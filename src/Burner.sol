@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Ownable} from "./libraries/Ownable.sol";
-import {IDMN} from "./interfaces/ERC20/IDMN.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import {IDMN} from "./interfaces/IDMN.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
-import {SafeERC20} from "./libraries/SafeERC20.sol";
-import {IERC20} from "./interfaces/ERC20/IERC20.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 
 /**
@@ -14,7 +15,7 @@ import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
  * @notice Burner is used to swap DAI to DMN and burn DMN
  * @dev The contract uses a custom pool in uniswap to burn DMN tokens
  */
-contract Burner is IBurner, Ownable {
+contract Burner is IBurner, Ownable2Step {
     using SafeERC20 for IERC20;
 
     IDMN public DMN;
@@ -33,7 +34,7 @@ contract Burner is IBurner, Ownable {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IDMN _dmn, IERC20 _dai, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
+    constructor(IDMN _dmn, IERC20 _dai, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
         DAI = _dai;
         DMN = _dmn;
         SwapRouter = _swapRouter;

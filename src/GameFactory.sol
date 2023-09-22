@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+
 import {Game} from "./Game.sol";
 import {IVault} from "./interfaces/IVault.sol";
-import {Ownable} from "./libraries/Ownable.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
 
 /**
@@ -11,7 +12,7 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @author X team
  * @notice This contract is only called by Vault to create games
  */
-contract GameFactory is IGameFactory, Ownable {
+contract GameFactory is IGameFactory, Ownable2Step {
     IVault public vault;
     address public server;
 
@@ -27,7 +28,7 @@ contract GameFactory is IGameFactory, Ownable {
      * @param _vault The vault address that will call the createGame
      * @param _server The server address that will be passed to each game
      */
-    constructor(IVault _vault, address _server) Ownable(msg.sender) {
+    constructor(IVault _vault, address _server) {
         vault = _vault;
         server = _server;
     }

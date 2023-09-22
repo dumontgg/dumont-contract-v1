@@ -2,13 +2,12 @@
 pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
+import {IDMN} from "./interfaces/IDMN.sol";
 import {IGame} from "./interfaces/IGame.sol";
 import {IVault} from "./interfaces/IVault.sol";
-import {Ownable} from "./libraries/Ownable.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
-import {IDMN} from "./interfaces/ERC20/IDMN.sol";
-import {IERC20} from "./interfaces/ERC20/IERC20.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
 
 /**
@@ -16,7 +15,7 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @author X team
  * @notice The vault is used to create games, and all deposits and withdrawals happen
  */
-contract Vault is IVault, Ownable {
+contract Vault is IVault, Ownable2Step {
     struct GameStruct {
         address player;
         address gameAddress;
@@ -49,9 +48,7 @@ contract Vault is IVault, Ownable {
      * @param _gameFactory Address of the GameFactory contract
      * @param _gameFeeInWei Sets the fee to create games
      */
-    constructor(IDMN _dmn, IERC20 _dai, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei)
-        Ownable(msg.sender)
-    {
+    constructor(IDMN _dmn, IERC20 _dai, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei) {
         DMN = _dmn;
         DAI = _dai;
         Burner = _burner;
