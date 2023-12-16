@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {IVault} from "./interfaces/IVault.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import {IGame} from "./interfaces/IGame.sol";
+import {Vault} from "./Vault.sol";
 
 /**
  * @title A single game contract playable for the a single player
@@ -9,80 +13,193 @@ import {IVault} from "./interfaces/IVault.sol";
  * @notice Server sets the hashed numbers inside the contract and the player has to guess each card
  * @dev The contract uses a commit-reveal mechanism to hide the deck of cards at first
  */
-contract Game {
-    struct RevealedCard {
-        // number is between 0 and 51 representing the 52 cards of the deck
-        uint8 number;
-        string salt;
-    }
+contract Game is IGame {
+    using SafeERC20 for IERC20;
 
-    // GameID is stored to communicate to the Vault contract more easily
-    uint256 public gameId;
+    uint256 public immutable gameId;
+    uint256 public immutable gameDuration;
+    uint256 public cardsRevealed;
+    mapping(uint256 => Card) public cards;
+    mapping(uint256 => uint256) public numbersRevealed;
 
-    // isInitialized will change to 2 when the game contract is called
-    // by the server to store the hash of the random deck of cards
-    uint8 public isInitialized = 1;
+    uint256 public constant INITIALIZED = 2;
+    uint256 public constant NOT_INITIALIZED = 1;
+    uint256 public isInitialized;
 
-    uint8 public index = 0; // ????
+    uint256 public constant LOCKED = 2;
+    uint256 public constant UNLOCKED = 1;
+    uint256 public isLocked;
 
-    // Keeps track of the number of cards that are revealed.
-    // This number should not surpass MAX_GUESSES_ALLOWED
-    uint8 public numbersRevealed;
-
-    // The maximum amount of cards that can be revealed in a game from a deck.
-    uint8 public maxGuessesAllowed;
-
-    IVault public vault;
+    // TODO: should i use IVault or Vault here? (i'm calling a public state variable inside here)
+    IERC20 public dai;
+    Vault public vault;
     address public server;
     address public player;
 
-    // A random deck of hashed cards. Each card is hashed with a unique salt
-    bytes[52] public deckHashed;
+    event CardRevealed(uint256 _index, uint256 _number, string _salt);
+    event PlayerGuessed(uint256 _index, uint256 _number, uint256 _daiAmount);
 
-    // Specifies which cards are guessed
-    bool[52] public isCardGuessed;
-
-    // Stores the number (suit + rank) and the salt of each card
-    RevealedCard[52] public deck;
+    error AlreadyGuessed(uint256 _index, uint256 _guessedNumber);
+    error BetAmountIsLessThanMinimum();
+    error BetAmountIsGreaterThanMaximum();
+    error NotAuthorized();
+    error InvalidGameIndex();
+    error GameIsUnlocked();
+    error GameIsLocked();
+    error GameIsNotInitialized();
+    error GameIsAlreadyInitialized();
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
+     * @param _dai DAI token address
      * @param _vault The Vault contract address
      * @param _server The server of the game that is allowed to submit the random hash of cards
      * @param _player The player that created the game using Vault contract
      * @param _gameId The ID of the game stored in Vault contract
-     * @param _maxGuessesAllowed The maximum amount of guesses a player can have each game
+     * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(IVault _vault, address _server, address _player, uint256 _gameId, uint8 _maxGuessesAllowed) {
+    constructor(IERC20 _dai, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
+        dai = _dai;
         vault = _vault;
         server = _server;
         player = _player;
         gameId = _gameId;
-        maxGuessesAllowed = _maxGuessesAllowed;
+        gameDuration = _gameDuration;
+
+        isInitialized = NOT_INITIALIZED;
+        isLocked = UNLOCKED;
     }
 
     modifier onlyPlayer() {
-        // _require(msg.sender == player, ErrorCodes.UNAUTHORIZED);
+        if (msg.sender != player) {
+            revert NotAuthorized();
+        }
 
         _;
     }
 
     modifier onlyServer() {
-        // _require(msg.sender == server, ErrorCodes.UNAUTHORIZED);
+        if (msg.sender != server) {
+            revert NotAuthorized();
+        }
 
         _;
     }
 
-    // we should implement a deadline for each game. 10min for example
-    modifier notInitialized() {
-        // _require(isInitialized == 2, ErrorCodes.ALREADY_INITIALIZED);
+    modifier shouldBeInitialized() {
+        if (isInitialized == NOT_INITIALIZED) {
+            revert GameIsNotInitialized();
+        }
 
         _;
     }
 
-    function initialize() public notInitialized onlyServer {
-        isInitialized = 2;
+    modifier shouldNotBeInitialized() {
+        if (isInitialized == INITIALIZED) {
+            revert GameIsAlreadyInitialized();
+        }
+
+        _;
     }
 
-    function guessCard() public onlyPlayer {}
+    modifier shouldBeLocked() {
+        if (isLocked == UNLOCKED) {
+            revert GameIsUnlocked();
+        }
+
+        _;
+    }
+
+    modifier shouldBeUnlocked() {
+        if (isLocked == LOCKED) {
+            revert GameIsLocked();
+        }
+
+        _;
+    }
+
+    function initialize(bytes[52] calldata _hashedCards) external shouldNotBeInitialized onlyServer {
+        isInitialized = INITIALIZED;
+
+        for (uint256 i = 0; i < 52;) {
+            cards[i].isInitialized = true;
+            cards[i].hashed = _hashedCards[i];
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function guessCard(uint256 _index, uint8 _number, uint256 _daiAmount)
+        external
+        onlyPlayer
+        shouldBeInitialized
+        shouldBeUnlocked
+    {
+        if (_index > 51) {
+            revert InvalidGameIndex();
+        }
+
+        if (cards[_index].isGuessed) {
+            revert AlreadyGuessed(_index, cards[_index].guessedNumber);
+        }
+
+
+        if (_daiAmount < vault.minimumBetAmount()) {
+            revert BetAmountIsLessThanMinimum();
+        }
+
+        if (getRate(_daiAmount, _number) > vault.getMaximumBetAmount()) {
+            revert BetAmountIsGreaterThanMaximum();
+        }
+
+        isLocked = LOCKED;
+
+        dai.safeTransferFrom(msg.sender, address(this), _daiAmount);
+
+        // dai miad haminja bad ke moshakhas shod, age yaroo bakhte bood ke mire be vault
+        // age ham borde bood ke hamoon DAI + ye rate i behesh mirese :D
+        // ba amir ansari check kon ke rate chetor calculate mishe
+
+        // check min amount
+        // lock this function
+        // transfer the amount to the vault
+        // ?? what if we enforce the user to approve the VAULT and call vault here with the player
+
+        cards[_index].isGuessed = true;
+        cards[_index].guessedNumber = _number;
+
+        // Get the rate and check for max daiAmount user can get and restrict that
+        // why ? what's the point? rate should be a view function and rthe client can call it anytime
+        // there should be a minimum/maximum amount of DAI that people can use to
+        // getRate(index, number);
+
+        // minimum and maximum dai amount should be set on the vault
+
+        emit PlayerGuessed(_index, _number, _daiAmount);
+    }
+
+    function getRate(uint256 _daiAmount, uint8 _card) public view returns (uint256) {
+      uint256 remainingCards = 52 - cardsRevealed;
+
+      // TODO: make sure this is correct?
+      return remainingCards / numbersRevealed[_card] * _daiAmount;
+    }
+
+    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt) external onlyServer shouldBeLocked {
+        isLocked = UNLOCKED;
+
+        cards[_index].revealedSalt = _revealedSalt;
+        cards[_index].revealedNumber = _revealedNumber;
+
+        emit CardRevealed(_index, _revealedNumber, _revealedSalt);
+
+        /*
+        calculate the winner
+        decide of they won
+        transfer the tokens
+        interact with the vault
+        */
+    }
 }

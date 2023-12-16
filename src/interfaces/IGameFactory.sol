@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {IVault} from "./IVault.sol";
+// TODO: is this right? Is should we use interface here?
+import {Vault} from "../Vault.sol";
 
 /**
  * @title GameFactory is used to create games
@@ -14,7 +15,7 @@ interface IGameFactory {
      * @param _vault New vault address
      * @dev This function is only callable by the owner
      */
-    function setVault(IVault _vault) external;
+    function setVault(Vault _vault) external;
 
     /**
      * @notice Sets a new address for server
@@ -29,5 +30,5 @@ interface IGameFactory {
      * @param _gameId Id of the game
      * @return gameAddress The address of the created game
      */
-    function createGame(address _player, uint256 _gameId) external returns (address gameAddress);
+    function createGame(address _player, uint256 _gameId) external returns (address gameAddress, address);
 }

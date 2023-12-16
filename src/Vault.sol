@@ -16,27 +16,25 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice The vault is used to create games, and all deposits and withdrawals happen
  */
 contract Vault is IVault, Ownable2Step {
-    struct GameStruct {
-        address player;
-        address gameAddress;
-    }
-
-    IDMN public DMN;
-    IERC20 public DAI;
-    IBurner public Burner;
-    IGameFactory public GameFactory;
-
-    uint256 public gameFeeInWei;
+    uint256 public minimumBetAmount = 1e18;
     uint256 public gameId = 0;
-    mapping(uint256 => GameStruct) public games;
+    uint256 public gameFeeInWei;
+    mapping(uint256 => GameUsers) public games;
 
-    event Deposit(address indexed _spender, uint256 _amount);
-    event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
+    IDMN public dmn;
+    IERC20 public dai;
+    IBurner public burner;
+    IGameFactory public gameFactory;
+
     event BurnerChanged(address indexed _from, address indexed _to);
+    event Deposit(address indexed _spender, uint256 _amount);
     event GameFactoryChanged(address indexed _from, address indexed _to);
     event GameFeeChanged(uint256 _from, uint256 _to);
     event GameCreated(uint256 _gameId, address _gameAddress, address _player);
+    event MinimumBetAmountChanged(uint256 _from, uint256 _to);
+    event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
 
+    error NotAuthorized();
     error FailedToSendEther();
     error InsufficientAmount();
 
@@ -49,11 +47,40 @@ contract Vault is IVault, Ownable2Step {
      * @param _gameFeeInWei Sets the fee to create games
      */
     constructor(IDMN _dmn, IERC20 _dai, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei) {
-        DMN = _dmn;
-        DAI = _dai;
-        Burner = _burner;
-        GameFactory = _gameFactory;
+        dmn = _dmn;
+        dai = _dai;
+        burner = _burner;
+        gameFactory = _gameFactory;
         gameFeeInWei = _gameFeeInWei;
+    }
+
+    modifier onlyPlayer(uint256 _gameId) {
+        if (games[_gameId].player == msg.sender) {
+            revert NotAuthorized();
+        }
+
+        _;
+    }
+
+
+    /**
+     * @notice Changes the minimum bet amount of DAI
+     * @param _minimumBetAmount The new minimum bet amount
+     */
+    function setMinimumBetAmount(uint256 _minimumBetAmount) external onlyOwner {
+        emit MinimumBetAmountChanged(minimumBetAmount, _minimumBetAmount);
+
+        minimumBetAmount = _minimumBetAmount;
+    }
+
+    /**
+     * @notice Returns the maximum bet amount a user can place
+     */
+    function getMaximumBetAmount() public view returns (uint256) {
+        uint256 daiAmount = dai.balanceOf(address(this));
+
+        // TODO: Do we need to multiply by 100 and then divide or it's good now?
+        return daiAmount / 100 * 5;
     }
 
     /**
@@ -61,9 +88,9 @@ contract Vault is IVault, Ownable2Step {
      * @param _burner The new address of the Burner contract
      */
     function setBurner(IBurner _burner) external onlyOwner {
-        emit BurnerChanged(address(Burner), address(_burner));
+        emit BurnerChanged(address(burner), address(_burner));
 
-        Burner = _burner;
+        burner = _burner;
     }
 
     /**
@@ -71,9 +98,9 @@ contract Vault is IVault, Ownable2Step {
      * @param _gameFactory The new address of the GameFactory contract
      */
     function setGameFactory(IGameFactory _gameFactory) external onlyOwner {
-        emit GameFactoryChanged(address(GameFactory), address(_gameFactory));
+        emit GameFactoryChanged(address(gameFactory), address(_gameFactory));
 
-        GameFactory = _gameFactory;
+        gameFactory = _gameFactory;
     }
 
     /**
@@ -92,7 +119,7 @@ contract Vault is IVault, Ownable2Step {
      * @dev Should be called by the admins of the protocol
      */
     function depositDai(uint256 _amount) external {
-        DAI.transferFrom(msg.sender, address(this), _amount);
+        dai.transferFrom(msg.sender, address(this), _amount);
 
         emit Deposit(msg.sender, _amount);
     }
@@ -135,9 +162,9 @@ contract Vault is IVault, Ownable2Step {
             revert InsufficientAmount();
         }
 
-        address gameAddress = GameFactory.createGame(msg.sender, gameId);
+        (address gameAddress, address server) = gameFactory.createGame(msg.sender, gameId);
 
-        games[gameId] = GameStruct({gameAddress: gameAddress, player: msg.sender});
+        games[gameId] = GameUsers({gameAddress: gameAddress, player: msg.sender, server: server});
 
         emit GameCreated(gameId, gameAddress, msg.sender);
 

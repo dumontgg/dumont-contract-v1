@@ -28,7 +28,7 @@ abstract contract BaseTest is Test {
         // TODO: do something about ISwapRouter for Burner
         burner = new Burner(dmn, dai, ISwapRouter(address(this)), 3000);
         vault = new Vault(dmn, dai, burner, gameFactory, 1e15);
-        gameFactory = new GameFactory(vault, address(this));
+        gameFactory = new GameFactory(dai, vault, address(this), 200);
 
         // Set the correct address for GameFactory for Vault
         vault.setGameFactory(gameFactory);

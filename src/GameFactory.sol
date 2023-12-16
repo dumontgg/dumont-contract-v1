@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import {Game} from "./Game.sol";
-import {IVault} from "./interfaces/IVault.sol";
+import {Vault} from "./Vault.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
 
 /**
@@ -13,24 +14,32 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice This contract is only called by Vault to create games
  */
 contract GameFactory is IGameFactory, Ownable2Step {
-    IVault public vault;
+    uint256 public gameDuration;
+
+    IERC20 public dai;
+    Vault public vault;
     address public server;
 
+    event GameDurationChanged(uint256 _from, uint256 _to);
     event VaultChanged(address indexed _from, address indexed _to);
     event ServerChanged(address indexed from, address indexed _to);
-    event GameCreated(uint256 indexed gameId, address indexed _game, address indexed _player);
+    event GameCreated(uint256 indexed gameId, address indexed _game, address indexed _player, uint256 _gameDuration);
 
-    // This is fired when the caller of createGame is not the Vault
     error NotAuthorized();
 
     /**
      * @notice Sets vault and server addresses
+     * @param _dai The address of the DAI ERC20 token
      * @param _vault The vault address that will call the createGame
      * @param _server The server address that will be passed to each game
+     * @param _gameDuration The duration of the game
+     * game will be unplayable when this time passes after game creation date
      */
-    constructor(IVault _vault, address _server) {
+    constructor(IERC20 _dai, Vault _vault, address _server, uint256 _gameDuration) {
+        dai = _dai;
         vault = _vault;
         server = _server;
+        gameDuration = _gameDuration;
     }
 
     /**
@@ -45,11 +54,22 @@ contract GameFactory is IGameFactory, Ownable2Step {
     }
 
     /**
+     * @notice Sets a new gameDuration for a games
+     * @param _gameDuration The new duration of the game by seconds
+     * @dev This function is only callable by the owner
+     */
+    function setGameDuration(uint256 _gameDuration) external onlyOwner {
+        emit GameDurationChanged(gameDuration, _gameDuration);
+
+        gameDuration = _gameDuration;
+    }
+
+    /**
      * @notice Sets a new address for Vault
      * @param _vault New vault address
      * @dev This function is only callable by the owner
      */
-    function setVault(IVault _vault) external onlyOwner {
+    function setVault(Vault _vault) external onlyOwner {
         emit VaultChanged(address(vault), address(_vault));
 
         vault = _vault;
@@ -72,13 +92,11 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameId Id of the game
      * @return gameAddress The address of the created game
      */
-    function createGame(address _player, uint256 _gameId) external onlyVault returns (address gameAddress) {
-        // Server is passed so that the server can make changed to the game contract
-        // Such as putting the hash of the Cards inside the contract to initialize the game
-        Game g = new Game(vault, server, _player, _gameId, 12); // TODO: maxallowance should be changable by admins
+    function createGame(address _player, uint256 _gameId) external onlyVault returns (address gameAddress, address) {
+        gameAddress = address(new Game(dai, vault, server, _player, _gameId, gameDuration));
 
-        gameAddress = address(g);
+        emit GameCreated(_gameId, gameAddress, _player, gameDuration);
 
-        emit GameCreated(_gameId, gameAddress, _player);
+        return (gameAddress, server);
     }
 }
