@@ -31,7 +31,7 @@ contract Game is IGame {
     uint256 public isLocked;
 
     // TODO: should i use IVault or Vault here? (i'm calling a public state variable inside here)
-    IERC20 public dai;
+    IERC20 public usdt;
     Vault public vault;
     address public server;
     address public player;
@@ -51,15 +51,15 @@ contract Game is IGame {
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
-     * @param _dai DAI token address
+     * @param _usdt The address of the USDT token
      * @param _vault The Vault contract address
      * @param _server The server of the game that is allowed to submit the random hash of cards
      * @param _player The player that created the game using Vault contract
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(IERC20 _dai, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
-        dai = _dai;
+    constructor(IERC20 _usdt, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
+        usdt = _usdt;
         vault = _vault;
         server = _server;
         player = _player;
@@ -145,7 +145,6 @@ contract Game is IGame {
             revert AlreadyGuessed(_index, cards[_index].guessedNumber);
         }
 
-
         if (_daiAmount < vault.minimumBetAmount()) {
             revert BetAmountIsLessThanMinimum();
         }
@@ -156,7 +155,7 @@ contract Game is IGame {
 
         isLocked = LOCKED;
 
-        dai.safeTransferFrom(msg.sender, address(this), _daiAmount);
+        usdt.safeTransferFrom(msg.sender, address(this), _daiAmount);
 
         // dai miad haminja bad ke moshakhas shod, age yaroo bakhte bood ke mire be vault
         // age ham borde bood ke hamoon DAI + ye rate i behesh mirese :D
@@ -181,13 +180,17 @@ contract Game is IGame {
     }
 
     function getRate(uint256 _daiAmount, uint8 _card) public view returns (uint256) {
-      uint256 remainingCards = 52 - cardsRevealed;
+        uint256 remainingCards = 52 - cardsRevealed;
 
-      // TODO: make sure this is correct?
-      return remainingCards / numbersRevealed[_card] * _daiAmount;
+        // TODO: make sure this is correct?
+        return (remainingCards / numbersRevealed[_card]) * _daiAmount;
     }
 
-    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt) external onlyServer shouldBeLocked {
+    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt)
+        external
+        onlyServer
+        shouldBeLocked
+    {
         isLocked = UNLOCKED;
 
         cards[_index].revealedSalt = _revealedSalt;

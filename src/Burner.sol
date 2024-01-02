@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IDMN} from "./interfaces/IDMN.sol";
+import {IDMT} from "./interfaces/IDMT.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 
@@ -18,30 +18,30 @@ import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 contract Burner is IBurner, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    IDMN public DMN;
-    IERC20 public DAI;
-    ISwapRouter public SwapRouter;
+    IDMT public dmt;
+    IERC20 public usdt;
+    ISwapRouter public swapRouter;
 
     uint24 public uniswapPoolFee;
 
-    event DMNTokensBurned(uint256 _daiAmount, uint256 _dmnAmount);
+    event DMTTokensBurned(uint256 _usdtAmount, uint256 _dmnAmount);
     event UniswapPoolFeeChanged(uint24 _from, uint24 _to);
 
     /**
      * @notice Sets related contract addresses
-     * @param _dmn The address of the DMN ERC20 token contract
-     * @param _dai The address of the DAI ERC20 token contract
+     * @param _dmt The address of the DMN ERC20 token contract
+     * @param _usdt The address of the USDT token
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IDMN _dmn, IERC20 _dai, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
-        DAI = _dai;
-        DMN = _dmn;
-        SwapRouter = _swapRouter;
+    constructor(IDMT _dmt, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
+        usdt = _usdt;
+        dmt = _dmt;
+        swapRouter = _swapRouter;
 
         uniswapPoolFee = _uniswapPoolFee;
 
-        DAI.forceApprove(address(_swapRouter), type(uint256).max);
+        usdt.forceApprove(address(_swapRouter), type(uint256).max);
     }
 
     /**
@@ -53,15 +53,15 @@ contract Burner is IBurner, Ownable2Step {
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
             fee: uniswapPoolFee,
             amountIn: _amountIn,
-            tokenIn: address(DAI),
-            tokenOut: address(DMN),
+            tokenIn: address(usdt),
+            tokenOut: address(dmt),
             recipient: address(this),
             deadline: block.timestamp,
             amountOutMinimum: _amountOutMinimum,
             sqrtPriceLimitX96: 0
         });
 
-        amountOut = SwapRouter.exactInputSingle(params);
+        amountOut = swapRouter.exactInputSingle(params);
     }
 
     /**
@@ -80,15 +80,15 @@ contract Burner is IBurner, Ownable2Step {
      * @param _amountOutMinimum The minimum amount of DMN to burn
      */
     function burnTokens(uint256 _amountOutMinimum) external onlyOwner {
-        uint256 daiBalance = DAI.balanceOf(address(this));
+        uint256 daiBalance = usdt.balanceOf(address(this));
 
         // Swap is used to convert all DAI tokens to DMN tokens
         _swap(daiBalance, _amountOutMinimum);
 
-        uint256 dmnBalance = DMN.balanceOf(address(this));
+        uint256 dmnBalance = dmt.balanceOf(address(this));
 
-        emit DMNTokensBurned(daiBalance, dmnBalance);
+        emit DMTTokensBurned(daiBalance, dmnBalance);
 
-        DMN.burn(dmnBalance);
+        dmt.burn(dmnBalance);
     }
 }

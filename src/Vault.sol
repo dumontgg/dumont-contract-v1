@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import {IDMN} from "./interfaces/IDMN.sol";
+import {IDMT} from "./interfaces/IDMT.sol";
 import {IGame} from "./interfaces/IGame.sol";
 import {IVault} from "./interfaces/IVault.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
@@ -21,8 +21,8 @@ contract Vault is IVault, Ownable2Step {
     uint256 public gameFeeInWei;
     mapping(uint256 => GameUsers) public games;
 
-    IDMN public dmn;
-    IERC20 public dai;
+    IDMT public dmt;
+    IERC20 public usdt;
     IBurner public burner;
     IGameFactory public gameFactory;
 
@@ -40,15 +40,15 @@ contract Vault is IVault, Ownable2Step {
 
     /**
      * @notice Sets contract addresses and gameFee
-     * @param _dmn Address of the Dumont token
-     * @param _dai Address of the DAI token
+     * @param _dmt Address of the Dumont token
+     * @param _usdt The address of the USDT token
      * @param _burner Address of the burner token used to sell DAI and burn DMN tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _gameFeeInWei Sets the fee to create games
      */
-    constructor(IDMN _dmn, IERC20 _dai, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei) {
-        dmn = _dmn;
-        dai = _dai;
+    constructor(IDMT _dmt, IERC20 _usdt, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei) {
+        dmt = _dmt;
+        usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
         gameFeeInWei = _gameFeeInWei;
@@ -61,7 +61,6 @@ contract Vault is IVault, Ownable2Step {
 
         _;
     }
-
 
     /**
      * @notice Changes the minimum bet amount of DAI
@@ -77,10 +76,10 @@ contract Vault is IVault, Ownable2Step {
      * @notice Returns the maximum bet amount a user can place
      */
     function getMaximumBetAmount() public view returns (uint256) {
-        uint256 daiAmount = dai.balanceOf(address(this));
+        uint256 daiAmount = usdt.balanceOf(address(this));
 
         // TODO: Do we need to multiply by 100 and then divide or it's good now?
-        return daiAmount / 100 * 5;
+        return (daiAmount / 100) * 5;
     }
 
     /**
@@ -119,7 +118,7 @@ contract Vault is IVault, Ownable2Step {
      * @dev Should be called by the admins of the protocol
      */
     function depositDai(uint256 _amount) external {
-        dai.transferFrom(msg.sender, address(this), _amount);
+        usdt.transferFrom(msg.sender, address(this), _amount);
 
         emit Deposit(msg.sender, _amount);
     }

@@ -6,10 +6,16 @@ import {Vault} from "../Vault.sol";
 
 /**
  * @title GameFactory is used to create games
- * @author X team
  * @notice This contract is only called by Vault to create games
  */
 interface IGameFactory {
+    event GameDurationChanged(uint256 _from, uint256 _to);
+    event VaultChanged(address indexed _from, address indexed _to);
+    event ServerChanged(address indexed from, address indexed _to);
+    event GameCreated(uint256 indexed gameId, address indexed _game, address indexed _player, uint256 _gameDuration);
+
+    error NotAuthorized(address _caller);
+
     /**
      * @notice Sets a new address for Vault
      * @param _vault New vault address
