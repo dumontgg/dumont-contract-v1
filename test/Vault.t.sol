@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {DMN} from "../src/DMN.sol";
+import {DMT} from "../src/DMT.sol";
 import {BaseTest} from "./Base.t.sol";
 import {Vault} from "../src/Vault.sol";
 import {Burner} from "../src/Burner.sol";
@@ -15,6 +15,7 @@ contract VaultTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
     }
+
     // function setUp() public {
     //     DMN dmn = new DMN(200000000, address(this));
     //     ERC20 dai = new ERC20("DAI", "DAI");

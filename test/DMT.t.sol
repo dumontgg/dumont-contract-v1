@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {DMN} from "../src/DMN.sol";
 
-contract DMNTest is Test {
-    DMN public token;
+import {DMT} from "../src/DMT.sol";
+
+contract DMTTest is Test {
+    DMT public token;
 
     function setUp() public {
-        token = new DMN(uint256(200), address(this));
+        token = new DMT(uint256(200), address(this));
     }
 
     function test_decimals() public {
