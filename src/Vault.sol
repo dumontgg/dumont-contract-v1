@@ -11,7 +11,7 @@ import {IBurner} from "./interfaces/IBurner.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
 
 /**
- * @notice That vault contract that stores DAI and manages other contracts
+ * @notice That vault contract that stores USDT and manages other contracts
  * @author X team
  * @notice The vault is used to create games, and all deposits and withdrawals happen
  */
@@ -32,7 +32,11 @@ contract Vault is IVault, Ownable2Step {
     event GameFeeChanged(uint256 _from, uint256 _to);
     event GameCreated(uint256 _gameId, address _gameAddress, address _player);
     event MinimumBetAmountChanged(uint256 _from, uint256 _to);
-    event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
+    event Withdraw(
+        address indexed _token,
+        uint256 _amount,
+        address indexed _recipient
+    );
 
     error NotAuthorized();
     error FailedToSendEther();
@@ -42,11 +46,17 @@ contract Vault is IVault, Ownable2Step {
      * @notice Sets contract addresses and gameFee
      * @param _dmt Address of the Dumont token
      * @param _usdt The address of the USDT token
-     * @param _burner Address of the burner token used to sell DAI and burn DMN tokens
+     * @param _burner Address of the burner token used to sell USDT and burn DMT tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _gameFeeInWei Sets the fee to create games
      */
-    constructor(IDMT _dmt, IERC20 _usdt, IBurner _burner, IGameFactory _gameFactory, uint256 _gameFeeInWei) {
+    constructor(
+        IDMT _dmt,
+        IERC20 _usdt,
+        IBurner _burner,
+        IGameFactory _gameFactory,
+        uint256 _gameFeeInWei
+    ) {
         dmt = _dmt;
         usdt = _usdt;
         burner = _burner;
@@ -63,7 +73,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Changes the minimum bet amount of DAI
+     * @notice Changes the minimum bet amount of USDT
      * @param _minimumBetAmount The new minimum bet amount
      */
     function setMinimumBetAmount(uint256 _minimumBetAmount) external onlyOwner {
@@ -76,10 +86,10 @@ contract Vault is IVault, Ownable2Step {
      * @notice Returns the maximum bet amount a user can place
      */
     function getMaximumBetAmount() public view returns (uint256) {
-        uint256 daiAmount = usdt.balanceOf(address(this));
+        uint256 usdtAmount = usdt.balanceOf(address(this));
 
         // TODO: Do we need to multiply by 100 and then divide or it's good now?
-        return (daiAmount / 100) * 5;
+        return (usdtAmount / 100) * 5;
     }
 
     /**
@@ -113,8 +123,8 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Deposits DAI into the contract
-     * @param _amount The amount of DAI to deposit
+     * @notice Deposits USDT into the contract
+     * @param _amount The amount of USDT to deposit
      * @dev Should be called by the admins of the protocol
      */
     function depositDai(uint256 _amount) external {
@@ -124,13 +134,17 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Withdraws an amount of a specific token, usually DAI or DMN
+     * @notice Withdraws an amount of a specific token, usually USDT or DMT
      * @param _token The ERC20 token to withdraw
      * @param _amount The amount of token to withdraw
      * @param _recipient The destination address that will receive the tokens
      * @dev This can only be called by the owner of the contract
      */
-    function withdrawToken(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdrawToken(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).transfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -145,7 +159,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -161,9 +175,16 @@ contract Vault is IVault, Ownable2Step {
             revert InsufficientAmount();
         }
 
-        (address gameAddress, address server) = gameFactory.createGame(msg.sender, gameId);
+        (address gameAddress, address server) = gameFactory.createGame(
+            msg.sender,
+            gameId
+        );
 
-        games[gameId] = GameUsers({gameAddress: gameAddress, player: msg.sender, server: server});
+        games[gameId] = GameUsers({
+            gameAddress: gameAddress,
+            player: msg.sender,
+            server: server
+        });
 
         emit GameCreated(gameId, gameAddress, msg.sender);
 
@@ -174,5 +195,9 @@ contract Vault is IVault, Ownable2Step {
 
     // function calculateBurnAmount() internal {}
     //
-    // function gameLost() internal {}
+    // TODO: add a modifier that only games can call this
+    function gameLost(
+        uint256 _gameId,
+        uint256 calldata _guess
+    ) public onlyGame(_gameId) {}
 }

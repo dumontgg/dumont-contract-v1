@@ -54,7 +54,7 @@ abstract contract BaseTest is Test {
     }
 
     /**
-     * @notice Creates a new address, gives it a label, transfers ETH, DAI, and DMN to it
+     * @notice Creates a new address, gives it a label, transfers ETH, USDT, and DMN to it
      * @param _name The name used to label the new address
      */
     function createUser(string memory _name) internal returns (address userAddress) {
@@ -66,7 +66,7 @@ abstract contract BaseTest is Test {
     }
 
     /**
-     * @dev Approves DAI to the Vault contract from the admin address
+     * @dev Approves USDT to the Vault contract from the admin address
      */
     function approveAdmin() internal {
         changePrank({msgSender: users.admin});

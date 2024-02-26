@@ -26,28 +26,10 @@ contract Game is IGame {
     uint256 public constant NOT_INITIALIZED = 1;
     uint256 public isInitialized;
 
-    uint256 public constant LOCKED = 2;
-    uint256 public constant UNLOCKED = 1;
-    uint256 public isLocked;
-
-    // TODO: should i use IVault or Vault here? (i'm calling a public state variable inside here)
     IERC20 public usdt;
     Vault public vault;
     address public server;
     address public player;
-
-    event CardRevealed(uint256 _index, uint256 _number, string _salt);
-    event PlayerGuessed(uint256 _index, uint256 _number, uint256 _daiAmount);
-
-    error AlreadyGuessed(uint256 _index, uint256 _guessedNumber);
-    error BetAmountIsLessThanMinimum();
-    error BetAmountIsGreaterThanMaximum();
-    error NotAuthorized();
-    error InvalidGameIndex();
-    error GameIsUnlocked();
-    error GameIsLocked();
-    error GameIsNotInitialized();
-    error GameIsAlreadyInitialized();
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
@@ -58,7 +40,14 @@ contract Game is IGame {
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(IERC20 _usdt, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
+    constructor(
+        IERC20 _usdt,
+        Vault _vault,
+        address _server,
+        address _player,
+        uint256 _gameId,
+        uint256 _gameDuration
+    ) {
         usdt = _usdt;
         vault = _vault;
         server = _server;
@@ -67,7 +56,6 @@ contract Game is IGame {
         gameDuration = _gameDuration;
 
         isInitialized = NOT_INITIALIZED;
-        isLocked = UNLOCKED;
     }
 
     modifier onlyPlayer() {
@@ -102,27 +90,12 @@ contract Game is IGame {
         _;
     }
 
-    modifier shouldBeLocked() {
-        if (isLocked == UNLOCKED) {
-            revert GameIsUnlocked();
-        }
-
-        _;
-    }
-
-    modifier shouldBeUnlocked() {
-        if (isLocked == LOCKED) {
-            revert GameIsLocked();
-        }
-
-        _;
-    }
-
-    function initialize(bytes[52] calldata _hashedCards) external shouldNotBeInitialized onlyServer {
+    function initialize(
+        bytes[52] calldata _hashedCards
+    ) external shouldNotBeInitialized onlyServer {
         isInitialized = INITIALIZED;
 
-        for (uint256 i = 0; i < 52;) {
-            cards[i].isInitialized = true;
+        for (uint256 i = 0; i < 52; ) {
             cards[i].hashed = _hashedCards[i];
 
             unchecked {
@@ -131,75 +104,105 @@ contract Game is IGame {
         }
     }
 
-    function guessCard(uint256 _index, uint8 _number, uint256 _daiAmount)
-        external
-        onlyPlayer
-        shouldBeInitialized
-        shouldBeUnlocked
-    {
-        if (_index > 51) {
+    function guessCard(
+        uint256 _cardIndex,
+        uint256[] calldata _guessedNumbers,
+        uint256 _betAmount
+    ) external onlyPlayer shouldBeInitialized {
+        if (_cardIndex > 51) {
             revert InvalidGameIndex();
         }
 
-        if (cards[_index].isGuessed) {
-            revert AlreadyGuessed(_index, cards[_index].guessedNumber);
+        if (cards[_cardIndex].isGuessed) {
+            revert AlreadyGuessed(_cardIndex, cards[_cardIndex].guessedNumbers);
         }
 
-        if (_daiAmount < vault.minimumBetAmount()) {
+        if (_betAmount < vault.minimumBetAmount()) {
             revert BetAmountIsLessThanMinimum();
         }
 
-        if (getRate(_daiAmount, _number) > vault.getMaximumBetAmount()) {
+        uint256 totalWinningBetAmount = getRate(_guessedNumbers) * _betAmount;
+
+        // Check if the bet is going to be higher than the maximum possible amount
+        if (totalWinningBetAmount > vault.getMaximumBetAmount()) {
             revert BetAmountIsGreaterThanMaximum();
         }
 
-        isLocked = LOCKED;
+        usdt.safeTransferFrom(msg.sender, address(this), _betAmount);
 
-        usdt.safeTransferFrom(msg.sender, address(this), _daiAmount);
+        cards[_cardIndex].isGuessed = true;
+        cards[_cardIndex].betAmount = _betAmount;
+        cards[_cardIndex].guessedNumbers = _guessedNumbers;
 
-        // dai miad haminja bad ke moshakhas shod, age yaroo bakhte bood ke mire be vault
-        // age ham borde bood ke hamoon DAI + ye rate i behesh mirese :D
-        // ba amir ansari check kon ke rate chetor calculate mishe
-
-        // check min amount
-        // lock this function
-        // transfer the amount to the vault
-        // ?? what if we enforce the user to approve the VAULT and call vault here with the player
-
-        cards[_index].isGuessed = true;
-        cards[_index].guessedNumber = _number;
-
-        // Get the rate and check for max daiAmount user can get and restrict that
-        // why ? what's the point? rate should be a view function and rthe client can call it anytime
-        // there should be a minimum/maximum amount of DAI that people can use to
-        // getRate(index, number);
-
-        // minimum and maximum dai amount should be set on the vault
-
-        emit PlayerGuessed(_index, _number, _daiAmount);
+        emit PlayerGuessed(_cardIndex, _guessedNumbers, _betAmount);
     }
 
-    function getRate(uint256 _daiAmount, uint8 _card) public view returns (uint256) {
+    function getRate(uint256[] calldata _cards) public view returns (uint256) {
         uint256 remainingCards = 52 - cardsRevealed;
 
-        // TODO: make sure this is correct?
-        return (remainingCards / numbersRevealed[_card]) * _daiAmount;
+        uint256 makhraj = 0;
+
+        // check if all _cards values are unique
+        for (uint256 i = 0; i < _cards.length; ++i) {
+            makhraj += 4 - numbersRevealed[_cards[i]];
+        }
+
+        // check if the decimal rounding does not ruin the rate
+        return remainingCards / makhraj;
     }
 
-    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt)
-        external
-        onlyServer
-        shouldBeLocked
-    {
-        isLocked = UNLOCKED;
+    function checkCardRevealed(
+        uint256[] storage _guessedNumbers,
+        uint256 _revealedNumber
+    ) private returns (bool isPlayerWinner) {
+        isPlayerWinner = false;
 
+        for (uint256 i = 0; i < _guessedNumbers.length; ++i) {
+            if (_guessedNumbers[i] == _revealedNumber) {
+                isPlayerWinner = true;
+
+                break;
+            }
+        }
+    }
+
+    function revealCard(
+        uint256 _index,
+        uint8 _revealedNumber,
+        string calldata _revealedSalt
+    ) external onlyServer {
         cards[_index].revealedSalt = _revealedSalt;
         cards[_index].revealedNumber = _revealedNumber;
+
+        bool isPlayerWon = checkCardRevealed(
+            cards[_index].guessedNumbers,
+            cards[_index].revealedNumber
+        );
+
+        /*
+         * TODO: what would be the optimal way of storing the bet amount?
+         * ANSWER: Amount should be transferred to Vault after guessCard and everything will be
+         * handled from the Vault itself.
+         */
+
+        if (isPlayerWon) {
+            Vault.gameLost(
+                gameId,
+                getRate(cards[_index].guessedNumbers),
+                cards[_index].betAmount
+            );
+        } else {
+            usdt.transferFrom(
+                address(this),
+                address(Vault),
+                cards[_index].betAmount
+            );
+            // ???
+        }
 
         emit CardRevealed(_index, _revealedNumber, _revealedSalt);
 
         /*
-        calculate the winner
         decide of they won
         transfer the tokens
         interact with the vault

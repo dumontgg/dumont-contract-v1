@@ -12,7 +12,7 @@ import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 /**
  * @title Burner contract burns DMN tokens
  * @author X team
- * @notice Burner is used to swap DAI to DMN and burn DMN
+ * @notice Burner is used to swap USDT to DMN and burn DMN
  * @dev The contract uses a custom pool in uniswap to burn DMN tokens
  */
 contract Burner is IBurner, Ownable2Step {
@@ -45,9 +45,9 @@ contract Burner is IBurner, Ownable2Step {
     }
 
     /**
-     * @notice Swaps DAI to get DMN using a UniswapV3 pool
-     * @param _amountIn The amount of DAI to swap
-     * @param _amountOutMinimum The minimum amount of DMN to receive
+     * @notice Swaps USDT to get DMT using a UniswapV3 pool
+     * @param _amountIn The amount of USDT to swap
+     * @param _amountOutMinimum The minimum amount of DMT to receive
      */
     function _swap(uint256 _amountIn, uint256 _amountOutMinimum) private returns (uint256 amountOut) {
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
@@ -76,18 +76,18 @@ contract Burner is IBurner, Ownable2Step {
     }
 
     /**
-     * @notice Swaps DAI to DMN and burns DMN tokens
-     * @param _amountOutMinimum The minimum amount of DMN to burn
+     * @notice Swaps USDT to DMT and burns DMN tokens
+     * @param _amountOutMinimum The minimum amount of DMT to burn
      */
     function burnTokens(uint256 _amountOutMinimum) external onlyOwner {
-        uint256 daiBalance = usdt.balanceOf(address(this));
+        uint256 usdtBalance = usdt.balanceOf(address(this));
 
-        // Swap is used to convert all DAI tokens to DMN tokens
-        _swap(daiBalance, _amountOutMinimum);
+        // Swap is used to convert all USDT tokens to DMT tokens
+        _swap(usdtBalance, _amountOutMinimum);
 
         uint256 dmnBalance = dmt.balanceOf(address(this));
 
-        emit DMTTokensBurned(daiBalance, dmnBalance);
+        emit DMTTokensBurned(usdtBalance, dmnBalance);
 
         dmt.burn(dmnBalance);
     }

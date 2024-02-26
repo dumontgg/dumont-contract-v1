@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 /**
  * @title Burner contract burns DMN tokens
  * @author X team
- * @notice Burner is used to swap DAI to DMN and burn DMN
+ * @notice Burner is used to swap USDT to DMN and burn DMN
  * @dev The contract uses a custom pool in uniswap to burn DMN tokens
  */
 interface IBurner {
@@ -16,7 +16,7 @@ interface IBurner {
     function setUniswapPoolFee(uint24 _uniswapPoolFee) external;
 
     /**
-     * @notice Swaps DAI to DMN and burns DMN tokens
+     * @notice Swaps USDT to DMT and burns DMT tokens
      * @param _amountOutMinimum The minimum amount of DMN to burn
      */
     function burnTokens(uint256 _amountOutMinimum) external;
