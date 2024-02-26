@@ -5,38 +5,38 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IDMT} from "./interfaces/IDMT.sol";
+import {IMONT} from "./interfaces/IMONT.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 
 /**
- * @title Burner contract burns DMN tokens
+ * @title Burner contract burns MONT tokens
  * @author X team
- * @notice Burner is used to swap USDT to DMN and burn DMN
- * @dev The contract uses a custom pool in uniswap to burn DMN tokens
+ * @notice Burner is used to swap USDT to MONT and burn MONT
+ * @dev The contract uses a custom pool in uniswap to burn MONT tokens
  */
 contract Burner is IBurner, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    IDMT public dmt;
+    IMONT public mont;
     IERC20 public usdt;
     ISwapRouter public swapRouter;
 
     uint24 public uniswapPoolFee;
 
-    event DMTTokensBurned(uint256 _usdtAmount, uint256 _dmnAmount);
+    event MONTTokensBurned(uint256 _usdtAmount, uint256 _montAmount);
     event UniswapPoolFeeChanged(uint24 _from, uint24 _to);
 
     /**
      * @notice Sets related contract addresses
-     * @param _dmt The address of the DMN ERC20 token contract
+     * @param _mont The address of the MONT ERC20 token contract
      * @param _usdt The address of the USDT token
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IDMT _dmt, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
+    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
         usdt = _usdt;
-        dmt = _dmt;
+        mont = _mont;
         swapRouter = _swapRouter;
 
         uniswapPoolFee = _uniswapPoolFee;
@@ -45,16 +45,16 @@ contract Burner is IBurner, Ownable2Step {
     }
 
     /**
-     * @notice Swaps USDT to get DMT using a UniswapV3 pool
+     * @notice Swaps USDT to get MONT using a UniswapV3 pool
      * @param _amountIn The amount of USDT to swap
-     * @param _amountOutMinimum The minimum amount of DMT to receive
+     * @param _amountOutMinimum The minimum amount of MONT to receive
      */
     function _swap(uint256 _amountIn, uint256 _amountOutMinimum) private returns (uint256 amountOut) {
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
             fee: uniswapPoolFee,
             amountIn: _amountIn,
             tokenIn: address(usdt),
-            tokenOut: address(dmt),
+            tokenOut: address(mont),
             recipient: address(this),
             deadline: block.timestamp,
             amountOutMinimum: _amountOutMinimum,
@@ -76,19 +76,19 @@ contract Burner is IBurner, Ownable2Step {
     }
 
     /**
-     * @notice Swaps USDT to DMT and burns DMN tokens
-     * @param _amountOutMinimum The minimum amount of DMT to burn
+     * @notice Swaps USDT to MONT and burns MONT tokens
+     * @param _amountOutMinimum The minimum amount of MONT to burn
      */
     function burnTokens(uint256 _amountOutMinimum) external onlyOwner {
         uint256 usdtBalance = usdt.balanceOf(address(this));
 
-        // Swap is used to convert all USDT tokens to DMT tokens
+        // Swap is used to convert all USDT tokens to MONT tokens
         _swap(usdtBalance, _amountOutMinimum);
 
-        uint256 dmnBalance = dmt.balanceOf(address(this));
+        uint256 montBalance = mont.balanceOf(address(this));
 
-        emit DMTTokensBurned(usdtBalance, dmnBalance);
+        emit MONTTokensBurned(usdtBalance, montBalance);
 
-        dmt.burn(dmnBalance);
+        mont.burn(montBalance);
     }
 }

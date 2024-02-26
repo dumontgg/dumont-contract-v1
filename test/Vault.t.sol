@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {DMT} from "../src/DMT.sol";
+import {MONT} from "../src/MONT.sol";
 import {BaseTest} from "./Base.t.sol";
 import {Vault} from "../src/Vault.sol";
 import {Burner} from "../src/Burner.sol";
@@ -17,14 +17,14 @@ contract VaultTest is BaseTest {
     }
 
     // function setUp() public {
-    //     DMN dmn = new DMN(200000000, address(this));
+    //     MONT mont = new MONT(200000000, address(this));
     //     ERC20 dai = new ERC20("DAI", "DAI");
-    //     Burner burner = new Burner(dmn, dai, ISwapRouter(address(this)), 3000);
+    //     Burner burner = new Burner(mont, dai, ISwapRouter(address(this)), 3000);
     //     GameFactory gameFactory = new GameFactory(IVault(address(this)), address(this));
     //
     //     uint256 gameFeeInWei = 3000000;
     //
-    //     vault = new Vault(dmn, dai, burner, gameFactory, gameFeeInWei);
+    //     vault = new Vault(mont, dai, burner, gameFactory, gameFeeInWei);
     // }
 
     function test_owner() public {

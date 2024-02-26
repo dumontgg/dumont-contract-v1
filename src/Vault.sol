@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import {IDMT} from "./interfaces/IDMT.sol";
+import {IMONT} from "./interfaces/IMONT.sol";
 import {IGame} from "./interfaces/IGame.sol";
 import {IVault} from "./interfaces/IVault.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
@@ -21,7 +21,7 @@ contract Vault is IVault, Ownable2Step {
     uint256 public gameFeeInWei;
     mapping(uint256 => GameUsers) public games;
 
-    IDMT public dmt;
+    IMONT public mont;
     IERC20 public usdt;
     IBurner public burner;
     IGameFactory public gameFactory;
@@ -44,20 +44,20 @@ contract Vault is IVault, Ownable2Step {
 
     /**
      * @notice Sets contract addresses and gameFee
-     * @param _dmt Address of the Dumont token
+     * @param _mont Address of the Dumont token
      * @param _usdt The address of the USDT token
-     * @param _burner Address of the burner token used to sell USDT and burn DMT tokens
+     * @param _burner Address of the burner token used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _gameFeeInWei Sets the fee to create games
      */
     constructor(
-        IDMT _dmt,
+        IMONT _mont,
         IERC20 _usdt,
         IBurner _burner,
         IGameFactory _gameFactory,
         uint256 _gameFeeInWei
     ) {
-        dmt = _dmt;
+        mont = _mont;
         usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
@@ -134,7 +134,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Withdraws an amount of a specific token, usually USDT or DMT
+     * @notice Withdraws an amount of a specific token, usually USDT or MONT
      * @param _token The ERC20 token to withdraw
      * @param _amount The amount of token to withdraw
      * @param _recipient The destination address that will receive the tokens

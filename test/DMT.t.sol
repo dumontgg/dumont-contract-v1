@@ -3,13 +3,13 @@ pragma solidity 0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 
-import {DMT} from "../src/DMT.sol";
+import {MONT} from "../src/MONT.sol";
 
-contract DMTTest is Test {
-    DMT public token;
+contract MONTTest is Test {
+    MONT public token;
 
     function setUp() public {
-        token = new DMT(uint256(200), address(this));
+        token = new MONT(uint256(200), address(this));
     }
 
     function test_decimals() public {
