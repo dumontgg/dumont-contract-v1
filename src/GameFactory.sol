@@ -16,24 +16,25 @@ contract GameFactory is IGameFactory, Ownable2Step {
     uint256 public gameDuration;
     IERC20 public usdt;
     Vault public vault;
-    address public server;
+    address public gameManager;
 
     /**
-     * @notice Sets vault and server addresses
+     * @notice Sets addresses and duration of each game
      * @param _usdt The address of the USDT token
      * @param _vault The vault address that will call the createGame
-     * @param _server The server address that will be passed to each game
+     * @param _gameManager A trusted address that will be passed to each game that will be used
+     *  to initialize the game and reveal each card that the player guesses
      * @param _gameDuration The duration of each game. Games expire after that period of time
      */
-    constructor(IERC20 _usdt, Vault _vault, address _server, uint256 _gameDuration) {
+    constructor(IERC20 _usdt, Vault _vault, address _gameManager, uint256 _gameDuration) {
         usdt = _usdt;
         vault = _vault;
-        server = _server;
+        gameManager = _gameManager;
         gameDuration = _gameDuration;
     }
 
     /**
-     * @notice Checks if the caller is the vault contract address to protect createGame function
+     * @notice Checks if the caller is the vault contract address
      */
     modifier onlyVault() {
         if (msg.sender != address(vault)) {
@@ -64,26 +65,26 @@ contract GameFactory is IGameFactory, Ownable2Step {
     }
 
     /**
-     * @notice Sets a new address for server
-     * @param _server New server address
+     * @notice Sets a new manager for newly created games
+     * @param _gameManager New manager address
      */
-    function setServer(address _server) external onlyOwner {
-        emit ServerChanged(server, _server);
+    function setGameManager(address _gameManager) external onlyOwner {
+        emit GameManagerChanged(gameManager, _gameManager);
 
-        server = _server;
+        gameManager = _gameManager;
     }
 
     /**
-     * @notice Creates a game with the specified parameters and returns the address of the game
+     * @notice Creates a game and returns the address of the game
      * @param _player The address of the player that called the Vault to create a game
      * @param _gameId Id of the game
      * @return gameAddress The address of the newly created game
      */
     function createGame(address _player, uint256 _gameId) external onlyVault returns (address gameAddress, address) {
-        gameAddress = address(new Game(usdt, vault, server, _player, _gameId, gameDuration));
+        gameAddress = address(new Game(usdt, vault, gameManager, _player, _gameId, gameDuration));
 
         emit GameCreated(_gameId, gameAddress, _player, gameDuration);
 
-        return (gameAddress, server);
+        return (gameAddress, gameManager);
     }
 }
