@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MI
 pragma solidity 0.8.20;
 
-import {IMONT} from "./interfaces/IMONT.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import {IMONT} from "./interfaces/IMONT.sol";
 
 /**
  * @title Dumont ERC20 token implementation

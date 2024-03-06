@@ -40,14 +40,7 @@ contract Game is IGame {
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(
-        IERC20 _usdt,
-        Vault _vault,
-        address _server,
-        address _player,
-        uint256 _gameId,
-        uint256 _gameDuration
-    ) {
+    constructor(IERC20 _usdt, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
         usdt = _usdt;
         vault = _vault;
         server = _server;
@@ -90,12 +83,10 @@ contract Game is IGame {
         _;
     }
 
-    function initialize(
-        bytes[52] calldata _hashedCards
-    ) external shouldNotBeInitialized onlyServer {
+    function initialize(bytes[52] calldata _hashedCards) external shouldNotBeInitialized onlyServer {
         isInitialized = INITIALIZED;
 
-        for (uint256 i = 0; i < 52; ) {
+        for (uint256 i = 0; i < 52;) {
             cards[i].hashed = _hashedCards[i];
 
             unchecked {
@@ -104,11 +95,11 @@ contract Game is IGame {
         }
     }
 
-    function guessCard(
-        uint256 _cardIndex,
-        uint256[] calldata _guessedNumbers,
-        uint256 _betAmount
-    ) external onlyPlayer shouldBeInitialized {
+    function guessCard(uint256 _cardIndex, uint256[] calldata _guessedNumbers, uint256 _betAmount)
+        external
+        onlyPlayer
+        shouldBeInitialized
+    {
         if (_cardIndex > 51) {
             revert InvalidGameIndex();
         }
@@ -137,7 +128,7 @@ contract Game is IGame {
         emit PlayerGuessed(_cardIndex, _guessedNumbers, _betAmount);
     }
 
-    function getRate(uint256[] calldata _cards) public view returns (uint256) {
+    function getRate(uint256[] memory _cards) public view returns (uint256) {
         uint256 remainingCards = 52 - cardsRevealed;
 
         uint256 makhraj = 0;
@@ -151,10 +142,11 @@ contract Game is IGame {
         return remainingCards / makhraj;
     }
 
-    function checkCardRevealed(
-        uint256[] storage _guessedNumbers,
-        uint256 _revealedNumber
-    ) private returns (bool isPlayerWinner) {
+    function checkCardRevealed(uint256[] storage _guessedNumbers, uint256 _revealedNumber)
+        private
+        view
+        returns (bool isPlayerWinner)
+    {
         isPlayerWinner = false;
 
         for (uint256 i = 0; i < _guessedNumbers.length; ++i) {
@@ -166,18 +158,21 @@ contract Game is IGame {
         }
     }
 
-    function revealCard(
-        uint256 _index,
-        uint8 _revealedNumber,
-        string calldata _revealedSalt
-    ) external onlyServer {
-        cards[_index].revealedSalt = _revealedSalt;
-        cards[_index].revealedNumber = _revealedNumber;
+    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt) external onlyServer {
+        Card storage card = cards[_index];
 
-        bool isPlayerWon = checkCardRevealed(
-            cards[_index].guessedNumbers,
-            cards[_index].revealedNumber
+        card.revealedSalt = _revealedSalt;
+        card.revealedNumber = _revealedNumber;
+
+        bool isPlayerWon = checkCardRevealed(card.guessedNumbers, card.revealedNumber);
+
+        uint256[] memory guessedNumbers = new uint256[](
+            card.guessedNumbers.length
         );
+
+        for (uint256 i = 0; i < card.guessedNumbers.length; i++) {
+            guessedNumbers[i] = card.guessedNumbers[i];
+        }
 
         /*
          * TODO: what would be the optimal way of storing the bet amount?
@@ -186,17 +181,9 @@ contract Game is IGame {
          */
 
         if (isPlayerWon) {
-            Vault.gameLost(
-                gameId,
-                getRate(cards[_index].guessedNumbers),
-                cards[_index].betAmount
-            );
+            vault.playerLostGame(gameId, getRate(guessedNumbers), card.betAmount);
         } else {
-            usdt.transferFrom(
-                address(this),
-                address(Vault),
-                cards[_index].betAmount
-            );
+            usdt.transferFrom(address(this), address(vault), card.betAmount);
             // ???
         }
 

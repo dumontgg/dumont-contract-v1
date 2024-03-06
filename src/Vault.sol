@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IGame} from "./interfaces/IGame.sol";
@@ -16,31 +17,17 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice The vault is used to create games, and all deposits and withdrawals happen
  */
 contract Vault is IVault, Ownable2Step {
-    uint256 public minimumBetAmount = 1e18;
-    uint256 public gameId = 0;
-    uint256 public gameFeeInWei;
-    mapping(uint256 => GameUsers) public games;
+    using SafeERC20 for IERC20;
 
     IMONT public mont;
     IERC20 public usdt;
     IBurner public burner;
     IGameFactory public gameFactory;
 
-    event BurnerChanged(address indexed _from, address indexed _to);
-    event Deposit(address indexed _spender, uint256 _amount);
-    event GameFactoryChanged(address indexed _from, address indexed _to);
-    event GameFeeChanged(uint256 _from, uint256 _to);
-    event GameCreated(uint256 _gameId, address _gameAddress, address _player);
-    event MinimumBetAmountChanged(uint256 _from, uint256 _to);
-    event Withdraw(
-        address indexed _token,
-        uint256 _amount,
-        address indexed _recipient
-    );
-
-    error NotAuthorized();
-    error FailedToSendEther();
-    error InsufficientAmount();
+    uint256 public gameId = 0;
+    uint256 public gameCreationFee = 1e18;
+    uint256 public minimumBetAmount = 1e18;
+    mapping(uint256 gameId => GameDetails gameDetails) public games;
 
     /**
      * @notice Sets contract addresses and gameFee
@@ -48,24 +35,34 @@ contract Vault is IVault, Ownable2Step {
      * @param _usdt The address of the USDT token
      * @param _burner Address of the burner token used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
-     * @param _gameFeeInWei Sets the fee to create games
+     * @param _gameCreationFee Sets the fee for players to create games
      */
-    constructor(
-        IMONT _mont,
-        IERC20 _usdt,
-        IBurner _burner,
-        IGameFactory _gameFactory,
-        uint256 _gameFeeInWei
-    ) {
+    constructor(IMONT _mont, IERC20 _usdt, IBurner _burner, IGameFactory _gameFactory, uint256 _gameCreationFee) {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
-        gameFeeInWei = _gameFeeInWei;
+        gameCreationFee = _gameCreationFee;
     }
 
+    /**
+     * @notice Only player of the game can call Vault
+     * @param _gameId Id of the game
+     */
     modifier onlyPlayer(uint256 _gameId) {
         if (games[_gameId].player == msg.sender) {
+            revert NotAuthorized();
+        }
+
+        _;
+    }
+
+    /**
+     * @notice Only game contracts can call Vault
+     * @param _gameId Id of the game
+     */
+    modifier onlyGame(uint256 _gameId) {
+        if (games[_gameId].manager != msg.sender) {
             revert NotAuthorized();
         }
 
@@ -80,16 +77,6 @@ contract Vault is IVault, Ownable2Step {
         emit MinimumBetAmountChanged(minimumBetAmount, _minimumBetAmount);
 
         minimumBetAmount = _minimumBetAmount;
-    }
-
-    /**
-     * @notice Returns the maximum bet amount a user can place
-     */
-    function getMaximumBetAmount() public view returns (uint256) {
-        uint256 usdtAmount = usdt.balanceOf(address(this));
-
-        // TODO: Do we need to multiply by 100 and then divide or it's good now?
-        return (usdtAmount / 100) * 5;
     }
 
     /**
@@ -114,12 +101,12 @@ contract Vault is IVault, Ownable2Step {
 
     /**
      * @notice Changes the fee required to make a new game
-     * @param _gameFeeInWei The new amount of ether needed to create a game
+     * @param _gameCreationFee The new amount of USDT needed to create a game
      */
-    function setGameFee(uint256 _gameFeeInWei) external onlyOwner {
-        emit GameFeeChanged(gameFeeInWei, _gameFeeInWei);
+    function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
+        emit GameFeeChanged(gameCreationFee, _gameCreationFee);
 
-        gameFeeInWei = _gameFeeInWei;
+        gameCreationFee = _gameCreationFee;
     }
 
     /**
@@ -127,8 +114,8 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of USDT to deposit
      * @dev Should be called by the admins of the protocol
      */
-    function depositDai(uint256 _amount) external {
-        usdt.transferFrom(msg.sender, address(this), _amount);
+    function depositAdmin(uint256 _amount) external {
+        usdt.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Deposit(msg.sender, _amount);
     }
@@ -140,12 +127,8 @@ contract Vault is IVault, Ownable2Step {
      * @param _recipient The destination address that will receive the tokens
      * @dev This can only be called by the owner of the contract
      */
-    function withdrawToken(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external onlyOwner {
-        IERC20(_token).transfer(_recipient, _amount);
+    function withdrawToken(address _token, uint256 _amount, address _recipient) external onlyOwner {
+        IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
     }
@@ -159,7 +142,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success, ) = _recipient.call{value: balance}("");
+        (bool success,) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -168,36 +151,52 @@ contract Vault is IVault, Ownable2Step {
 
     /**
      * @notice Creates a new game using the GameFactory contract and stores the related data
-     * @dev The caller need to pay at least gameFeeInWei amount to create a game
+     * @dev The caller need to pay at least gameCreationFee amount to create a game
      */
-    function createGame() external payable {
-        if (msg.value < gameFeeInWei) {
-            revert InsufficientAmount();
-        }
+    function createGame() external returns (uint256) {
+        uint256 _gameId = gameId;
 
-        (address gameAddress, address server) = gameFactory.createGame(
-            msg.sender,
-            gameId
-        );
+        usdt.safeTransferFrom(msg.sender, address(this), gameCreationFee);
 
-        games[gameId] = GameUsers({
-            gameAddress: gameAddress,
-            player: msg.sender,
-            server: server
-        });
+        (address gameAddress, address manager) = gameFactory.createGame(msg.sender, _gameId);
 
-        emit GameCreated(gameId, gameAddress, msg.sender);
+        games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: manager});
 
-        unchecked {
-            ++gameId;
-        }
+        emit GameCreated(_gameId, gameAddress, msg.sender);
+
+        ++gameId;
+
+        return _gameId;
     }
 
-    // function calculateBurnAmount() internal {}
-    //
-    // TODO: add a modifier that only games can call this
-    function gameLost(
-        uint256 _gameId,
-        uint256 calldata _guess
-    ) public onlyGame(_gameId) {}
+    /**
+     * @notice Notifies the Vault that the player lost a bet
+     * @param _gameId Id of the game
+     * @param _guess Guess number of the player
+     * @param _betAmount Amount of the bet times the rate
+     */
+    function playerLostGame(uint256 _gameId, uint256 _guess, uint256 _betAmount) external onlyGame(_gameId) {
+        // give player some amount of MONT based on their bet_amount
+        transferMontReward(_betAmount);
+    }
+
+    function playerWonGame(uint256 _gameId, uint256 _guess, uint256 _betAmount) external onlyGame(_gameId) {
+        // give player some amount of MONT based on their bet_amount
+        // transfer bet_amount to player
+        transferMontReward(_betAmount);
+    }
+
+    function transferMontReward(uint256 _betAmount) private {
+        // rewardManager.transferRewards(player, _betAmount);
+    }
+
+    /**
+     * @notice Returns the maximum bet amount a player can place
+     */
+    function getMaximumBetAmount() public view returns (uint256) {
+        uint256 usdtAmount = usdt.balanceOf(address(this));
+
+        // TODO: Calculate temporary amount too
+        return (usdtAmount * 2) / 100;
+    }
 }
