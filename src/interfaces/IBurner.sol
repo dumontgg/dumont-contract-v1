@@ -8,6 +8,9 @@ pragma solidity 0.8.20;
  * @dev The contract uses a custom pool in uniswap to burn MONT tokens
  */
 interface IBurner {
+    event MONTTokensBurned(uint256 _usdtAmount, uint256 _montAmount);
+    event UniswapPoolFeeChanged(uint24 _from, uint24 _to);
+
     /**
      * @notice Changes the UniswapV3 pool by changing the fee of the pool
      * @param _uniswapPoolFee The new Uniswap pool fee

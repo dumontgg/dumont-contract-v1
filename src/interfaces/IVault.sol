@@ -26,6 +26,11 @@ interface IVault {
     /**
      * @notice Emitted when
      */
+    event RewardManagerChanged(address indexed _from, address indexed _to);
+
+    /**
+     * @notice Emitted when
+     */
     event GameFeeChanged(uint256 _from, uint256 _to);
 
     /**

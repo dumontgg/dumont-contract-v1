@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IGame} from "./interfaces/IGame.sol";
+import {Initializable} from "./helpers/Initializable.sol";
 import {Vault} from "./Vault.sol";
 
 /**
@@ -13,42 +14,37 @@ import {Vault} from "./Vault.sol";
  * @notice Server sets the hashed numbers inside the contract and the player has to guess each card
  * @dev The contract uses a commit-reveal mechanism to hide the deck of cards at first
  */
-contract Game is IGame {
+contract Game is Initializable, IGame {
     using SafeERC20 for IERC20;
 
-    uint256 public immutable gameId;
-    uint256 public immutable gameDuration;
     uint256 public cardsRevealed;
     mapping(uint256 => Card) public cards;
     mapping(uint256 => uint256) public numbersRevealed;
 
-    uint256 public constant INITIALIZED = 2;
-    uint256 public constant NOT_INITIALIZED = 1;
-    uint256 public isInitialized;
+    uint256 public immutable gameId;
+    uint256 public immutable gameDuration;
 
-    IERC20 public usdt;
-    Vault public vault;
-    address public server;
-    address public player;
+    IERC20 public immutable usdt;
+    Vault public immutable vault;
+    address public immutable manager;
+    address public immutable player;
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
      * @param _usdt The address of the USDT token
      * @param _vault The Vault contract address
-     * @param _server The server of the game that is allowed to submit the random hash of cards
+     * @param _manager The server of the game that is allowed to submit the random hash of cards
      * @param _player The player that created the game using Vault contract
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(IERC20 _usdt, Vault _vault, address _server, address _player, uint256 _gameId, uint256 _gameDuration) {
+    constructor(IERC20 _usdt, Vault _vault, address _manager, address _player, uint256 _gameId, uint256 _gameDuration) {
         usdt = _usdt;
         vault = _vault;
-        server = _server;
+        manager = _manager;
         player = _player;
         gameId = _gameId;
         gameDuration = _gameDuration;
-
-        isInitialized = NOT_INITIALIZED;
     }
 
     modifier onlyPlayer() {
@@ -59,32 +55,16 @@ contract Game is IGame {
         _;
     }
 
-    modifier onlyServer() {
-        if (msg.sender != server) {
+    modifier onlyManager() {
+        if (msg.sender != manager) {
             revert NotAuthorized();
         }
 
         _;
     }
 
-    modifier shouldBeInitialized() {
-        if (isInitialized == NOT_INITIALIZED) {
-            revert GameIsNotInitialized();
-        }
-
-        _;
-    }
-
-    modifier shouldNotBeInitialized() {
-        if (isInitialized == INITIALIZED) {
-            revert GameIsAlreadyInitialized();
-        }
-
-        _;
-    }
-
-    function initialize(bytes[52] calldata _hashedCards) external shouldNotBeInitialized onlyServer {
-        isInitialized = INITIALIZED;
+    function initialize(bytes[52] calldata _hashedCards) external onlyNotInitialized onlyManager {
+        initializeContract();
 
         for (uint256 i = 0; i < 52;) {
             cards[i].hashed = _hashedCards[i];
@@ -98,7 +78,7 @@ contract Game is IGame {
     function guessCard(uint256 _cardIndex, uint256[] calldata _guessedNumbers, uint256 _betAmount)
         external
         onlyPlayer
-        shouldBeInitialized
+        onlyInitialized
     {
         if (_cardIndex > 51) {
             revert InvalidGameIndex();
@@ -158,7 +138,11 @@ contract Game is IGame {
         }
     }
 
-    function revealCard(uint256 _index, uint8 _revealedNumber, string calldata _revealedSalt) external onlyServer {
+    function revealCard(uint256 _index, uint256 _revealedNumber, string calldata _revealedSalt)
+        external
+        onlyManager
+        onlyInitialized
+    {
         Card storage card = cards[_index];
 
         card.revealedSalt = _revealedSalt;
@@ -181,7 +165,7 @@ contract Game is IGame {
          */
 
         if (isPlayerWon) {
-            vault.playerLostGame(gameId, getRate(guessedNumbers), card.betAmount);
+            vault.playerLostGame(gameId, card.betAmount, getRate(guessedNumbers), player);
         } else {
             usdt.transferFrom(address(this), address(vault), card.betAmount);
             // ???

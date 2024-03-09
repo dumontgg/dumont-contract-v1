@@ -10,6 +10,7 @@ import {Burner} from "../src/Burner.sol";
 import {GameFactory} from "../src/GameFactory.sol";
 import {IVault} from "../src/interfaces/IVault.sol";
 import {ISwapRouter} from "../src/interfaces/ISwapRouter.sol";
+import {RewardManager} from "../src/RewardManager.sol";
 
 import {Users} from "./utils/Types.sol";
 
@@ -20,6 +21,7 @@ abstract contract BaseTest is Test {
     ERC20 internal usdt;
     Vault internal vault;
     Burner internal burner;
+    RewardManager internal rewardManager;
     GameFactory internal gameFactory;
 
     function setUp() public virtual {
@@ -27,7 +29,7 @@ abstract contract BaseTest is Test {
         usdt = new ERC20("Dai Stablecoin", "USDT"); // TODO: changename
         // TODO: do something about ISwapRouter for Burner
         burner = new Burner(mont, usdt, ISwapRouter(address(this)), 3000);
-        vault = new Vault(mont, usdt, burner, gameFactory, 1e15);
+        vault = new Vault(mont, usdt, burner, gameFactory, rewardManager, 1e15);
         gameFactory = new GameFactory(usdt, vault, address(this), 200);
 
         // Set the correct address for GameFactory for Vault

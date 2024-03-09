@@ -5,11 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IMONT} from "./interfaces/IMONT.sol";
-import {IGame} from "./interfaces/IGame.sol";
-import {IVault} from "./interfaces/IVault.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
+import {IGame} from "./interfaces/IGame.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
+import {IMONT} from "./interfaces/IMONT.sol";
+import {IRewardManager} from "./interfaces/IRewardManager.sol";
+import {IVault} from "./interfaces/IVault.sol";
 
 /**
  * @notice That vault contract that stores USDT and manages other contracts
@@ -23,6 +24,7 @@ contract Vault is IVault, Ownable2Step {
     IERC20 public usdt;
     IBurner public burner;
     IGameFactory public gameFactory;
+    IRewardManager public rewardManager;
 
     uint256 public gameId = 0;
     uint256 public gameCreationFee = 1e18;
@@ -35,13 +37,22 @@ contract Vault is IVault, Ownable2Step {
      * @param _usdt The address of the USDT token
      * @param _burner Address of the burner token used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
+     * @param _rewardManager Address of the RewardManager contract
      * @param _gameCreationFee Sets the fee for players to create games
      */
-    constructor(IMONT _mont, IERC20 _usdt, IBurner _burner, IGameFactory _gameFactory, uint256 _gameCreationFee) {
+    constructor(
+        IMONT _mont,
+        IERC20 _usdt,
+        IBurner _burner,
+        IGameFactory _gameFactory,
+        IRewardManager _rewardManager,
+        uint256 _gameCreationFee
+    ) {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
+        rewardManager = _rewardManager;
         gameCreationFee = _gameCreationFee;
     }
 
@@ -97,6 +108,16 @@ contract Vault is IVault, Ownable2Step {
         emit GameFactoryChanged(address(gameFactory), address(_gameFactory));
 
         gameFactory = _gameFactory;
+    }
+
+    /**
+     * @notice Changes the address of rewardManager contract
+     * @param _rewardManager The address of the new RewardManager contract
+     */
+    function setRewardManager(IRewardManager _rewardManager) external onlyOwner {
+        emit RewardManagerChanged(address(rewardManager), address(_rewardManager));
+
+        rewardManager = _rewardManager;
     }
 
     /**
@@ -172,22 +193,27 @@ contract Vault is IVault, Ownable2Step {
     /**
      * @notice Notifies the Vault that the player lost a bet
      * @param _gameId Id of the game
-     * @param _guess Guess number of the player
      * @param _betAmount Amount of the bet times the rate
+     * @param _betOdds Guess number of the player
      */
-    function playerLostGame(uint256 _gameId, uint256 _guess, uint256 _betAmount) external onlyGame(_gameId) {
-        // give player some amount of MONT based on their bet_amount
-        transferMontReward(_betAmount);
+    function playerLostGame(uint256 _gameId, uint256 _betAmount, uint256 _betOdds, address _player)
+        external
+        onlyGame(_gameId)
+    {
+        transferMontReward(_betAmount, _betOdds, _player, false);
     }
 
-    function playerWonGame(uint256 _gameId, uint256 _guess, uint256 _betAmount) external onlyGame(_gameId) {
+    function playerWonGame(uint256 _gameId, uint256 _betAmount, uint256 _betOdds, address _player)
+        external
+        onlyGame(_gameId)
+    {
         // give player some amount of MONT based on their bet_amount
         // transfer bet_amount to player
-        transferMontReward(_betAmount);
+        transferMontReward(_betAmount, _betOdds, _player, true);
     }
 
-    function transferMontReward(uint256 _betAmount) private {
-        // rewardManager.transferRewards(player, _betAmount);
+    function transferMontReward(uint256 _betAmount, uint256 _betOdds, address _player, bool _isPlayerWinner) private {
+        rewardManager.transferRewards(_betAmount, _betOdds, _isPlayerWinner, _player);
     }
 
     /**

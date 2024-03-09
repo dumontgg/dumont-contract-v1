@@ -12,8 +12,6 @@ interface IGame {
     error InvalidGameIndex();
     error GameIsUnlocked();
     error GameIsLocked();
-    error GameIsNotInitialized();
-    error GameIsAlreadyInitialized();
 
     struct Card {
         bytes hashed;
