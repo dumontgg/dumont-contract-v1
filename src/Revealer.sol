@@ -13,13 +13,21 @@ contract Revealer is AccessControl, IRevealer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function revealBatch(RevealedCard[] calldata _cards) external onlyRole(REVEALER_ROLE) {
+    /**
+     * @notice Reveals
+     * @dev Only games that the reveal is this address can be called here. Cards can also be 
+      from different games.
+     * @param _cards The details of the revealed cards from multiple games
+     */
+    function revealBatch(
+        RevealedCard[] calldata _cards
+    ) external onlyRole(REVEALER_ROLE) {
         for (uint256 i = 0; i < _cards.length; ++i) {
-            Game game = Game(_cards[i].gameAddress);
+            Game game = Game(_cards[i].game);
 
-            game.revealCard(_cards[i].cardIndex, _cards[i].cardNumber, _cards[i].salt);
+            game.revealCard(_cards[i].index, _cards[i].number, _cards[i].salt);
 
-            emit CardRevealed(msg.sender, _cards[i].gameAddress, _cards[i].cardIndex);
+            emit CardRevealed(msg.sender, _cards[i].game, _cards[i].index);
         }
     }
 }
