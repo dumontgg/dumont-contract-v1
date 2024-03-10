@@ -114,8 +114,13 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of rewardManager contract
      * @param _rewardManager The address of the new RewardManager contract
      */
-    function setRewardManager(IRewardManager _rewardManager) external onlyOwner {
-        emit RewardManagerChanged(address(rewardManager), address(_rewardManager));
+    function setRewardManager(
+        IRewardManager _rewardManager
+    ) external onlyOwner {
+        emit RewardManagerChanged(
+            address(rewardManager),
+            address(_rewardManager)
+        );
 
         rewardManager = _rewardManager;
     }
@@ -148,7 +153,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _recipient The destination address that will receive the tokens
      * @dev This can only be called by the owner of the contract
      */
-    function withdrawToken(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdrawToken(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -163,7 +172,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -179,9 +188,16 @@ contract Vault is IVault, Ownable2Step {
 
         usdt.safeTransferFrom(msg.sender, address(this), gameCreationFee);
 
-        (address gameAddress, address manager) = gameFactory.createGame(msg.sender, _gameId);
+        (address gameAddress, address manager) = gameFactory.createGame(
+            msg.sender,
+            _gameId
+        );
 
-        games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: manager});
+        games[_gameId] = GameDetails({
+            gameAddress: gameAddress,
+            player: msg.sender,
+            manager: manager
+        });
 
         emit GameCreated(_gameId, gameAddress, msg.sender);
 
@@ -196,24 +212,38 @@ contract Vault is IVault, Ownable2Step {
      * @param _betAmount Amount of the bet times the rate
      * @param _betOdds Guess number of the player
      */
-    function playerLostGame(uint256 _gameId, uint256 _betAmount, uint256 _betOdds, address _player)
-        external
-        onlyGame(_gameId)
-    {
+    function playerLostGame(
+        uint256 _gameId,
+        uint256 _betAmount,
+        uint256 _betOdds,
+        address _player
+    ) external onlyGame(_gameId) {
         transferMontReward(_betAmount, _betOdds, _player, false);
     }
 
-    function playerWonGame(uint256 _gameId, uint256 _betAmount, uint256 _betOdds, address _player)
-        external
-        onlyGame(_gameId)
-    {
+    function playerWonGame(
+        uint256 _gameId,
+        uint256 _betAmount,
+        uint256 _betOdds,
+        address _player
+    ) external onlyGame(_gameId) {
         // give player some amount of MONT based on their bet_amount
         // transfer bet_amount to player
         transferMontReward(_betAmount, _betOdds, _player, true);
     }
 
-    function transferMontReward(uint256 _betAmount, uint256 _betOdds, address _player, bool _isPlayerWinner) private {
-        rewardManager.transferRewards(_betAmount, _betOdds, _isPlayerWinner, _player);
+    function transferMontReward(
+        uint256 _betAmount,
+        uint256 _betOdds,
+        address _player,
+        bool _isPlayerWinner
+    ) private {
+        rewardManager.transferRewards(
+            _betAmount,
+            _betOdds,
+            _isPlayerWinner,
+            _player
+        );
     }
 
     /**

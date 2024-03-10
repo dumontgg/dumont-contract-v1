@@ -2,12 +2,18 @@
 pragma solidity 0.8.20;
 
 struct Users {
-    // Default admin for all contracts.
-    address admin;
-    // A normal user.
+    // A user.
     address alice;
-    // Malicious user.
+    // A user.
+    address adam;
+    // A user.
     address eve;
-    // Server of the project
-    address server;
+    // A user.
+    address bob;
+    // Server operator
+    address server1;
+    // Server operator
+    address server2;
+    // Default admin of all contracts.
+    address admin;
 }

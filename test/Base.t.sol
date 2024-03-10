@@ -5,73 +5,51 @@ import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {MONT} from "../src/MONT.sol";
-import {Vault} from "../src/Vault.sol";
-import {Burner} from "../src/Burner.sol";
-import {GameFactory} from "../src/GameFactory.sol";
-import {IVault} from "../src/interfaces/IVault.sol";
-import {ISwapRouter} from "../src/interfaces/ISwapRouter.sol";
-import {RewardManager} from "../src/RewardManager.sol";
-
 import {Users} from "./utils/Types.sol";
+import {Constants} from "./utils/Constants.sol";
 
-abstract contract BaseTest is Test {
+abstract contract BaseTest is Test, Constants {
     Users internal users;
 
     MONT internal mont;
     ERC20 internal usdt;
-    Vault internal vault;
-    Burner internal burner;
-    RewardManager internal rewardManager;
-    GameFactory internal gameFactory;
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
-        usdt = new ERC20("Dai Stablecoin", "USDT"); // TODO: changename
-        // TODO: do something about ISwapRouter for Burner
-        burner = new Burner(mont, usdt, ISwapRouter(address(this)), 3000);
-        vault = new Vault(mont, usdt, burner, gameFactory, rewardManager, 1e15);
-        gameFactory = new GameFactory(usdt, vault, address(this), 200);
+        usdt = new ERC20("Tether USD", "USDT");
 
-        // Set the correct address for GameFactory for Vault
-        vault.setGameFactory(gameFactory);
-
-        addLabels();
+        vm.label({account: address(mont), newLabel: "MONT"});
+        vm.label({account: address(usdt), newLabel: "USDT"});
 
         users = Users({
             eve: createUser("Eve"),
-            admin: createUser("Admin"),
+            bob: createUser("Bob"),
+            adam: createUser("Adam"),
             alice: createUser("Alice"),
-            server: createUser("Server")
+            admin: createUser("Admin"),
+            server1: createUser("Server1"),
+            server2: createUser("Server2")
         });
 
-        approveAdmin();
+        deal({token: address(mont), to: users.admin, give: 100_000_000e18});
+
+        // Warp to May 1, 2023 at 00:00 GMT to provide a more realistic testing environment.
+        vm.warp(MAY_1_2023);
     }
 
-    function addLabels() internal {
-        vm.label({account: address(mont), newLabel: "MONT"});
-        vm.label({account: address(usdt), newLabel: "USDT"});
-        vm.label({account: address(vault), newLabel: "Vault"});
-        vm.label({account: address(burner), newLabel: "Burner"});
-        vm.label({account: address(gameFactory), newLabel: "GameFactory"});
-    }
+    function 
 
     /**
-     * @notice Creates a new address, gives it a label, transfers ETH, USDT, and MONT to it
+     * @notice Creates a new address, gives it a label, transfers ETH and USDT to it
      * @param _name The name used to label the new address
+     * @return userAddress Generated address of the user
      */
-    function createUser(string memory _name) internal returns (address userAddress) {
+    function createUser(
+        string memory _name
+    ) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
         deal({to: userAddress, give: 100e18});
-        deal({token: address(mont), to: userAddress, give: 100e18});
         deal({token: address(usdt), to: userAddress, give: 100_000_000e18});
-    }
-
-    /**
-     * @dev Approves USDT to the Vault contract from the admin address
-     */
-    function approveAdmin() internal {
-        changePrank({msgSender: users.admin});
-        usdt.approve(address(vault), type(uint256).max);
     }
 }
