@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Game} from "./Game.sol";
 import {Vault} from "./Vault.sol";
@@ -13,24 +14,39 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice This contract can only be called by the Vault contract to create new games
  */
 contract GameFactory is IGameFactory, Ownable2Step {
-    uint256 public gameDuration;
+    using SafeERC20 for IERC20;
+
     IERC20 public usdt;
     Vault public vault;
-    address public gameManager;
+    address public revealer;
+
+    uint256 public gameDuration;
+    uint256 public gameCreationFee;
+
+    uint256 public gameId = 0;
+    mapping(uint256 gameId => GameDetails gameDetails) public games;
 
     /**
      * @notice Sets addresses and duration of each game
      * @param _usdt The address of the USDT token
      * @param _vault The vault address that will call the createGame
-     * @param _gameManager A trusted address that will be passed to each game that will be used
+     * @param _revealer A trusted address that will be passed to each game that will be used
      *  to initialize the game and reveal each card that the player guesses
      * @param _gameDuration The duration of each game. Games expire after that period of time
+     * @param _gameCreationFee Sets the fee for players to create games
      */
-    constructor(IERC20 _usdt, Vault _vault, address _gameManager, uint256 _gameDuration) {
+    constructor(
+        IERC20 _usdt,
+        Vault _vault,
+        address _revealer,
+        uint256 _gameDuration,
+        uint256 _gameCreationFee
+    ) {
         usdt = _usdt;
         vault = _vault;
-        gameManager = _gameManager;
+        revealer = _revealer;
         gameDuration = _gameDuration;
+        gameCreationFee = _gameCreationFee;
     }
 
     /**
@@ -42,6 +58,28 @@ contract GameFactory is IGameFactory, Ownable2Step {
         }
 
         _;
+    }
+
+    /**
+     * @notice Only player of the game can call Vault
+     * @param _gameId Id of the game
+     */
+    modifier onlyPlayer(uint256 _gameId) {
+        if (games[_gameId].player == msg.sender) {
+            revert NotAuthorized(msg.sender);
+        }
+
+        _;
+    }
+
+    /**
+     * @notice Changes the fee required to make a new game
+     * @param _gameCreationFee The new amount of USDT needed to create a game
+     */
+    function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
+        emit GameFeeChanged(gameCreationFee, _gameCreationFee);
+
+        gameCreationFee = _gameCreationFee;
     }
 
     /**
@@ -66,25 +104,48 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
     /**
      * @notice Sets a new manager for newly created games
-     * @param _gameManager New manager address
+     * @param _revealer New manager address
      */
-    function setGameManager(address _gameManager) external onlyOwner {
-        emit GameManagerChanged(gameManager, _gameManager);
+    function setRevealer(address _revealer) external onlyOwner {
+        emit RevealerChanged(revealer, _revealer);
 
-        gameManager = _gameManager;
+        revealer = _revealer;
     }
 
     /**
-     * @notice Creates a game and returns the address of the game
-     * @param _player The address of the player that called the Vault to create a game
-     * @param _gameId Id of the game
-     * @return gameAddress The address of the newly created game
+     * @notice Creates a new game using the GameFactory contract and stores the related data
+     * @dev The caller need to pay at least gameCreationFee amount to create a game
      */
-    function createGame(address _player, uint256 _gameId) external onlyVault returns (address gameAddress, address) {
-        gameAddress = address(new Game(usdt, vault, gameManager, _player, _gameId, gameDuration));
+    function createGame() external returns (uint256) {
+        uint256 _gameId = gameId;
 
-        emit GameCreated(_gameId, gameAddress, _player, gameDuration);
+        usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        return (gameAddress, gameManager);
+        address gameAddress = address(
+            new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration)
+        );
+
+        games[_gameId] = GameDetails({
+            gameAddress: gameAddress,
+            player: msg.sender,
+            manager: revealer
+        });
+
+        emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
+
+        ++gameId;
+
+        return _gameId;
+    }
+
+    /**
+     * @notice Returns a game
+     * @param _gameId ID of the game
+     * @return gameDetails Details of the game
+     */
+    function getGame(
+        uint256 _gameId
+    ) external view returns (GameDetails memory) {
+        return games[_gameId];
     }
 }

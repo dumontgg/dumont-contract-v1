@@ -8,6 +8,12 @@ import {Vault} from "../Vault.sol";
  * @notice This contract is only called by Vault to create games
  */
 interface IGameFactory {
+    struct GameDetails {
+        address player;
+        address manager;
+        address gameAddress;
+    }
+
     /**
      * @notice Emitted when game duration changes
      * @param _from The old game duration
@@ -23,11 +29,16 @@ interface IGameFactory {
     event VaultChanged(address indexed _from, address indexed _to);
 
     /**
-     * @notice Emitted when the address of the manager changes
-     * @param _from The old game manager address
-     * @param _to The new game manager address
+     * @notice Emitted when the address of the revealer changes
+     * @param _from The old revealer address
+     * @param _to The new revealer address
      */
-    event GameManagerChanged(address indexed _from, address indexed _to);
+    event RevealerChanged(address indexed _from, address indexed _to);
+
+    /**
+     * @notice Emitted when
+     */
+    event GameFeeChanged(uint256 _from, uint256 _to);
 
     /**
      * @notice Emitted when a new Game is deployed
@@ -37,7 +48,10 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
+        uint256 indexed _gameId,
+        address indexed _gameAddress,
+        address indexed _player,
+        uint256 _gameDuration
     );
 
     /**
@@ -60,16 +74,21 @@ interface IGameFactory {
     function setVault(Vault _vault) external;
 
     /**
-     * @notice Sets a new manager for newly created games
-     * @param _gameManager New manager address
+     * @notice Sets a new revealer for newly created games
+     * @param _revealer New revealer address
      */
-    function setGameManager(address _gameManager) external;
+    function setRevealer(address _revealer) external;
 
     /**
-     * @notice Creates a game and returns the address of the game
-     * @param _player The address of the player that called the Vault to create a game
-     * @param _gameId Id of the game
-     * @return gameAddress The address of the created game
+     * @notice Creates a new game using the GameFactory contract and stores the related data
+     * @dev The caller need to pay at least gameCreationFee amount to create a game
      */
-    function createGame(address _player, uint256 _gameId) external returns (address gameAddress, address);
+    function createGame() external returns (uint256);
+
+    /**
+     * @notice Returns a game
+     * @param _gameId ID of the game
+     * @return gameDetails Details of the game
+     */
+    function getGame(uint256 _gameId) external returns (GameDetails memory);
 }

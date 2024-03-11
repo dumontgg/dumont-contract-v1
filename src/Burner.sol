@@ -7,7 +7,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
-import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
+import {ISwapRouter} from "./interfaces/Uniswap/ISwapRouter.sol";
 
 /**
  * @title Burner contract burns MONT tokens
@@ -31,7 +31,12 @@ contract Burner is IBurner, Ownable2Step {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) {
+    constructor(
+        IMONT _mont,
+        IERC20 _usdt,
+        ISwapRouter _swapRouter,
+        uint24 _uniswapPoolFee
+    ) {
         usdt = _usdt;
         mont = _mont;
         swapRouter = _swapRouter;
@@ -49,6 +54,16 @@ contract Burner is IBurner, Ownable2Step {
         emit UniswapPoolFeeChanged(uniswapPoolFee, _uniswapPoolFee);
 
         uniswapPoolFee = _uniswapPoolFee;
+    }
+
+    /**
+     * @notice Changes the SwapRouter contract address
+     * @param _swapRouter The new SwapRouter contract address
+     */
+    function setSwapRouter(ISwapRouter _swapRouter) external onlyOwner {
+        emit SwapRouterChanged(address(swapRouter), address(_swapRouter));
+
+        swapRouter = _swapRouter;
     }
 
     /**
@@ -73,17 +88,21 @@ contract Burner is IBurner, Ownable2Step {
      * @param _amountIn The amount of USDT to swap
      * @param _amountOutMinimum The minimum amount of MONT to receive
      */
-    function _swap(uint256 _amountIn, uint256 _amountOutMinimum) private returns (uint256 amountOut) {
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            fee: uniswapPoolFee,
-            amountIn: _amountIn,
-            tokenIn: address(usdt),
-            tokenOut: address(mont),
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountOutMinimum: _amountOutMinimum,
-            sqrtPriceLimitX96: 0
-        });
+    function _swap(
+        uint256 _amountIn,
+        uint256 _amountOutMinimum
+    ) private returns (uint256 amountOut) {
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                fee: uniswapPoolFee,
+                amountIn: _amountIn,
+                tokenIn: address(usdt),
+                tokenOut: address(mont),
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountOutMinimum: _amountOutMinimum,
+                sqrtPriceLimitX96: 0
+            });
 
         amountOut = swapRouter.exactInputSingle(params);
     }

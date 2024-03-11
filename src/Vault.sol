@@ -26,10 +26,7 @@ contract Vault is IVault, Ownable2Step {
     IGameFactory public gameFactory;
     IRewardManager public rewardManager;
 
-    uint256 public gameId = 0;
-    uint256 public gameCreationFee = 1e18;
-    uint256 public minimumBetAmount = 1e18;
-    mapping(uint256 gameId => GameDetails gameDetails) public games;
+    uint256 public minimumBetAmount;
 
     /**
      * @notice Sets contract addresses and gameFee
@@ -38,7 +35,7 @@ contract Vault is IVault, Ownable2Step {
      * @param _burner Address of the burner token used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _rewardManager Address of the RewardManager contract
-     * @param _gameCreationFee Sets the fee for players to create games
+     * @param _minimumBetAmount Minimum amount of USDT that the player can place bet
      */
     constructor(
         IMONT _mont,
@@ -46,26 +43,14 @@ contract Vault is IVault, Ownable2Step {
         IBurner _burner,
         IGameFactory _gameFactory,
         IRewardManager _rewardManager,
-        uint256 _gameCreationFee
+        uint256 _minimumBetAmount
     ) {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
         rewardManager = _rewardManager;
-        gameCreationFee = _gameCreationFee;
-    }
-
-    /**
-     * @notice Only player of the game can call Vault
-     * @param _gameId Id of the game
-     */
-    modifier onlyPlayer(uint256 _gameId) {
-        if (games[_gameId].player == msg.sender) {
-            revert NotAuthorized();
-        }
-
-        _;
+        minimumBetAmount = _minimumBetAmount;
     }
 
     /**
@@ -73,21 +58,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _gameId Id of the game
      */
     modifier onlyGame(uint256 _gameId) {
-        if (games[_gameId].manager != msg.sender) {
+        if (gameFactory.getGame(_gameId).manager != msg.sender) {
             revert NotAuthorized();
         }
 
         _;
-    }
-
-    /**
-     * @notice Changes the minimum bet amount of USDT
-     * @param _minimumBetAmount The new minimum bet amount
-     */
-    function setMinimumBetAmount(uint256 _minimumBetAmount) external onlyOwner {
-        emit MinimumBetAmountChanged(minimumBetAmount, _minimumBetAmount);
-
-        minimumBetAmount = _minimumBetAmount;
     }
 
     /**
@@ -123,16 +98,6 @@ contract Vault is IVault, Ownable2Step {
         );
 
         rewardManager = _rewardManager;
-    }
-
-    /**
-     * @notice Changes the fee required to make a new game
-     * @param _gameCreationFee The new amount of USDT needed to create a game
-     */
-    function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
-        emit GameFeeChanged(gameCreationFee, _gameCreationFee);
-
-        gameCreationFee = _gameCreationFee;
     }
 
     /**
@@ -180,33 +145,6 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Creates a new game using the GameFactory contract and stores the related data
-     * @dev The caller need to pay at least gameCreationFee amount to create a game
-     */
-    function createGame() external returns (uint256) {
-        uint256 _gameId = gameId;
-
-        usdt.safeTransferFrom(msg.sender, address(this), gameCreationFee);
-
-        (address gameAddress, address manager) = gameFactory.createGame(
-            msg.sender,
-            _gameId
-        );
-
-        games[_gameId] = GameDetails({
-            gameAddress: gameAddress,
-            player: msg.sender,
-            manager: manager
-        });
-
-        emit GameCreated(_gameId, gameAddress, msg.sender);
-
-        ++gameId;
-
-        return _gameId;
-    }
-
-    /**
      * @notice Notifies the Vault that the player lost a bet
      * @param _gameId Id of the game
      * @param _betAmount Amount of the bet times the rate
@@ -247,6 +185,16 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
+     * @notice Changes the minimum bet amount of USDT
+     * @param _minimumBetAmount The new minimum bet amount
+     */
+    function setMinimumBetAmount(uint256 _minimumBetAmount) external onlyOwner {
+        emit MinimumBetAmountChanged(minimumBetAmount, _minimumBetAmount);
+
+        minimumBetAmount = _minimumBetAmount;
+    }
+
+    /**
      * @notice Returns the maximum bet amount a player can place
      */
     function getMaximumBetAmount() public view returns (uint256) {
@@ -254,5 +202,12 @@ contract Vault is IVault, Ownable2Step {
 
         // TODO: Calculate temporary amount too
         return (usdtAmount * 2) / 100;
+    }
+
+    /**
+     * @notice Returns the minimum bet amount a player can place
+     */
+    function getMinimumBetAmount() public view returns (uint256) {
+        return minimumBetAmount;
     }
 }

@@ -1,18 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Test} from "forge-std/Test.sol";
 
-import {MONT} from "../src/MONT.sol";
-import {Users} from "./utils/Types.sol";
+import {Burner} from "../src/Burner.sol";
 import {Constants} from "./utils/Constants.sol";
+import {GameFactory} from "../src/GameFactory.sol";
+import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
+import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
+import {MONT} from "../src/MONT.sol";
+import {RewardManager} from "../src/RewardManager.sol";
+import {Revealer} from "../src/Revealer.sol";
+import {Users} from "./utils/Types.sol";
+import {Vault} from "../src/Vault.sol";
 
 abstract contract BaseTest is Test, Constants {
     Users internal users;
 
+    Burner internal burner;
+    GameFactory internal gameFactory;
     MONT internal mont;
+    RewardManager internal rewardManager;
+    Revealer internal revealer;
     ERC20 internal usdt;
+    Vault internal vault;
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
@@ -37,7 +49,36 @@ abstract contract BaseTest is Test, Constants {
         vm.warp(MAY_1_2023);
     }
 
-    function 
+    function deployContracts() internal {
+        revealer = new Revealer();
+        vault = new Vault(
+            mont,
+            usdt,
+            Burner(address(0x00)),
+            GameFactory(address(0x00)),
+            RewardManager(address(0x00)),
+            1e18
+        );
+        gameFactory = new GameFactory(
+            usdt,
+            vault,
+            address(revealer),
+            ONE_HOUR * 12,
+            1e18
+        );
+        rewardManager = new RewardManager(
+            address(vault),
+            mont,
+            IQuoter(address(0x00)),
+            usdt,
+            3000
+        );
+        burner = new Burner(mont, usdt, ISwapRouter(address(0x00)), 500);
+
+        vault.setBurner(burner);
+        vault.setGameFactory(gameFactory);
+        vault.setRewardManager(rewardManager);
+    }
 
     /**
      * @notice Creates a new address, gives it a label, transfers ETH and USDT to it

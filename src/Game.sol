@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IGame} from "./interfaces/IGame.sol";
+import {IGameFactory} from "./interfaces/IGameFactory.sol";
 import {Initializable} from "./helpers/Initializable.sol";
 import {Vault} from "./Vault.sol";
 
@@ -38,7 +39,14 @@ contract Game is Initializable, IGame {
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
      */
-    constructor(IERC20 _usdt, Vault _vault, address _manager, address _player, uint256 _gameId, uint256 _gameDuration) {
+    constructor(
+        IERC20 _usdt,
+        Vault _vault,
+        address _manager,
+        address _player,
+        uint256 _gameId,
+        uint256 _gameDuration
+    ) {
         usdt = _usdt;
         vault = _vault;
         manager = _manager;
@@ -63,10 +71,12 @@ contract Game is Initializable, IGame {
         _;
     }
 
-    function initialize(bytes[52] calldata _hashedCards) external onlyNotInitialized onlyManager {
+    function initialize(
+        bytes[52] calldata _hashedCards
+    ) external onlyNotInitialized onlyManager {
         initializeContract();
 
-        for (uint256 i = 0; i < 52;) {
+        for (uint256 i = 0; i < 52; ) {
             cards[i].hashed = _hashedCards[i];
 
             unchecked {
@@ -75,11 +85,11 @@ contract Game is Initializable, IGame {
         }
     }
 
-    function guessCard(uint256 _cardIndex, uint256[] calldata _guessedNumbers, uint256 _betAmount)
-        external
-        onlyPlayer
-        onlyInitialized
-    {
+    function guessCard(
+        uint256 _cardIndex,
+        uint256[] calldata _guessedNumbers,
+        uint256 _betAmount
+    ) external onlyPlayer onlyInitialized {
         if (_cardIndex > 51) {
             revert InvalidGameIndex();
         }
@@ -122,11 +132,10 @@ contract Game is Initializable, IGame {
         return remainingCards / makhraj;
     }
 
-    function checkCardRevealed(uint256[] storage _guessedNumbers, uint256 _revealedNumber)
-        private
-        view
-        returns (bool isPlayerWinner)
-    {
+    function checkCardRevealed(
+        uint256[] storage _guessedNumbers,
+        uint256 _revealedNumber
+    ) private view returns (bool isPlayerWinner) {
         isPlayerWinner = false;
 
         for (uint256 i = 0; i < _guessedNumbers.length; ++i) {
@@ -138,17 +147,20 @@ contract Game is Initializable, IGame {
         }
     }
 
-    function revealCard(uint256 _index, uint256 _revealedNumber, string calldata _revealedSalt)
-        external
-        onlyManager
-        onlyInitialized
-    {
+    function revealCard(
+        uint256 _index,
+        uint256 _revealedNumber,
+        string calldata _revealedSalt
+    ) external onlyManager onlyInitialized {
         Card storage card = cards[_index];
 
         card.revealedSalt = _revealedSalt;
         card.revealedNumber = _revealedNumber;
 
-        bool isPlayerWon = checkCardRevealed(card.guessedNumbers, card.revealedNumber);
+        bool isPlayerWon = checkCardRevealed(
+            card.guessedNumbers,
+            card.revealedNumber
+        );
 
         uint256[] memory guessedNumbers = new uint256[](
             card.guessedNumbers.length
@@ -165,7 +177,12 @@ contract Game is Initializable, IGame {
          */
 
         if (isPlayerWon) {
-            vault.playerLostGame(gameId, card.betAmount, getRate(guessedNumbers), player);
+            vault.playerLostGame(
+                gameId,
+                card.betAmount,
+                getRate(guessedNumbers),
+                player
+            );
         } else {
             usdt.transferFrom(address(this), address(vault), card.betAmount);
             // ???

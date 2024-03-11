@@ -2,12 +2,6 @@
 pragma solidity 0.8.20;
 
 interface IVault {
-    struct GameDetails {
-        address player;
-        address manager;
-        address gameAddress;
-    }
-
     /**
      * @notice Emitted when
      */
@@ -31,11 +25,6 @@ interface IVault {
     /**
      * @notice Emitted when
      */
-    event GameFeeChanged(uint256 _from, uint256 _to);
-
-    /**
-     * @notice Emitted when
-     */
     event GameCreated(uint256 _gameId, address _gameAddress, address _player);
 
     /**
@@ -46,7 +35,11 @@ interface IVault {
     /**
      * @notice Emitted when
      */
-    event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
+    event Withdraw(
+        address indexed _token,
+        uint256 _amount,
+        address indexed _recipient
+    );
 
     /**
      * @notice Thrown when
