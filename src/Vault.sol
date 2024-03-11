@@ -13,9 +13,9 @@ import {IRewardManager} from "./interfaces/IRewardManager.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 /**
- * @notice That vault contract that stores USDT and manages other contracts
- * @author X team
- * @notice The vault is used to create games, and all deposits and withdrawals happen
+ * @title Vault Contract
+ * @notice Manages USDT deposits, withdrawals, and game rewards
+ * @dev All deposits and withdrawals happen through this contract
  */
 contract Vault is IVault, Ownable2Step {
     using SafeERC20 for IERC20;
@@ -29,13 +29,13 @@ contract Vault is IVault, Ownable2Step {
     uint256 public minimumBetAmount;
 
     /**
-     * @notice Sets contract addresses and gameFee
-     * @param _mont Address of the Dumont token
-     * @param _usdt The address of the USDT token
-     * @param _burner Address of the burner token used to sell USDT and burn MONT tokens
+     * @notice Constructor to set initial values
+     * @param _mont Address of the Dumont token contract
+     * @param _usdt Address of the USDT token contract
+     * @param _burner Address of the burner contract used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _rewardManager Address of the RewardManager contract
-     * @param _minimumBetAmount Minimum amount of USDT that the player can place bet
+     * @param _minimumBetAmount Minimum amount of USDT that a player can place as a bet
      */
     constructor(
         IMONT _mont,
@@ -54,7 +54,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Only game contracts can call Vault
+     * @notice Modifier to restrict access to game contracts only
      * @param _gameId Id of the game
      */
     modifier onlyGame(uint256 _gameId) {
@@ -66,7 +66,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Changes the address of Burner contract
+     * @notice Changes the address of the Burner contract
      * @param _burner The new address of the Burner contract
      */
     function setBurner(IBurner _burner) external onlyOwner {
@@ -76,7 +76,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Changes the address of GameFactory contract
+     * @notice Changes the address of the GameFactory contract
      * @param _gameFactory The new address of the GameFactory contract
      */
     function setGameFactory(IGameFactory _gameFactory) external onlyOwner {
@@ -86,7 +86,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Changes the address of rewardManager contract
+     * @notice Changes the address of the RewardManager contract
      * @param _rewardManager The address of the new RewardManager contract
      */
     function setRewardManager(
@@ -101,24 +101,22 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Deposits USDT into the contract
+     * @notice Allows admins to deposit USDT into the contract
      * @param _amount The amount of USDT to deposit
-     * @dev Should be called by the admins of the protocol
      */
-    function depositAdmin(uint256 _amount) external {
+    function deposit(uint256 _amount) external {
         usdt.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Deposit(msg.sender, _amount);
     }
 
     /**
-     * @notice Withdraws an amount of a specific token, usually USDT or MONT
-     * @param _token The ERC20 token to withdraw
-     * @param _amount The amount of token to withdraw
-     * @param _recipient The destination address that will receive the tokens
-     * @dev This can only be called by the owner of the contract
+     * @notice Allows the owner to withdraw a specified amount of tokens
+     * @param _token The address of the ERC20 token to withdraw
+     * @param _amount The amount of tokens to withdraw
+     * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdrawToken(
+    function withdraw(
         address _token,
         uint256 _amount,
         address _recipient
@@ -129,10 +127,8 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Withdraws ETH from the contract and transfers it to the recipient
-     * @param _recipient The destination address that will receive ETH
-     * @dev ETH gets stored when the createGame function is called
-     * and this function can only be called by the owner
+     * @notice Allows the owner to withdraw ETH from the contract
+     * @param _recipient The address to receive the withdrawn ETH
      */
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
@@ -145,37 +141,19 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Notifies the Vault that the player lost a bet
+     * @notice Notifies the Vault contract that a player lost a bet
      * @param _gameId Id of the game
-     * @param _betAmount Amount of the bet times the rate
-     * @param _betOdds Guess number of the player
+     * @param _betAmount Amount of the bet multiplied by the odds
+     * @param _betOdds The bet odds
+     * @param _player The address of the player
      */
-    function playerLostGame(
+    function notifyGameOutcome(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _betOdds,
+        uint256 _isPlayerWinner,
         address _player
     ) external onlyGame(_gameId) {
-        transferMontReward(_betAmount, _betOdds, _player, false);
-    }
-
-    function playerWonGame(
-        uint256 _gameId,
-        uint256 _betAmount,
-        uint256 _betOdds,
-        address _player
-    ) external onlyGame(_gameId) {
-        // give player some amount of MONT based on their bet_amount
-        // transfer bet_amount to player
-        transferMontReward(_betAmount, _betOdds, _player, true);
-    }
-
-    function transferMontReward(
-        uint256 _betAmount,
-        uint256 _betOdds,
-        address _player,
-        bool _isPlayerWinner
-    ) private {
         rewardManager.transferRewards(
             _betAmount,
             _betOdds,

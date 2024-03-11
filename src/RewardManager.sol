@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {Bool} from "./libraries/Bool.sol";
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
 import {IRewardManager} from "./interfaces/IRewardManager.sol";
@@ -26,7 +27,13 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _usdt a
      * @param _poolFee a
      */
-    constructor(address _vault, IMONT _mont, IQuoter _quoter, IERC20 _usdt, uint24 _poolFee) {
+    constructor(
+        address _vault,
+        IMONT _mont,
+        IQuoter _quoter,
+        IERC20 _usdt,
+        uint24 _poolFee
+    ) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -65,12 +72,17 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _player a
      * @return reward dd
      */
-    function transferRewards(uint256 _betAmount, uint256 _betOdds, bool _isPlayerWinner, address _player)
-        external
-        onlyVault
-        returns (uint256 reward)
-    {
-        uint256 houseFee = calculateHouseFee(_betAmount, _betOdds, _isPlayerWinner);
+    function transferRewards(
+        uint256 _betAmount,
+        uint256 _betOdds,
+        uint256 _isPlayerWinner,
+        address _player
+    ) external onlyVault returns (uint256 reward) {
+        uint256 houseFee = calculateHouseFee(
+            _betAmount,
+            _betOdds,
+            _isPlayerWinner
+        );
         uint256 price = getMontPrice();
 
         uint256 calculation1 = ((houseFee * 8) / 10) / price;
@@ -94,14 +106,14 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _isPlayerWinner a
      * @return houseFee dd
      */
-    function calculateHouseFee(uint256 _betAmount, uint256 _betOdds, bool _isPlayerWinner)
-        private
-        pure
-        returns (uint256 houseFee)
-    {
+    function calculateHouseFee(
+        uint256 _betAmount,
+        uint256 _betOdds,
+        uint256 _isPlayerWinner
+    ) private pure returns (uint256 houseFee) {
         houseFee = (_betAmount * _betOdds) / 10;
 
-        if (!_isPlayerWinner) {
+        if (_isPlayerWinner == Bool.FALSE) {
             houseFee = _betAmount / 10;
         }
     }
@@ -111,6 +123,12 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @return price dd
      */
     function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1000000, 0);
+        price = quoter.quoteExactInputSingle(
+            address(usdt),
+            address(mont),
+            poolFee,
+            1000000,
+            0
+        );
     }
 }
