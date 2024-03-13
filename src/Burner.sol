@@ -38,8 +38,8 @@ contract Burner is IBurner, Ownable2Step {
         ISwapRouter _swapRouter,
         uint24 _uniswapPoolFee
     ) Ownable(msg.sender) {
-        usdt = _usdt;
         mont = _mont;
+        usdt = _usdt;
         swapRouter = _swapRouter;
         uniswapPoolFee = _uniswapPoolFee;
 
@@ -65,6 +65,8 @@ contract Burner is IBurner, Ownable2Step {
         emit SwapRouterChanged(address(swapRouter), address(_swapRouter));
 
         swapRouter = _swapRouter;
+
+        usdt.forceApprove(address(_swapRouter), type(uint256).max);
     }
 
     /**

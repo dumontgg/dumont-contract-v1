@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IGame} from "./interfaces/IGame.sol";
@@ -102,7 +103,10 @@ contract Game is Initializable, IGame {
             revert BetAmountIsLessThanMinimum();
         }
 
-        uint256 totalWinningBetAmount = getRate(_guessedNumbers) * _betAmount;
+        // check that _guessedNumbers are unique
+
+        UD60x18 totalWinningBet = getRate(_guessedNumbers).mul(ud(_betAmount));
+        uint256 totalWinningBetAmount = totalWinningBet.unwrap();
 
         // Check if the bet is going to be higher than the maximum possible amount
         if (totalWinningBetAmount > vault.getMaximumBetAmount()) {
@@ -118,7 +122,7 @@ contract Game is Initializable, IGame {
         emit PlayerGuessed(_cardIndex, _guessedNumbers, _betAmount);
     }
 
-    function getRate(uint256[] memory _cards) public view returns (uint256) {
+    function getRate(uint256[] memory _cards) public view returns (UD60x18) {
         uint256 remainingCards = 52 - cardsRevealed;
 
         uint256 makhraj = 0;
@@ -128,8 +132,10 @@ contract Game is Initializable, IGame {
             makhraj += 4 - numbersRevealed[_cards[i]];
         }
 
-        // check if the decimal rounding does not ruin the rate
-        return remainingCards / makhraj;
+        UD60x18 a = ud(remainingCards);
+        UD60x18 b = a.div(ud(makhraj));
+
+        return b;
     }
 
     function checkCardRevealed(

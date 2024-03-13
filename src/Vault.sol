@@ -180,7 +180,6 @@ contract Vault is IVault, Ownable2Step {
     function getMaximumBetAmount() public view returns (uint256) {
         uint256 usdtAmount = usdt.balanceOf(address(this));
 
-        // TODO: Calculate temporary amount too
         return (usdtAmount * 2) / 100;
     }
 

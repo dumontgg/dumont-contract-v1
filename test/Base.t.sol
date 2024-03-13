@@ -15,6 +15,7 @@ import {Revealer} from "../src/Revealer.sol";
 import {USDT} from "./utils/tokens/USDT.t.sol";
 import {Users} from "./utils/Types.sol";
 import {Vault} from "../src/Vault.sol";
+import {SWAP_ROUTER} from "./fork/Addresses.t.sol";
 
 abstract contract BaseTest is Test, Constants {
     Users internal users;
@@ -74,7 +75,7 @@ abstract contract BaseTest is Test, Constants {
             usdt,
             3000
         );
-        burner = new Burner(mont, usdt, ISwapRouter(address(0x00)), 500);
+        burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
 
         vault.setBurner(burner);
         vault.setGameFactory(gameFactory);
