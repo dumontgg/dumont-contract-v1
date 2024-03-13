@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -33,7 +34,7 @@ contract RewardManager is Ownable2Step, IRewardManager {
         IQuoter _quoter,
         IERC20 _usdt,
         uint24 _poolFee
-    ) {
+    ) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;

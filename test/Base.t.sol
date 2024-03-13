@@ -12,6 +12,7 @@ import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
 import {MONT} from "../src/MONT.sol";
 import {RewardManager} from "../src/RewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
+import {USDT} from "./utils/tokens/USDT.t.sol";
 import {Users} from "./utils/Types.sol";
 import {Vault} from "../src/Vault.sol";
 
@@ -28,7 +29,7 @@ abstract contract BaseTest is Test, Constants {
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
-        usdt = new ERC20("Tether USD", "USDT");
+        usdt = new USDT();
 
         vm.label({account: address(mont), newLabel: "MONT"});
         vm.label({account: address(usdt), newLabel: "USDT"});

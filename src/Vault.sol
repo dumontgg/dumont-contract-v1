@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -44,7 +45,7 @@ contract Vault is IVault, Ownable2Step {
         IGameFactory _gameFactory,
         IRewardManager _rewardManager,
         uint256 _minimumBetAmount
-    ) {
+    ) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;

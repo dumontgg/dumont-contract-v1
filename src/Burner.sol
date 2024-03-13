@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -36,7 +37,7 @@ contract Burner is IBurner, Ownable2Step {
         IERC20 _usdt,
         ISwapRouter _swapRouter,
         uint24 _uniswapPoolFee
-    ) {
+    ) Ownable(msg.sender) {
         usdt = _usdt;
         mont = _mont;
         swapRouter = _swapRouter;
