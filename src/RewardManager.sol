@@ -62,21 +62,29 @@ contract RewardManager is Ownable2Step, IRewardManager {
         vault = _vault;
     }
 
-    // TODO: setPoolFee
+    /**
+     * @notice Changes the Uniswap pool fee tier
+     * @param _poolFee The new pool fee
+     */
+    function setPoolFee(uint24 _poolFee) external onlyOwner {
+        emit PoolFeeChanged(poolFee, _poolFee);
+
+        poolFee = _poolFee;
+    }
 
     /**
      * @notice a
      * @param _betAmount a
      * @param _betOdds a
-     * @param _isPlayerWinner a
      * @param _player a
+     * @param _isPlayerWinner a
      * @return reward dd
      */
     function transferRewards(
         uint256 _betAmount,
         uint256 _betOdds,
-        uint256 _isPlayerWinner,
-        address _player
+        address _player,
+        bool _isPlayerWinner
     ) external onlyVault returns (uint256 reward) {
         uint256 houseFee = calculateHouseFee(
             _betAmount,
@@ -109,11 +117,11 @@ contract RewardManager is Ownable2Step, IRewardManager {
     function calculateHouseFee(
         uint256 _betAmount,
         uint256 _betOdds,
-        uint256 _isPlayerWinner
+        bool _isPlayerWinner
     ) private pure returns (uint256 houseFee) {
         houseFee = (_betAmount * _betOdds) / 10;
 
-        if (_isPlayerWinner == Bool.FALSE) {
+        if (!_isPlayerWinner) {
             houseFee = _betAmount / 10;
         }
     }
@@ -127,7 +135,7 @@ contract RewardManager is Ownable2Step, IRewardManager {
             address(usdt),
             address(mont),
             poolFee,
-            1000000,
+            1e6,
             0
         );
     }

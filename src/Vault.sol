@@ -146,19 +146,20 @@ contract Vault is IVault, Ownable2Step {
      * @param _betAmount Amount of the bet multiplied by the odds
      * @param _betOdds The bet odds
      * @param _player The address of the player
+     * @param _isPlayerWinner cc
      */
     function notifyGameOutcome(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _betOdds,
-        uint256 _isPlayerWinner,
-        address _player
+        address _player,
+        bool _isPlayerWinner
     ) external onlyGame(_gameId) {
         rewardManager.transferRewards(
             _betAmount,
             _betOdds,
-            _isPlayerWinner,
-            _player
+            _player,
+            _isPlayerWinner
         );
     }
 

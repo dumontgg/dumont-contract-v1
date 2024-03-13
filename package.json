@@ -1,0 +1,23 @@
+{
+  "name": "v1-core",
+  "version": "1.0.0",
+  "description": "Dumont V1 contracts",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matinkaboli/dumont-contract-v1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/matinkaboli/dumont-contract-v1/issues"
+  },
+  "homepage": "https://github.com/matinkaboli/dumont-contract-v1#readme"
+}

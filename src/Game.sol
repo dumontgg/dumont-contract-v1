@@ -176,17 +176,13 @@ contract Game is Initializable, IGame {
          * handled from the Vault itself.
          */
 
-        if (isPlayerWon) {
-            vault.playerLostGame(
-                gameId,
-                card.betAmount,
-                getRate(guessedNumbers),
-                player
-            );
-        } else {
-            usdt.transferFrom(address(this), address(vault), card.betAmount);
-            // ???
-        }
+        vault.notifyGameOutcome(
+            gameId,
+            card.betAmount,
+            getRate(guessedNumbers),
+            player,
+            isPlayerWon
+        );
 
         emit CardRevealed(_index, _revealedNumber, _revealedSalt);
 
