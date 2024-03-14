@@ -182,10 +182,13 @@ contract Game is Initializable, IGame {
          * handled from the Vault itself.
          */
 
+        UD60x18 totalBetUD = getRate(guessedNumbers).mul(ud(card.betAmount));
+        uint256 totalBetAmount = totalBetUD.unwrap();
+
         vault.notifyGameOutcome(
             gameId,
             card.betAmount,
-            getRate(guessedNumbers),
+            totalBetAmount,
             player,
             isPlayerWon
         );

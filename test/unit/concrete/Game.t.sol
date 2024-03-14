@@ -18,8 +18,6 @@ contract GameTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        changePrank({msgSender: users.admin});
-
         deployContracts();
 
         game = new Game(usdt, vault, users.server1, users.alice, 0, 200);
@@ -45,7 +43,7 @@ contract GameTest is BaseTest {
         cards[0] = 4;
         cards[0] = 4;
 
-        UD60x18 a = game.getRate2(cards);
+        UD60x18 a = game.getRate(cards);
         uint256 b = a.mul(ud(1e18)).unwrap();
 
         console2.log("%s", b);

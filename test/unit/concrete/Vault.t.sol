@@ -17,8 +17,7 @@ contract VaultTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        changePrank({msgSender: users.admin});
-
+        vm.prank(users.admin);
         vault = new Vault(
             mont,
             usdt,

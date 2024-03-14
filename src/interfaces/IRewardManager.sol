@@ -31,14 +31,14 @@ interface IRewardManager {
     /**
      * @notice a
      * @param _betAmount a
-     * @param _betOdds a
+     * @param _totalAmount a
      * @param _player a
      * @param _isPlayerWinner a
      * @return reward dd
      */
     function transferRewards(
         uint256 _betAmount,
-        uint256 _betOdds,
+        uint256 _totalAmount,
         address _player,
         bool _isPlayerWinner
     ) external returns (uint256 reward);

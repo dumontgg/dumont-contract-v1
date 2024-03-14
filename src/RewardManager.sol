@@ -76,31 +76,29 @@ contract RewardManager is Ownable2Step, IRewardManager {
     /**
      * @notice a
      * @param _betAmount a
-     * @param _betOdds a
+     * @param _totalAmount a
      * @param _player a
      * @param _isPlayerWinner a
      * @return reward dd
      */
     function transferRewards(
         uint256 _betAmount,
-        uint256 _betOdds,
+        uint256 _totalAmount,
         address _player,
         bool _isPlayerWinner
     ) external onlyVault returns (uint256 reward) {
         uint256 houseFee = calculateHouseFee(
             _betAmount,
-            _betOdds,
+            _totalAmount,
             _isPlayerWinner
         );
         uint256 price = getMontPrice();
 
-        uint256 calculation1 = ((houseFee * 8) / 10) / price;
-        uint256 calculation2 = _betAmount * _betOdds;
+        // houseFee * 0.8 / price
+        reward = ((houseFee * 8) / 10) / price;
 
-        reward = calculation1;
-
-        if (calculation1 > calculation2) {
-            reward = calculation2;
+        if (reward > _totalAmount) {
+            reward = _totalAmount;
         }
 
         mont.safeTransfer(_player, reward);
@@ -111,16 +109,17 @@ contract RewardManager is Ownable2Step, IRewardManager {
     /**
      * @notice a
      * @param _betAmount a
-     * @param _betOdds a
+     * @param _totalAmount a
      * @param _isPlayerWinner a
      * @return houseFee dd
      */
     function calculateHouseFee(
         uint256 _betAmount,
-        uint256 _betOdds,
+        uint256 _totalAmount,
         bool _isPlayerWinner
     ) private pure returns (uint256 houseFee) {
-        houseFee = (_betAmount * _betOdds) / 10;
+        // TODO: use UD HERE
+        houseFee = _totalAmount / 10;
 
         if (!_isPlayerWinner) {
             houseFee = _betAmount / 10;

@@ -45,13 +45,15 @@ abstract contract BaseTest is Test, Constants {
             server2: createUser("Server2")
         });
 
-        deal({token: address(mont), to: users.admin, give: 100_000_000e18});
+        deal(address(mont), users.admin, 100_000_000e18);
 
         // Warp to May 1, 2023 at 00:00 GMT to provide a more realistic testing environment.
         vm.warp(MAY_1_2023);
     }
 
     function deployContracts() internal {
+        vm.startPrank(users.admin);
+
         revealer = new Revealer();
         vault = new Vault(
             mont,
@@ -80,6 +82,8 @@ abstract contract BaseTest is Test, Constants {
         vault.setBurner(burner);
         vault.setGameFactory(gameFactory);
         vault.setRewardManager(rewardManager);
+
+        vm.stopPrank();
     }
 
     /**
@@ -92,7 +96,7 @@ abstract contract BaseTest is Test, Constants {
     ) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
-        deal({to: userAddress, give: 100e18});
-        deal({token: address(usdt), to: userAddress, give: 100_000_000e18});
+        deal(userAddress, 100e18);
+        deal(address(usdt), userAddress, 100_000_000e18);
     }
 }
