@@ -23,6 +23,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
     address public revealer;
 
     uint256 public gameDuration;
+    uint256 public claimableAfter;
     uint256 public gameCreationFee;
 
     uint256 public gameId = 0;
@@ -34,15 +35,22 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _vault The address of the vault that will call the createGame function
      * @param _revealer A trusted address used to initialize games and reveal player guesses
      * @param _gameDuration The duration of each game, after which games expire
+     * @param _claimableAfter The duration which the user can claim their win if revealer does not reveal
      * @param _gameCreationFee The fee required for players to create games
      */
-    constructor(IERC20 _usdt, Vault _vault, address _revealer, uint256 _gameDuration, uint256 _gameCreationFee)
-        Ownable(msg.sender)
-    {
+    constructor(
+        IERC20 _usdt,
+        Vault _vault,
+        address _revealer,
+        uint256 _gameDuration,
+        uint256 _claimableAfter,
+        uint256 _gameCreationFee
+    ) Ownable(msg.sender) {
         usdt = _usdt;
         vault = _vault;
         revealer = _revealer;
         gameDuration = _gameDuration;
+        claimableAfter = _claimableAfter;
         gameCreationFee = _gameCreationFee;
     }
 
@@ -90,6 +98,16 @@ contract GameFactory is IGameFactory, Ownable2Step {
     }
 
     /**
+     * @notice Changes the claimable duration of future games
+     * @param _claimableAfter The new duration in seconds
+     */
+    function setClaimableAfter(uint256 _claimableAfter) external onlyOwner {
+        emit ClaimableAfterChanged(claimableAfter, _claimableAfter);
+
+        claimableAfter = _claimableAfter;
+    }
+
+    /**
      * @notice Changes the address of the Vault contract
      * @param _vault The new Vault contract address
      */
@@ -119,9 +137,23 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress = address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration));
+        address gameAddress = address(
+            new Game(
+                usdt,
+                vault,
+                revealer,
+                msg.sender,
+                _gameId,
+                gameDuration,
+                claimableAfter
+            )
+        );
 
-        games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: revealer});
+        games[_gameId] = GameDetails({
+            gameAddress: gameAddress,
+            player: msg.sender,
+            manager: revealer
+        });
 
         emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
 
@@ -135,7 +167,9 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(uint256 _gameId) external view returns (GameDetails memory) {
+    function getGame(
+        uint256 _gameId
+    ) external view returns (GameDetails memory) {
         return games[_gameId];
     }
 }

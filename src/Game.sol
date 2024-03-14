@@ -20,16 +20,17 @@ contract Game is Initializable, IGame {
     using SafeERC20 for IERC20;
 
     uint256 public cardsRevealed;
+    uint256 public cardsFreeRevealed;
     mapping(uint256 => Card) public cards;
     mapping(uint256 => uint256) public numbersRevealed;
-
-    uint256 public immutable gameId;
-    uint256 public immutable gameDuration;
 
     IERC20 public immutable usdt;
     Vault public immutable vault;
     address public immutable manager;
     address public immutable player;
+    uint256 public immutable gameId;
+    uint256 public immutable gameDuration;
+    uint256 public immutable claimableAfter;
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
@@ -39,6 +40,7 @@ contract Game is Initializable, IGame {
      * @param _player The player that created the game using Vault contract
      * @param _gameId The ID of the game stored in Vault contract
      * @param _gameDuration The duration of the game. After that the game will be unplayable
+     * @param _claimableAfter The duration which the user can claim their win if revealer does not reveal
      */
     constructor(
         IERC20 _usdt,
@@ -46,7 +48,8 @@ contract Game is Initializable, IGame {
         address _manager,
         address _player,
         uint256 _gameId,
-        uint256 _gameDuration
+        uint256 _gameDuration,
+        uint256 _claimableAfter
     ) {
         usdt = _usdt;
         vault = _vault;
@@ -54,6 +57,7 @@ contract Game is Initializable, IGame {
         player = _player;
         gameId = _gameId;
         gameDuration = _gameDuration;
+        claimableAfter = _claimableAfter;
     }
 
     modifier onlyPlayer() {
@@ -105,15 +109,16 @@ contract Game is Initializable, IGame {
 
         // check that _guessedNumbers are unique
 
-        UD60x18 totalWinningBet = getRate(_guessedNumbers).mul(ud(_betAmount));
-        uint256 totalWinningBetAmount = totalWinningBet.unwrap();
+        uint256 totalWinningBetAmount = getRate(_guessedNumbers)
+            .mul(ud(_betAmount))
+            .unwrap();
 
         // Check if the bet is going to be higher than the maximum possible amount
         if (totalWinningBetAmount > vault.getMaximumBetAmount()) {
             revert BetAmountIsGreaterThanMaximum();
         }
 
-        usdt.safeTransferFrom(msg.sender, address(this), _betAmount);
+        usdt.safeTransferFrom(msg.sender, address(vault), _betAmount);
 
         cards[_cardIndex].isGuessed = true;
         cards[_cardIndex].betAmount = _betAmount;

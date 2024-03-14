@@ -20,7 +20,15 @@ contract GameTest is BaseTest {
 
         deployContracts();
 
-        game = new Game(usdt, vault, users.server1, users.alice, 0, 200);
+        game = new Game(
+            usdt,
+            vault,
+            users.server1,
+            users.alice,
+            0,
+            ONE_HOUR * 12,
+            ONE_HOUR * 6
+        );
     }
 
     function test_owner() public {

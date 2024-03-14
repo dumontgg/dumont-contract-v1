@@ -23,6 +23,13 @@ interface IGameFactory {
     event GameDurationChanged(uint256 _from, uint256 _to);
 
     /**
+     * @notice Emitted when the claimable duration changes
+     * @param _from The old claimable duration
+     * @param _to The new claimable duration
+     */
+    event ClaimableAfterChanged(uint256 _from, uint256 _to);
+
+    /**
      * @notice Emitted when the address of the Vault changes
      * @param _from The old Vault address
      * @param _to The new Vault address
@@ -51,7 +58,10 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
+        uint256 indexed _gameId,
+        address indexed _gameAddress,
+        address indexed _player,
+        uint256 _gameDuration
     );
 
     /**
@@ -71,6 +81,12 @@ interface IGameFactory {
      * @param _gameDuration The new duration in seconds
      */
     function setGameDuration(uint256 _gameDuration) external;
+
+    /**
+     * @notice Changes the claimable duration of future games
+     * @param _claimableAfter The new duration in seconds
+     */
+    function setClaimableAfter(uint256 _claimableAfter) external;
 
     /**
      * @notice Changes the address of the Vault contract
@@ -96,5 +112,7 @@ interface IGameFactory {
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(uint256 _gameId) external view returns (GameDetails memory);
+    function getGame(
+        uint256 _gameId
+    ) external view returns (GameDetails memory);
 }
