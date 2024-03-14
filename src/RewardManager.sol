@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -11,6 +11,11 @@ import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
 import {IRewardManager} from "./interfaces/IRewardManager.sol";
 
+/**
+ * @title Reward Manager Contract
+ * @notice Manages the distribution of MONT rewards to players based on game outcomes
+ * @dev Only the Vault contract can call functions in this contract
+ */
 contract RewardManager is Ownable2Step, IRewardManager {
     using SafeERC20 for IMONT;
 
@@ -21,20 +26,14 @@ contract RewardManager is Ownable2Step, IRewardManager {
     uint24 public poolFee;
 
     /**
-     * @notice
-     * @param _vault a
-     * @param _mont a
-     * @param _quoter a
-     * @param _usdt a
-     * @param _poolFee a
+     * @notice Constructor to initialize contract state variables
+     * @param _vault Address of the Vault contract
+     * @param _mont Address of the MONT token contract
+     * @param _quoter Address of the Uniswap quoter contract
+     * @param _usdt Address of the USDT token contract
+     * @param _poolFee Uniswap pool fee tier
      */
-    constructor(
-        address _vault,
-        IMONT _mont,
-        IQuoter _quoter,
-        IERC20 _usdt,
-        uint24 _poolFee
-    ) Ownable(msg.sender) {
+    constructor(address _vault, IMONT _mont, IQuoter _quoter, IERC20 _usdt, uint24 _poolFee) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -43,7 +42,7 @@ contract RewardManager is Ownable2Step, IRewardManager {
     }
 
     /**
-     * @notice AA
+     * @notice Modifier to restrict access to only the Vault contract
      */
     modifier onlyVault() {
         if (msg.sender != vault) {
@@ -54,8 +53,8 @@ contract RewardManager is Ownable2Step, IRewardManager {
     }
 
     /**
-     * @notice Changes the Vault address
-     * @param _vault new Vault contract
+     * @notice Changes the address of the Vault contract
+     * @param _vault New Vault contract address
      */
     function setVault(address _vault) external onlyOwner {
         emit VaultChanged(vault, _vault);
@@ -65,7 +64,7 @@ contract RewardManager is Ownable2Step, IRewardManager {
 
     /**
      * @notice Changes the Uniswap pool fee tier
-     * @param _poolFee The new pool fee
+     * @param _poolFee New Uniswap pool fee
      */
     function setPoolFee(uint24 _poolFee) external onlyOwner {
         emit PoolFeeChanged(poolFee, _poolFee);
@@ -74,24 +73,19 @@ contract RewardManager is Ownable2Step, IRewardManager {
     }
 
     /**
-     * @notice a
-     * @param _betAmount a
-     * @param _totalAmount a
-     * @param _player a
-     * @param _isPlayerWinner a
-     * @return reward dd
+     * @notice Transfers MONT rewards to the player based on game outcome
+     * @param _betAmount Amount of the bet
+     * @param _totalAmount Total amount of the bet multiplied by the odds
+     * @param _player Address of the player
+     * @param _isPlayerWinner Flag indicating whether the player won the bet
+     * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferRewards(
-        uint256 _betAmount,
-        uint256 _totalAmount,
-        address _player,
-        bool _isPlayerWinner
-    ) external onlyVault returns (uint256 reward) {
-        uint256 houseFee = calculateHouseFee(
-            _betAmount,
-            _totalAmount,
-            _isPlayerWinner
-        );
+    function transferRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
+        external
+        onlyVault
+        returns (uint256 reward)
+    {
+        uint256 houseFee = calculateHouseFee(_betAmount, _totalAmount, _isPlayerWinner);
         uint256 price = getMontPrice();
 
         // houseFee * 0.8 / price
@@ -107,18 +101,17 @@ contract RewardManager is Ownable2Step, IRewardManager {
     }
 
     /**
-     * @notice a
-     * @param _betAmount a
-     * @param _totalAmount a
-     * @param _isPlayerWinner a
-     * @return houseFee dd
+     * @notice Calculates the house fee based on game outcome
+     * @param _betAmount Amount of the bet
+     * @param _totalAmount Total amount of the bet multiplied by the odds
+     * @param _isPlayerWinner Flag indicating whether the player won the bet
+     * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(
-        uint256 _betAmount,
-        uint256 _totalAmount,
-        bool _isPlayerWinner
-    ) private pure returns (uint256 houseFee) {
-        // TODO: use UD HERE
+    function calculateHouseFee(uint256 _betAmount, uint256 _totalAmount, bool _isPlayerWinner)
+        private
+        pure
+        returns (uint256 houseFee)
+    {
         houseFee = _totalAmount / 10;
 
         if (!_isPlayerWinner) {
@@ -127,16 +120,10 @@ contract RewardManager is Ownable2Step, IRewardManager {
     }
 
     /**
-     * @notice a
-     * @return price dd
+     * @notice Retrieves the current price of MONT token from Uniswap
+     * @return price Current price of MONT token
      */
     function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(
-            address(usdt),
-            address(mont),
-            poolFee,
-            1e6,
-            0
-        );
+        price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
     }
 }

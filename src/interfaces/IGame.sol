@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.23;
 
 interface IGame {
     event CardRevealed(uint256 _index, uint256 _number, string _salt);
