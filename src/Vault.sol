@@ -156,6 +156,7 @@ contract Vault is IVault, Ownable2Step {
         address _player,
         bool _isPlayerWinner
     ) external onlyGame(_gameId) {
+        // TODO: get % tax and move it to burner from win or loss??
         rewardManager.transferRewards(
             _betAmount,
             _totalAmount,

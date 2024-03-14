@@ -2,11 +2,6 @@
 pragma solidity 0.8.23;
 
 interface IGame {
-    struct GameInfo {
-        uint256 gameDuration;
-        uint256 claimableAfter;
-    }
-
     struct Card {
         uint256 betAmount;
         uint256 revealedNumber;

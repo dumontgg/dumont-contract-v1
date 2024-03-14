@@ -27,7 +27,8 @@ contract GameTest is BaseTest {
             users.alice,
             0,
             ONE_HOUR * 12,
-            ONE_HOUR * 6
+            ONE_HOUR * 6,
+            3
         );
     }
 
@@ -35,7 +36,7 @@ contract GameTest is BaseTest {
         assertEq(vault.owner(), users.admin);
     }
 
-    function test_rate() public {
+    function test_rate() public view {
         uint256[] memory cards = new uint256[](12);
 
         cards[0] = uint256(1);

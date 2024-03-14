@@ -16,6 +16,7 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @dev This contract can only be called by the Vault contract to create new games
  */
 contract GameFactory is IGameFactory, Ownable2Step {
+    // TODO: take a look at matrix and see what's up with their referral platform
     using SafeERC20 for IERC20;
 
     IERC20 public usdt;
@@ -24,6 +25,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
     uint256 public gameDuration;
     uint256 public claimableAfter;
+    uint256 public maxFreeReveals;
     uint256 public gameCreationFee;
 
     uint256 public gameId = 0;
@@ -37,6 +39,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameDuration The duration of each game, after which games expire
      * @param _claimableAfter The duration which the user can claim their win if revealer does not reveal
      * @param _gameCreationFee The fee required for players to create games
+     * @param _maxFreeReveals The maximum amount of free reveals a player can request
      */
     constructor(
         IERC20 _usdt,
@@ -44,6 +47,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
         address _revealer,
         uint256 _gameDuration,
         uint256 _claimableAfter,
+        uint256 _maxFreeReveals,
         uint256 _gameCreationFee
     ) Ownable(msg.sender) {
         usdt = _usdt;
@@ -51,6 +55,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
         revealer = _revealer;
         gameDuration = _gameDuration;
         claimableAfter = _claimableAfter;
+        maxFreeReveals = _maxFreeReveals;
         gameCreationFee = _gameCreationFee;
     }
 
@@ -108,6 +113,16 @@ contract GameFactory is IGameFactory, Ownable2Step {
     }
 
     /**
+     * @notice Changes the maximum amount of free reveals a player can request for future games
+     * @param _maxFreeReveals The amount of free reveals a player can request
+     */
+    function setMaxFreeReveals(uint256 _maxFreeReveals) external onlyOwner {
+        emit MaxFreeRevealsChanged(maxFreeReveals, _maxFreeReveals);
+
+        maxFreeReveals = _maxFreeReveals;
+    }
+
+    /**
      * @notice Changes the address of the Vault contract
      * @param _vault The new Vault contract address
      */
@@ -145,7 +160,8 @@ contract GameFactory is IGameFactory, Ownable2Step {
                 msg.sender,
                 _gameId,
                 gameDuration,
-                claimableAfter
+                claimableAfter,
+                maxFreeReveals
             )
         );
 

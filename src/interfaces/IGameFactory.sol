@@ -30,6 +30,13 @@ interface IGameFactory {
     event ClaimableAfterChanged(uint256 _from, uint256 _to);
 
     /**
+     * @notice Emitted when the maximum free reveals change
+     * @param _from The old maximum number
+     * @param _to The new maximum number
+     */
+    event MaxFreeRevealsChanged(uint256 _from, uint256 _to);
+
+    /**
      * @notice Emitted when the address of the Vault changes
      * @param _from The old Vault address
      * @param _to The new Vault address
@@ -87,6 +94,12 @@ interface IGameFactory {
      * @param _claimableAfter The new duration in seconds
      */
     function setClaimableAfter(uint256 _claimableAfter) external;
+
+    /**
+     * @notice Changes the maximum amount of free reveals a player can request for future games
+     * @param _maxFreeReveals The amount of free reveals a player can request
+     */
+    function setMaxFreeReveals(uint256 _maxFreeReveals) external;
 
     /**
      * @notice Changes the address of the Vault contract
