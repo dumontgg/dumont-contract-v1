@@ -4,8 +4,9 @@ pragma solidity 0.8.23;
 import {Vault} from "../Vault.sol";
 
 /**
- * @title GameFactory is used to create games
- * @notice This contract is only called by Vault to create games
+ * @title GameFactory Contract
+ * @notice Facilitates the creation of new games
+ * @dev This contract can only be called by the Vault contract to create new games
  */
 interface IGameFactory {
     struct GameDetails {
@@ -15,7 +16,7 @@ interface IGameFactory {
     }
 
     /**
-     * @notice Emitted when game duration changes
+     * @notice Emitted when the game duration changes
      * @param _from The old game duration
      * @param _to The new game duration
      */
@@ -36,7 +37,9 @@ interface IGameFactory {
     event RevealerChanged(address indexed _from, address indexed _to);
 
     /**
-     * @notice Emitted when
+     * @notice Emitted when the game creation fee changes
+     * @param _from The old game creation fee
+     * @param _to The new game creation fee
      */
     event GameFeeChanged(uint256 _from, uint256 _to);
 
@@ -48,10 +51,7 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId,
-        address indexed _gameAddress,
-        address indexed _player,
-        uint256 _gameDuration
+        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
     );
 
     /**
@@ -61,34 +61,40 @@ interface IGameFactory {
     error NotAuthorized(address _caller);
 
     /**
-     * @notice Sets a new duration for future games
-     * @param _gameDuration The new duration of games by seconds
+     * @notice Changes the fee required to create a new game
+     * @param _gameCreationFee The new fee amount in USDT
+     */
+    function setGameCreationFee(uint256 _gameCreationFee) external;
+
+    /**
+     * @notice Changes the duration of future games
+     * @param _gameDuration The new duration in seconds
      */
     function setGameDuration(uint256 _gameDuration) external;
 
     /**
-     * @notice Sets a new address for Vault
-     * @param _vault New vault address
-     * @dev This function is only callable by the owner
+     * @notice Changes the address of the Vault contract
+     * @param _vault The new Vault contract address
      */
     function setVault(Vault _vault) external;
 
     /**
-     * @notice Sets a new revealer for newly created games
-     * @param _revealer New revealer address
+     * @notice Changes the manager address for creating new games
+     * @param _revealer The new manager address
      */
     function setRevealer(address _revealer) external;
 
     /**
-     * @notice Creates a new game using the GameFactory contract and stores the related data
-     * @dev The caller need to pay at least gameCreationFee amount to create a game
+     * @notice Creates a new game using the GameFactory contract and stores related data
+     * @dev The caller must pay at least the gameCreationFee amount to create a game
+     * @return The ID of the newly created game
      */
     function createGame() external returns (uint256);
 
     /**
-     * @notice Returns a game
-     * @param _gameId ID of the game
-     * @return gameDetails Details of the game
+     * @notice Retrieves the details of a specific game
+     * @param _gameId The ID of the game
+     * @return Details of the specified game
      */
-    function getGame(uint256 _gameId) external returns (GameDetails memory);
+    function getGame(uint256 _gameId) external view returns (GameDetails memory);
 }

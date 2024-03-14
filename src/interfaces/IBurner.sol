@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {ISwapRouter} from "./Uniswap/ISwapRouter.sol";
+
 /**
  * @title Burner contract burns MONT tokens
- * @author X team
  * @notice Burner is used to swap USDT to MONT and burn MONT
- * @dev The contract uses a custom pool in uniswap to burn MONT tokens
  */
 interface IBurner {
     /**
-     * @notice Emitted when
-     * @param _usdtAmount a
-     * @param _montAmount a
+     * @notice Emitted when MONT tokens are burned
+     * @param _usdtAmount The amount of USDT swapped
+     * @param _montAmount The amount of MONT burned
      */
     event MONTTokensBurned(uint256 _usdtAmount, uint256 _montAmount);
 
     /**
-     * @notice Emitted when
-     * @param _from a
-     * @param _to a
+     * @notice Emitted when the UniswapV3 pool fee is changed
+     * @param _from The old Uniswap pool fee
+     * @param _to The new Uniswap pool fee
      */
     event UniswapPoolFeeChanged(uint24 _from, uint24 _to);
 
     /**
-     * @notice Emitted when
-     * @param _from a
-     * @param _to a
+     * @notice Emitted when the swap router address is changed
+     * @param _from The old swap router address
+     * @param _to The new swap router address
      */
     event SwapRouterChanged(address _from, address _to);
 
@@ -35,6 +35,12 @@ interface IBurner {
      * @dev Can only be called by the owner of the contract
      */
     function setUniswapPoolFee(uint24 _uniswapPoolFee) external;
+
+    /**
+     * @notice Changes the SwapRouter contract address
+     * @param _swapRouter The new SwapRouter contract address
+     */
+    function setSwapRouter(ISwapRouter _swapRouter) external;
 
     /**
      * @notice Swaps USDT to MONT and burns MONT tokens
