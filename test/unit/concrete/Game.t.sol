@@ -20,16 +20,7 @@ contract GameTest is BaseTest {
 
         deployContracts();
 
-        game = new Game(
-            usdt,
-            vault,
-            users.server1,
-            users.alice,
-            0,
-            ONE_HOUR * 12,
-            ONE_HOUR * 6,
-            3
-        );
+        game = new Game(usdt, vault, users.server1, users.alice, 0, ONE_HOUR * 12, ONE_HOUR * 6, 3);
     }
 
     function test_owner() public {
@@ -37,22 +28,9 @@ contract GameTest is BaseTest {
     }
 
     function test_rate() public view {
-        uint256[] memory cards = new uint256[](12);
+        bool[13] memory cards = [true, false, false, true, false, true, false, true, false, true, false, true, false];
 
-        cards[0] = uint256(1);
-        cards[0] = 2;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-        cards[0] = 4;
-
-        UD60x18 a = game.getRate(cards);
+        UD60x18 a = game.getGuessOdds(cards);
         uint256 b = a.mul(ud(1e18)).unwrap();
 
         console2.log("%s", b);

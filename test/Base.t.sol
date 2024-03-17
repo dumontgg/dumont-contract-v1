@@ -55,30 +55,10 @@ abstract contract BaseTest is Test, Constants {
         vm.startPrank(users.admin);
 
         revealer = new Revealer();
-        vault = new Vault(
-            mont,
-            usdt,
-            Burner(address(0x00)),
-            GameFactory(address(0x00)),
-            RewardManager(address(0x00)),
-            1e18
-        );
-        gameFactory = new GameFactory(
-            usdt,
-            vault,
-            address(revealer),
-            ONE_HOUR * 12,
-            ONE_HOUR * 6,
-            1e18,
-            3
-        );
-        rewardManager = new RewardManager(
-            address(vault),
-            mont,
-            IQuoter(address(0x00)),
-            usdt,
-            3000
-        );
+        vault =
+            new Vault(mont, usdt, Burner(address(0x00)), GameFactory(address(0x00)), RewardManager(address(0x00)), 1e18);
+        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 1e18, 3);
+        rewardManager = new RewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);
         burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
 
         vault.setBurner(burner);
@@ -93,9 +73,7 @@ abstract contract BaseTest is Test, Constants {
      * @param _name The name used to label the new address
      * @return userAddress Generated address of the user
      */
-    function createUser(
-        string memory _name
-    ) internal returns (address userAddress) {
+    function createUser(string memory _name) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
         deal(userAddress, 100e18);

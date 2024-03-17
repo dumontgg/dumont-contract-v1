@@ -16,7 +16,6 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @dev This contract can only be called by the Vault contract to create new games
  */
 contract GameFactory is IGameFactory, Ownable2Step {
-    // TODO: take a look at matrix and see what's up with their referral platform
     using SafeERC20 for IERC20;
 
     IERC20 public usdt;
@@ -30,6 +29,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
     uint256 public gameId = 0;
     mapping(uint256 gameId => GameDetails gameDetails) public games;
+    mapping(address referee => address referrer) public referrals;
 
     /**
      * @notice Initializes the GameFactory contract with specified parameters
@@ -145,35 +145,27 @@ contract GameFactory is IGameFactory, Ownable2Step {
     /**
      * @notice Creates a new game using the GameFactory contract and stores related data
      * @dev The caller must pay at least the gameCreationFee amount to create a game
+     * @param _referrer The referrer of the player. Could be the 0x00 address if already set or
+     * if the player does not want to set one
      * @return The ID of the newly created game
      */
-    function createGame() external returns (uint256) {
+    function createGame(address _referrer) external returns (uint256) {
         uint256 _gameId = gameId;
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress = address(
-            new Game(
-                usdt,
-                vault,
-                revealer,
-                msg.sender,
-                _gameId,
-                gameDuration,
-                claimableAfter,
-                maxFreeReveals
-            )
-        );
+        address gameAddress =
+            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
-        games[_gameId] = GameDetails({
-            gameAddress: gameAddress,
-            player: msg.sender,
-            manager: revealer
-        });
+        games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: revealer});
 
         emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
 
         ++gameId;
+
+        if (_referrer != address(0)) {
+            setReferrer(msg.sender, _referrer);
+        }
 
         return _gameId;
     }
@@ -183,9 +175,26 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(
-        uint256 _gameId
-    ) external view returns (GameDetails memory) {
+    function getGame(uint256 _gameId) external view returns (GameDetails memory) {
         return games[_gameId];
+    }
+
+    /**
+     * @notice Sets the referrer for a player (referee)
+     * @param _referee The player who chose the link of the referrer
+     * @param _referrer The player who invited the referee
+     */
+    function setReferrer(address _referee, address _referrer) private {
+        if (_referrer == _referee) {
+            revert InvalidReferrer(_referrer, _referee);
+        }
+
+        if (referrals[_referee] != address(0)) {
+            revert ReferralAlreadySet(_referee, referrals[_referee]);
+        }
+
+        referrals[_referee] = _referrer;
+
+        emit Referred(_referee, _referrer, block.timestamp);
     }
 }

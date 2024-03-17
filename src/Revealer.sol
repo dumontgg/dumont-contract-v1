@@ -22,6 +22,18 @@ contract Revealer is AccessControl, IRevealer {
     }
 
     /**
+     * @notice Reveals a card
+     * @param _card The details of the revealed card
+     */
+    function reveal(RevealedCard calldata _card) public onlyRole(REVEALER_ROLE) {
+        Game game = Game(_card.game);
+
+        game.revealCard(_card.index, _card.number, _card.salt);
+
+        emit CardRevealed(msg.sender, _card.game, _card.index);
+    }
+
+    /**
      * @notice Reveals cards from multiple games
      * @param _cards The details of the revealed cards from multiple games
      */

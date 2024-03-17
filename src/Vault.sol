@@ -90,13 +90,8 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the RewardManager contract
      * @param _rewardManager The address of the new RewardManager contract
      */
-    function setRewardManager(
-        IRewardManager _rewardManager
-    ) external onlyOwner {
-        emit RewardManagerChanged(
-            address(rewardManager),
-            address(_rewardManager)
-        );
+    function setRewardManager(IRewardManager _rewardManager) external onlyOwner {
+        emit RewardManagerChanged(address(rewardManager), address(_rewardManager));
 
         rewardManager = _rewardManager;
     }
@@ -117,11 +112,7 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external onlyOwner {
+    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -134,7 +125,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success, ) = _recipient.call{value: balance}("");
+        (bool success,) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -142,7 +133,7 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Notifies the Vault contract that a player lost a bet
+     * @notice Notifies the Vault contract that a player lost a bet and sends USDT if player is the winner
      * @param _gameId Id of the game
      * @param _betAmount Amount of the bet in USDT
      * @param _totalAmount Amount of the bet multiplied by the odds
@@ -156,13 +147,18 @@ contract Vault is IVault, Ownable2Step {
         address _player,
         bool _isPlayerWinner
     ) external onlyGame(_gameId) {
-        // TODO: get % tax and move it to burner from win or loss??
-        rewardManager.transferRewards(
-            _betAmount,
-            _totalAmount,
-            _player,
-            _isPlayerWinner
-        );
+        uint256 burnAmount = (_betAmount * 8) / 100;
+
+        if (_isPlayerWinner) {
+            burnAmount = (_totalAmount * 8) / 100;
+
+            uint256 reward = _totalAmount - ((_totalAmount - _betAmount) / 10);
+            usdt.safeTransfer(_player, reward);
+        }
+
+        usdt.safeTransfer(address(burner), burnAmount);
+
+        rewardManager.transferRewards(_betAmount, _totalAmount, _player, _isPlayerWinner);
     }
 
     /**

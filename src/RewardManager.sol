@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Bool} from "./libraries/Bool.sol";
+import {GameFactory} from "./GameFactory.sol";
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
 import {IRewardManager} from "./interfaces/IRewardManager.sol";
@@ -24,19 +24,24 @@ contract RewardManager is Ownable2Step, IRewardManager {
     address public vault;
     IQuoter public quoter;
     uint24 public poolFee;
+    GameFactory public gameFactory;
 
     /**
      * @notice Constructor to initialize contract state variables
      * @param _vault Address of the Vault contract
      * @param _mont Address of the MONT token contract
-     * @param _quoter Address of the Uniswap quoter contract
      * @param _usdt Address of the USDT token contract
+     * @param _gameFactory Address of the GameFactory contract
+     * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(address _vault, IMONT _mont, IQuoter _quoter, IERC20 _usdt, uint24 _poolFee) Ownable(msg.sender) {
+    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee)
+        Ownable(msg.sender)
+    {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
+        gameFactory = _gameFactory;
         quoter = _quoter;
         poolFee = _poolFee;
     }
@@ -60,6 +65,16 @@ contract RewardManager is Ownable2Step, IRewardManager {
         emit VaultChanged(vault, _vault);
 
         vault = _vault;
+    }
+
+    /**
+     * @notice Changes the address of the GameFactory contract
+     * @param _gameFactory New GameFactory contract address
+     */
+    function setGameFactory(address _gameFactory) external onlyOwner {
+        emit GameFactoryChanged(address(gameFactory), _gameFactory);
+
+        gameFactory = GameFactory(_gameFactory);
     }
 
     /**
@@ -95,6 +110,14 @@ contract RewardManager is Ownable2Step, IRewardManager {
             reward = _totalAmount;
         }
 
+        (bool isReferrerSet, address referrer) = checkReferrer(_player);
+
+        if (isReferrerSet) {
+            reward = (_totalAmount * 11) / 10;
+
+            mont.safeTransfer(referrer, reward / 10);
+        }
+
         mont.safeTransfer(_player, reward);
 
         emit MontRewardTransferred(_player, reward);
@@ -125,5 +148,19 @@ contract RewardManager is Ownable2Step, IRewardManager {
      */
     function getMontPrice() private returns (uint256 price) {
         price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
+    }
+
+    /**
+     * @notice ??
+     * @param _referee ??
+     * @return isReferrerSet ??
+     * @return referrer ??
+     */
+    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
+        referrer = gameFactory.referrals(_referee);
+
+        if (referrer != address(0)) {
+            isReferrerSet = true;
+        }
     }
 }

@@ -65,17 +65,20 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId,
-        address indexed _gameAddress,
-        address indexed _player,
-        uint256 _gameDuration
+        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
     );
+
+    event Referred(address _referee, address _referrer, uint256 _timestamp);
 
     /**
      * @notice Thrown when the caller is not authorized
      * @param _caller Address of the caller of the transaction
      */
     error NotAuthorized(address _caller);
+
+    error InvalidReferrer(address _referrer, address _referee);
+
+    error ReferralAlreadySet(address _referee, address _referrer);
 
     /**
      * @notice Changes the fee required to create a new game
@@ -116,16 +119,16 @@ interface IGameFactory {
     /**
      * @notice Creates a new game using the GameFactory contract and stores related data
      * @dev The caller must pay at least the gameCreationFee amount to create a game
+     * @param _referrer The referrer of the player. Could be the 0x00 address if already set or
+     * if the player does not want to set one
      * @return The ID of the newly created game
      */
-    function createGame() external returns (uint256);
+    function createGame(address _referrer) external returns (uint256);
 
     /**
      * @notice Retrieves the details of a specific game
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(
-        uint256 _gameId
-    ) external view returns (GameDetails memory);
+    function getGame(uint256 _gameId) external view returns (GameDetails memory);
 }

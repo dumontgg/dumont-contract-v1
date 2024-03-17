@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+// import {GameFactory} from "../GameFactory.sol";
+
 /**
  * @title Reward Manager Interface
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
@@ -12,6 +14,13 @@ interface IRewardManager {
      * @param _to The new Vault contract address
      */
     event VaultChanged(address indexed _from, address indexed _to);
+
+    /**
+     * @notice Emitted when the GameFactory contract address is changed
+     * @param _from The old GameFactory contract address
+     * @param _to The new GameFactory contract address
+     */
+    event GameFactoryChanged(address indexed _from, address indexed _to);
 
     /**
      * @notice Emitted when the Uniswap pool fee tier is changed
@@ -37,6 +46,12 @@ interface IRewardManager {
      * @param _vault New Vault contract address
      */
     function setVault(address _vault) external;
+
+    /**
+     * @notice Changes the address of the GameFactory contract
+     * @param _gameFactory New GameFactory contract address
+     */
+    function setGameFactory(address _gameFactory) external;
 
     /**
      * @notice Changes the Uniswap pool fee tier
