@@ -7,7 +7,7 @@ pragma solidity 0.8.23;
  * @title Reward Manager Interface
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
  */
-interface IRewardManager {
+interface IMontRewardManager {
     /**
      * @notice Emitted when the Vault contract address is changed
      * @param _from The old Vault contract address
@@ -67,7 +67,10 @@ interface IRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
-        external
-        returns (uint256 reward);
+    function transferPlayerRewards(
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        address _player,
+        bool _isPlayerWinner
+    ) external returns (uint256 reward);
 }

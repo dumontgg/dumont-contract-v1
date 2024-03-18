@@ -33,6 +33,7 @@ contract Game is Initializable, IGame {
     uint256 public immutable gameDuration;
     uint256 public immutable claimableAfter;
     uint256 public immutable maxFreeReveals;
+    bool public constant SHOULD_GET_REWARDS = true;
 
     /**
      * @notice Sets contract and player addresses, and sets a custom maxGuessesAllowed
@@ -81,10 +82,12 @@ contract Game is Initializable, IGame {
         _;
     }
 
-    function initialize(bytes[52] calldata _hashedCards) external onlyNotInitialized onlyRevealer {
+    function initialize(
+        bytes[52] calldata _hashedCards
+    ) external onlyNotInitialized onlyRevealer {
         initializeContract();
 
-        for (uint256 i = 0; i < 52;) {
+        for (uint256 i = 0; i < 52; ) {
             cards[i].hashed = _hashedCards[i];
             cards[i].status = CardStatus.HIDDEN;
 
@@ -94,11 +97,11 @@ contract Game is Initializable, IGame {
         }
     }
 
-    function guessCard(uint256 _cardIndex, uint256 _betAmount, bool[13] calldata _guessedNumbers)
-        external
-        onlyPlayer
-        onlyInitialized
-    {
+    function guessCard(
+        uint256 _cardIndex,
+        uint256 _betAmount,
+        bool[13] calldata _guessedNumbers
+    ) external onlyPlayer onlyInitialized {
         Card storage _card = cards[_cardIndex];
 
         if (_cardIndex > 51) {
@@ -113,7 +116,9 @@ contract Game is Initializable, IGame {
             revert BetAmountIsLessThanMinimum();
         }
 
-        uint256 totalWinningBetAmount = getGuessOdds(_guessedNumbers).mul(ud(_betAmount)).unwrap();
+        uint256 totalWinningBetAmount = getGuessOdds(_guessedNumbers)
+            .mul(ud(_betAmount))
+            .unwrap();
 
         if (totalWinningBetAmount > vault.getMaximumBetAmount()) {
             revert BetAmountIsGreaterThanMaximum();
@@ -130,7 +135,9 @@ contract Game is Initializable, IGame {
         emit PlayerGuessed(_cardIndex, _guessedNumbers, _betAmount);
     }
 
-    function getGuessOdds(bool[13] memory _cards) public view returns (UD60x18) {
+    function getGuessOdds(
+        bool[13] memory _cards
+    ) public view returns (UD60x18) {
         uint256 remainingCards = 52 - cardsRevealed;
         uint256 remainingSelectedCard = 0;
 
@@ -159,16 +166,23 @@ contract Game is Initializable, IGame {
 
         _card.status = CardStatus.CLAIMED;
 
-        vault.notifyGameOutcome(gameId, _card.betAmount, _card.totalAmount, player, true);
+        vault.transferPlayerRewards(
+            gameId,
+            _card.betAmount,
+            _card.totalAmount,
+            player,
+            true,
+            !SHOULD_GET_REWARDS
+        );
 
         emit CardClaimed(_index, block.timestamp);
     }
 
-    function revealCard(uint256 _index, uint256 _revealedNumber, string calldata _revealedSalt)
-        external
-        onlyRevealer
-        onlyInitialized
-    {
+    function revealCard(
+        uint256 _index,
+        uint256 _revealedNumber,
+        string calldata _revealedSalt
+    ) external onlyRevealer onlyInitialized {
         Card storage _card = cards[_index];
 
         if (_card.status != CardStatus.GUESSED) {
@@ -181,14 +195,26 @@ contract Game is Initializable, IGame {
 
         ++numbersRevealedCount[_revealedNumber];
 
-        bool isPlayerWon = checkCardRevealed(_card.guessedNumbers, _card.revealedNumber);
+        bool isPlayerWon = checkCardRevealed(
+            _card.guessedNumbers,
+            _card.revealedNumber
+        );
 
-        vault.notifyGameOutcome(gameId, _card.betAmount, _card.totalAmount, player, isPlayerWon);
+        vault.transferPlayerRewards(
+            gameId,
+            _card.betAmount,
+            _card.totalAmount,
+            player,
+            isPlayerWon,
+            SHOULD_GET_REWARDS
+        );
 
         emit CardRevealed(_index, _revealedNumber, _revealedSalt);
     }
 
-    function requestRevealFreeCard(uint256 _index) external onlyPlayer onlyInitialized {
+    function requestRevealFreeCard(
+        uint256 _index
+    ) external onlyPlayer onlyInitialized {
         Card storage _card = cards[_index];
 
         if (_card.status != CardStatus.HIDDEN) {
@@ -201,15 +227,14 @@ contract Game is Initializable, IGame {
         emit RevealFreeCardRequested(_index, block.timestamp);
     }
 
-    function revealFreeCard(uint256 _index, uint256 _revealedNumber, string calldata _revealedSalt)
-        external
-        onlyRevealer
-        onlyInitialized
-    {
+    function revealFreeCard(
+        uint256 _index,
+        uint256 _revealedNumber,
+        string calldata _revealedSalt
+    ) external onlyRevealer onlyInitialized {
         Card storage _card = cards[_index];
 
         if (_card.status != CardStatus.FREE_REVEALE_REQUESTED) {
-            // todo: wrong error
             revert CardIsNotFreeRevealed();
         }
 
@@ -222,11 +247,10 @@ contract Game is Initializable, IGame {
         emit CardRevealed(_index, _revealedNumber, _revealedSalt);
     }
 
-    function checkCardRevealed(bool[13] memory _guessedNumbers, uint256 _revealedNumber)
-        private
-        pure
-        returns (bool isPlayerWinner)
-    {
+    function checkCardRevealed(
+        bool[13] memory _guessedNumbers,
+        uint256 _revealedNumber
+    ) private pure returns (bool isPlayerWinner) {
         isPlayerWinner = false;
 
         for (uint256 i = 0; i < 13; ++i) {

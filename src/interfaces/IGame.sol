@@ -24,7 +24,11 @@ interface IGame {
 
     event CardRevealed(uint256 _index, uint256 _number, string _salt);
 
-    event PlayerGuessed(uint256 _index, bool[13] _guessedNumbers, uint256 _usdtAmount);
+    event PlayerGuessed(
+        uint256 _index,
+        bool[13] _guessedNumbers,
+        uint256 _usdtAmount
+    );
 
     event RevealFreeCardRequested(uint256 _index, uint256 _timestamp);
 

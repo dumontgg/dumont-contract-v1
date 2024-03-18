@@ -10,7 +10,7 @@ import {IBurner} from "./interfaces/IBurner.sol";
 import {IGame} from "./interfaces/IGame.sol";
 import {IGameFactory} from "./interfaces/IGameFactory.sol";
 import {IMONT} from "./interfaces/IMONT.sol";
-import {IRewardManager} from "./interfaces/IRewardManager.sol";
+import {IMontRewardManager} from "./interfaces/IMontRewardManager.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 /**
@@ -25,7 +25,7 @@ contract Vault is IVault, Ownable2Step {
     IERC20 public usdt;
     IBurner public burner;
     IGameFactory public gameFactory;
-    IRewardManager public rewardManager;
+    IMontRewardManager public montRewardManager;
 
     uint256 public minimumBetAmount;
 
@@ -35,7 +35,7 @@ contract Vault is IVault, Ownable2Step {
      * @param _usdt Address of the USDT token contract
      * @param _burner Address of the burner contract used to sell USDT and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
-     * @param _rewardManager Address of the RewardManager contract
+     * @param _montRewardManager Address of the RewardManager contract
      * @param _minimumBetAmount Minimum amount of USDT that a player can place as a bet
      */
     constructor(
@@ -43,15 +43,15 @@ contract Vault is IVault, Ownable2Step {
         IERC20 _usdt,
         IBurner _burner,
         IGameFactory _gameFactory,
-        IRewardManager _rewardManager,
+        IMontRewardManager _montRewardManager,
         uint256 _minimumBetAmount
     ) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;
         gameFactory = _gameFactory;
-        rewardManager = _rewardManager;
         minimumBetAmount = _minimumBetAmount;
+        montRewardManager = _montRewardManager;
     }
 
     /**
@@ -87,13 +87,18 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Changes the address of the RewardManager contract
-     * @param _rewardManager The address of the new RewardManager contract
+     * @notice Changes the address of the MontRewardManager contract
+     * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setRewardManager(IRewardManager _rewardManager) external onlyOwner {
-        emit RewardManagerChanged(address(rewardManager), address(_rewardManager));
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external onlyOwner {
+        emit RewardManagerChanged(
+            address(montRewardManager),
+            address(_montRewardManager)
+        );
 
-        rewardManager = _rewardManager;
+        montRewardManager = _montRewardManager;
     }
 
     /**
@@ -112,7 +117,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -125,7 +134,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -139,13 +148,15 @@ contract Vault is IVault, Ownable2Step {
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _player The address of the player
      * @param _isPlayerWinner cc
+     * @param _receiveReward cc
      */
-    function notifyGameOutcome(
+    function transferPlayerRewards(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _totalAmount,
         address _player,
-        bool _isPlayerWinner
+        bool _isPlayerWinner,
+        bool _receiveReward
     ) external onlyGame(_gameId) {
         uint256 burnAmount = (_betAmount * 8) / 100;
 
@@ -158,7 +169,14 @@ contract Vault is IVault, Ownable2Step {
 
         usdt.safeTransfer(address(burner), burnAmount);
 
-        rewardManager.transferRewards(_betAmount, _totalAmount, _player, _isPlayerWinner);
+        if (_receiveReward) {
+            montRewardManager.transferPlayerRewards(
+                _betAmount,
+                _totalAmount,
+                _player,
+                _isPlayerWinner
+            );
+        }
     }
 
     /**

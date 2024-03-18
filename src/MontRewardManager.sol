@@ -9,14 +9,14 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {GameFactory} from "./GameFactory.sol";
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
-import {IRewardManager} from "./interfaces/IRewardManager.sol";
+import {IMontRewardManager} from "./interfaces/IMontRewardManager.sol";
 
 /**
  * @title Reward Manager Contract
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
  * @dev Only the Vault contract can call functions in this contract
  */
-contract RewardManager is Ownable2Step, IRewardManager {
+contract MontRewardManager is Ownable2Step, IMontRewardManager {
     using SafeERC20 for IMONT;
 
     IMONT public mont;
@@ -35,9 +35,14 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee)
-        Ownable(msg.sender)
-    {
+    constructor(
+        address _vault,
+        IMONT _mont,
+        IERC20 _usdt,
+        GameFactory _gameFactory,
+        IQuoter _quoter,
+        uint24 _poolFee
+    ) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -95,15 +100,19 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
-        external
-        onlyVault
-        returns (uint256 reward)
-    {
-        uint256 houseFee = calculateHouseFee(_betAmount, _totalAmount, _isPlayerWinner);
+    function transferPlayerRewards(
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        address _player,
+        bool _isPlayerWinner
+    ) external onlyVault returns (uint256 reward) {
+        uint256 houseFee = calculateHouseFee(
+            _betAmount,
+            _totalAmount,
+            _isPlayerWinner
+        );
         uint256 price = getMontPrice();
 
-        // houseFee * 0.8 / price
         reward = ((houseFee * 8) / 10) / price;
 
         if (reward > _totalAmount) {
@@ -130,11 +139,11 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(uint256 _betAmount, uint256 _totalAmount, bool _isPlayerWinner)
-        private
-        pure
-        returns (uint256 houseFee)
-    {
+    function calculateHouseFee(
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        bool _isPlayerWinner
+    ) private pure returns (uint256 houseFee) {
         houseFee = _totalAmount / 10;
 
         if (!_isPlayerWinner) {
@@ -147,7 +156,13 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @return price Current price of MONT token
      */
     function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
+        price = quoter.quoteExactInputSingle(
+            address(usdt),
+            address(mont),
+            poolFee,
+            1e6,
+            0
+        );
     }
 
     /**
@@ -156,7 +171,9 @@ contract RewardManager is Ownable2Step, IRewardManager {
      * @return isReferrerSet ??
      * @return referrer ??
      */
-    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(
+        address _referee
+    ) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {

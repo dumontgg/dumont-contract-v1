@@ -10,7 +10,7 @@ import {Vault} from "../../../src/Vault.sol";
 import {Burner} from "../../../src/Burner.sol";
 import {Game} from "../../../src/Game.sol";
 import {GameFactory} from "../../../src/GameFactory.sol";
-import {RewardManager} from "../../../src/RewardManager.sol";
+import {MontRewardManager} from "../../../src/MontRewardManager.sol";
 
 contract GameTest is BaseTest {
     Game public game;
@@ -20,7 +20,16 @@ contract GameTest is BaseTest {
 
         deployContracts();
 
-        game = new Game(usdt, vault, users.server1, users.alice, 0, ONE_HOUR * 12, ONE_HOUR * 6, 3);
+        game = new Game(
+            usdt,
+            vault,
+            users.server1,
+            users.alice,
+            0,
+            ONE_HOUR * 12,
+            ONE_HOUR * 6,
+            3
+        );
     }
 
     function test_owner() public {
@@ -28,7 +37,21 @@ contract GameTest is BaseTest {
     }
 
     function test_rate() public view {
-        bool[13] memory cards = [true, false, false, true, false, true, false, true, false, true, false, true, false];
+        bool[13] memory cards = [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false
+        ];
 
         UD60x18 a = game.getGuessOdds(cards);
         uint256 b = a.mul(ud(1e18)).unwrap();

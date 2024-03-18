@@ -8,7 +8,7 @@ import {BaseTest} from "../../Base.t.sol";
 import {Vault} from "../../../src/Vault.sol";
 import {Burner} from "../../../src/Burner.sol";
 import {GameFactory} from "../../../src/GameFactory.sol";
-import {RewardManager} from "../../../src/RewardManager.sol";
+import {MontRewardManager} from "../../../src/MontRewardManager.sol";
 
 contract VaultTest is BaseTest {
     uint256 private constant GAME_CREATION_FEE = 1e18;
@@ -23,7 +23,7 @@ contract VaultTest is BaseTest {
             usdt,
             Burner(address(0x00)),
             GameFactory(address(0x00)),
-            RewardManager(address(0x00)),
+            MontRewardManager(address(0x00)),
             GAME_CREATION_FEE
         );
     }
