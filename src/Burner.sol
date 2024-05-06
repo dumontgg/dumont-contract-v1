@@ -12,7 +12,6 @@ import {ISwapRouter} from "./interfaces/Uniswap/ISwapRouter.sol";
 
 /**
  * @title Burner contract burns MONT tokens
- * @author X team
  * @notice Burner is used to swap USDT to MONT and burn MONT
  * @dev The contract uses a custom pool in uniswap to burn MONT tokens
  */
@@ -22,7 +21,6 @@ contract Burner is IBurner, Ownable2Step {
     IMONT public mont;
     IERC20 public usdt;
     ISwapRouter public swapRouter;
-
     uint24 public uniswapPoolFee;
 
     /**
@@ -32,12 +30,7 @@ contract Burner is IBurner, Ownable2Step {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(
-        IMONT _mont,
-        IERC20 _usdt,
-        ISwapRouter _swapRouter,
-        uint24 _uniswapPoolFee
-    ) Ownable(msg.sender) {
+    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         swapRouter = _swapRouter;
@@ -91,21 +84,17 @@ contract Burner is IBurner, Ownable2Step {
      * @param _amountIn The amount of USDT to swap
      * @param _amountOutMinimum The minimum amount of MONT to receive
      */
-    function _swap(
-        uint256 _amountIn,
-        uint256 _amountOutMinimum
-    ) private returns (uint256 amountOut) {
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                fee: uniswapPoolFee,
-                amountIn: _amountIn,
-                tokenIn: address(usdt),
-                tokenOut: address(mont),
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountOutMinimum: _amountOutMinimum,
-                sqrtPriceLimitX96: 0
-            });
+    function _swap(uint256 _amountIn, uint256 _amountOutMinimum) private returns (uint256 amountOut) {
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            fee: uniswapPoolFee,
+            amountIn: _amountIn,
+            tokenIn: address(usdt),
+            tokenOut: address(mont),
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountOutMinimum: _amountOutMinimum,
+            sqrtPriceLimitX96: 0
+        });
 
         amountOut = swapRouter.exactInputSingle(params);
     }

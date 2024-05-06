@@ -20,21 +20,21 @@ interface IGameFactory {
      * @param _from The old game duration
      * @param _to The new game duration
      */
-    event GameDurationChanged(uint256 _from, uint256 _to);
+    event GameDurationChanged(uint256 indexed _from, uint256 indexed _to);
 
     /**
      * @notice Emitted when the claimable duration changes
      * @param _from The old claimable duration
      * @param _to The new claimable duration
      */
-    event ClaimableAfterChanged(uint256 _from, uint256 _to);
+    event ClaimableAfterChanged(uint256 indexed _from, uint256 indexed _to);
 
     /**
      * @notice Emitted when the maximum free reveals change
      * @param _from The old maximum number
      * @param _to The new maximum number
      */
-    event MaxFreeRevealsChanged(uint256 _from, uint256 _to);
+    event MaxFreeRevealsChanged(uint256 indexed _from, uint256 indexed _to);
 
     /**
      * @notice Emitted when the address of the Vault changes
@@ -55,7 +55,7 @@ interface IGameFactory {
      * @param _from The old game creation fee
      * @param _to The new game creation fee
      */
-    event GameFeeChanged(uint256 _from, uint256 _to);
+    event GameFeeChanged(uint256 indexed _from, uint256 indexed _to);
 
     /**
      * @notice Emitted when a new Game is deployed
@@ -65,7 +65,10 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
+        uint256 indexed _gameId,
+        address indexed _gameAddress,
+        address indexed _player,
+        uint256 _gameDuration
     );
 
     event Referred(address _referee, address _referrer, uint256 _timestamp);
@@ -121,14 +124,16 @@ interface IGameFactory {
      * @dev The caller must pay at least the gameCreationFee amount to create a game
      * @param _referrer The referrer of the player. Could be the 0x00 address if already set or
      * if the player does not want to set one
-     * @return The ID of the newly created game
+     * @return The ID and the address of the newly created game
      */
-    function createGame(address _referrer) external returns (uint256);
+    function createGame(address _referrer) external returns (uint256, address);
 
     /**
      * @notice Retrieves the details of a specific game
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(uint256 _gameId) external view returns (GameDetails memory);
+    function getGame(
+        uint256 _gameId
+    ) external view returns (GameDetails memory);
 }

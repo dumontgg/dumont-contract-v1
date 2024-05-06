@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {IBurner} from "./IBurner.sol";
+import {IGameFactory} from "./IGameFactory.sol";
+import {IMontRewardManager} from "./IMontRewardManager.sol";
+
 /**
  * @title Vault Contract
  * @notice Manages USDT deposits, withdrawals, and game rewards
@@ -35,14 +39,6 @@ interface IVault {
     event Deposit(address indexed _spender, uint256 _amount);
 
     /**
-     * @notice Emitted when a new game is created
-     * @param _gameId The ID of the newly created game
-     * @param _gameAddress The address of the new game contract
-     * @param _player The address of the player who created the game
-     */
-    event GameCreated(uint256 _gameId, address _gameAddress, address _player);
-
-    /**
      * @notice Emitted when the minimum bet amount is changed
      * @param _from The old minimum bet amount
      * @param _to The new minimum bet amount
@@ -63,8 +59,9 @@ interface IVault {
 
     /**
      * @notice Thrown when the caller is not authorized to perform an action
+     * @param _caller Caller of the function
      */
-    error NotAuthorized();
+    error NotAuthorized(address _caller);
 
     /**
      * @notice Thrown when an attempt to send ether fails
@@ -75,4 +72,82 @@ interface IVault {
      * @notice Thrown when the requested amount is not available
      */
     error InsufficientAmount();
+
+    /**
+     * @notice Changes the address of the Burner contract
+     * @param _burner The new address of the Burner contract
+     */
+    function setBurner(IBurner _burner) external;
+
+    /**
+     * @notice Changes the address of the GameFactory contract
+     * @param _gameFactory The new address of the GameFactory contract
+     */
+    function setGameFactory(IGameFactory _gameFactory) external;
+
+    /**
+     * @notice Changes the address of the MontRewardManager contract
+     * @param _montRewardManager The address of the new MontRewardManager contract
+     */
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external;
+
+    /**
+     * @notice Allows admins to deposit USDT into the contract
+     * @param _amount The amount of USDT to deposit
+     */
+    function deposit(uint256 _amount) external;
+
+    /**
+     * @notice Allows the owner to withdraw a specified amount of tokens
+     * @param _token The address of the ERC20 token to withdraw
+     * @param _amount The amount of tokens to withdraw
+     * @param _recipient The address to receive the withdrawn tokens
+     */
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external;
+
+    /**
+     * @notice Allows the owner to withdraw ETH from the contract
+     * @param _recipient The address to receive the withdrawn ETH
+     */
+    function withdrawETH(address _recipient) external;
+
+    /**
+     * @notice Notifies the Vault contract that a player lost a bet and sends USDT if player is the winner
+     * @param _gameId Id of the game
+     * @param _betAmount Amount of the bet in USDT
+     * @param _totalAmount Amount of the bet multiplied by the odds
+     * @param _player The address of the player
+     * @param _isPlayerWinner cc
+     * @param _receiveReward cc
+     */
+    function transferPlayerRewards(
+        uint256 _gameId,
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        address _player,
+        bool _isPlayerWinner,
+        bool _receiveReward
+    ) external;
+
+    /**
+     * @notice Changes the minimum bet amount of USDT
+     * @param _minimumBetAmount The new minimum bet amount
+     */
+    function setMinimumBetAmount(uint256 _minimumBetAmount) external;
+
+    /**
+     * @notice Returns the maximum bet amount a player can place
+     */
+    function getMaximumBetAmount() external view returns (uint256);
+
+    /**
+     * @notice Returns the minimum bet amount a player can place
+     */
+    function getMinimumBetAmount() external view returns (uint256);
 }

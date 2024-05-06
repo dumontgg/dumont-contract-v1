@@ -28,6 +28,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
     uint256 public gameCreationFee;
 
     uint256 public gameId = 0;
+    mapping(address user => uint256 games) public userGames;
     mapping(uint256 gameId => GameDetails gameDetails) public games;
     mapping(address referee => address referrer) public referrals;
 
@@ -149,7 +150,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * if the player does not want to set one
      * @return The ID of the newly created game
      */
-    function createGame(address _referrer) external returns (uint256) {
+    function createGame(address _referrer) external returns (uint256, address) {
         uint256 _gameId = gameId;
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
@@ -158,6 +159,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
             address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
         games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: revealer});
+        userGames[msg.sender] += 1;
 
         emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
 
@@ -167,7 +169,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
             setReferrer(msg.sender, _referrer);
         }
 
-        return _gameId;
+        return (_gameId, gameAddress);
     }
 
     /**

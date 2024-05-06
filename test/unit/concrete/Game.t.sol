@@ -53,7 +53,7 @@ contract GameTest is BaseTest {
             false
         ];
 
-        UD60x18 a = game.getGuessOdds(cards);
+        UD60x18 a = game.getGuessRate(cards);
         uint256 b = a.mul(ud(1e18)).unwrap();
 
         console2.log("%s", b);

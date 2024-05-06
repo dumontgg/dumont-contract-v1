@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {IMONT} from "./IMONT.sol";
 import {ISwapRouter} from "./Uniswap/ISwapRouter.sol";
 
 /**
@@ -13,21 +16,29 @@ interface IBurner {
      * @param _usdtAmount The amount of USDT swapped
      * @param _montAmount The amount of MONT burned
      */
-    event MONTTokensBurned(uint256 _usdtAmount, uint256 _montAmount);
+    event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
 
     /**
      * @notice Emitted when the UniswapV3 pool fee is changed
      * @param _from The old Uniswap pool fee
      * @param _to The new Uniswap pool fee
      */
-    event UniswapPoolFeeChanged(uint24 _from, uint24 _to);
+    event UniswapPoolFeeChanged(uint24 indexed _from, uint24 indexed _to);
 
     /**
      * @notice Emitted when the swap router address is changed
      * @param _from The old swap router address
      * @param _to The new swap router address
      */
-    event SwapRouterChanged(address _from, address _to);
+    event SwapRouterChanged(address indexed _from, address indexed _to);
+
+    function mont() external returns (IMONT);
+
+    function usdt() external returns (IERC20);
+
+    function swapRouter() external returns (ISwapRouter);
+
+    function uniswapPoolFee() external returns (uint24);
 
     /**
      * @notice Changes the UniswapV3 pool by changing the fee of the pool

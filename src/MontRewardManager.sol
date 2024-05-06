@@ -26,6 +26,8 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
     uint24 public poolFee;
     GameFactory public gameFactory;
 
+    mapping(address => uint256) public balances;
+
     /**
      * @notice Constructor to initialize contract state variables
      * @param _vault Address of the Vault contract
@@ -35,14 +37,9 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(
-        address _vault,
-        IMONT _mont,
-        IERC20 _usdt,
-        GameFactory _gameFactory,
-        IQuoter _quoter,
-        uint24 _poolFee
-    ) Ownable(msg.sender) {
+    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee)
+        Ownable(msg.sender)
+    {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -93,6 +90,22 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
     }
 
     /**
+     * @notice Claims MONT tokens of the caller (player)
+     * @return amount Amount of MONT tokens transferred to caller
+     */
+    function claim() external returns (uint256 amount) {
+        amount = balances[msg.sender];
+
+        if (amount > 0) {
+            balances[msg.sender] = 0;
+
+            mont.safeTransfer(msg.sender, amount);
+        }
+
+        emit MontClaimed(msg.sender, amount);
+    }
+
+    /**
      * @notice Transfers MONT rewards to the player based on game outcome
      * @param _betAmount Amount of the bet
      * @param _totalAmount Total amount of the bet multiplied by the odds
@@ -100,17 +113,12 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferPlayerRewards(
-        uint256 _betAmount,
-        uint256 _totalAmount,
-        address _player,
-        bool _isPlayerWinner
-    ) external onlyVault returns (uint256 reward) {
-        uint256 houseFee = calculateHouseFee(
-            _betAmount,
-            _totalAmount,
-            _isPlayerWinner
-        );
+    function transferPlayerRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
+        external
+        onlyVault
+        returns (uint256 reward)
+    {
+        uint256 houseFee = calculateHouseFee(_betAmount, _totalAmount, _isPlayerWinner);
         uint256 price = getMontPrice();
 
         reward = ((houseFee * 8) / 10) / price;
@@ -121,15 +129,15 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
 
         (bool isReferrerSet, address referrer) = checkReferrer(_player);
 
-        if (isReferrerSet) {
-            reward = (_totalAmount * 11) / 10;
-
-            mont.safeTransfer(referrer, reward / 10);
+        if (!isReferrerSet) {
+            reward = (_totalAmount * 8) / 10;
+        } else if (isReferrerSet) {
+            balances[referrer] += reward / 10;
         }
 
-        mont.safeTransfer(_player, reward);
+        balances[_player] += reward;
 
-        emit MontRewardTransferred(_player, reward);
+        emit MontRewardAssigned(_player, reward);
     }
 
     /**
@@ -139,11 +147,11 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(
-        uint256 _betAmount,
-        uint256 _totalAmount,
-        bool _isPlayerWinner
-    ) private pure returns (uint256 houseFee) {
+    function calculateHouseFee(uint256 _betAmount, uint256 _totalAmount, bool _isPlayerWinner)
+        private
+        pure
+        returns (uint256 houseFee)
+    {
         houseFee = _totalAmount / 10;
 
         if (!_isPlayerWinner) {
@@ -156,24 +164,16 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
      * @return price Current price of MONT token
      */
     function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(
-            address(usdt),
-            address(mont),
-            poolFee,
-            1e6,
-            0
-        );
+        price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
     }
 
     /**
-     * @notice ??
-     * @param _referee ??
-     * @return isReferrerSet ??
-     * @return referrer ??
+     * @notice Checks if the player has used an invite link
+     * @param _referee The player of the game getting the rewards
+     * @return isReferrerSet If the referrer is set for the referee (player)
+     * @return referrer Address of the referrer of the referee (player)
      */
-    function checkReferrer(
-        address _referee
-    ) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {

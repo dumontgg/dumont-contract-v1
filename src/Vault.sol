@@ -60,7 +60,7 @@ contract Vault is IVault, Ownable2Step {
      */
     modifier onlyGame(uint256 _gameId) {
         if (gameFactory.getGame(_gameId).manager != msg.sender) {
-            revert NotAuthorized();
+            revert NotAuthorized(msg.sender);
         }
 
         _;

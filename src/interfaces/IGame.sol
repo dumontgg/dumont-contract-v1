@@ -3,40 +3,38 @@ pragma solidity 0.8.23;
 
 interface IGame {
     enum CardStatus {
-        HIDDEN,
+        SECRETED,
         GUESSED,
         CLAIMED,
-        FREE_REVEALE_REQUESTED,
-        REVEALED,
-        FREE_REVEALED
+        LEAK_REQUESTED,
+        REVEALED
     }
 
     struct Card {
-        bytes hashed;
         uint256 betAmount;
         uint256 totalAmount;
-        bool[13] guessedNumbers;
-        CardStatus status;
         uint256 guessedAt;
-        string revealedSalt;
         uint256 revealedNumber;
+        bool[13] guessedNumbers;
+        bytes32 hash;
+        CardStatus status;
+        string revealedSalt;
     }
 
-    event CardRevealed(uint256 _index, uint256 _number, string _salt);
+    event CardRevealed(uint256 indexed _index, uint256 indexed _number, string _salt);
 
-    event PlayerGuessed(
-        uint256 _index,
-        bool[13] _guessedNumbers,
-        uint256 _usdtAmount
-    );
+    event PlayerGuessed(uint256 indexed _index, uint256 indexed _usdtAmount, bool[13] _guessedNumbers);
 
-    event RevealFreeCardRequested(uint256 _index, uint256 _timestamp);
+    event RevealFreeCardRequested(uint256 indexed _index, uint256 _timestamp);
 
-    event CardClaimed(uint256 _index, uint256 _timestamp);
+    event CardClaimed(uint256 indexed _index, uint256 _timestamp);
 
-    error CardIsNotHidden(uint256 _index);
+    error CardIsNotSecret(uint256 _index);
+    error MaximumLeaksRequested();
 
     error CardIsNotGuessed(uint256 _index);
+
+    error CardIsNotLeakRequested(uint256 _index);
 
     error BetAmountIsLessThanMinimum();
 
@@ -50,7 +48,9 @@ interface IGame {
 
     error NotYetTimeToClaim(uint256 _index);
 
+    error GameExpired();
+
     error GameIsLocked();
 
-    error CardIsNotFreeRevealed();
+    error InvalidSalt(uint256 _index, uint256 _number, string _salt);
 }
