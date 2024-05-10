@@ -18,16 +18,29 @@ interface IBurner {
      */
     event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
 
-    // TODO:
+    /**
+     * @notice Throws when there are not enough USDT tokens to burn
+     */
+    error NotEnoughUSDT();
+
+    /**
+     * @notice Returns the MONT token address
+     */
     function mont() external returns (IMONT);
 
-    // TODO:
+    /**
+     * @notice Returns the USDT token address
+     */
     function usdt() external returns (IERC20);
 
-    // TODO:
+    /**
+     * @notice Returns the Uniswap SwapRouter contract address
+     */
     function swapRouter() external returns (ISwapRouter);
 
-    // TODO:
+    /**
+     * @notice Returns the Uniswap USDT-MONT pool fee tier
+     */
     function uniswapPoolFee() external returns (uint24);
 
     /**

@@ -67,13 +67,15 @@ interface IGameFactory {
      * @param _gameId Unique ID of the game
      * @param _gameAddress Address of the game
      * @param _player Address of the player
-     * @param _gameDuration Duration of the game
      */
-    event GameCreated(
-        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
-    );
+    event GameCreated(uint256 indexed _gameId, address indexed _gameAddress, address indexed _player);
 
-    event Referred(address _referee, address _referrer, uint256 _timestamp);
+    /**
+     * @notice Emitted when a player sets a referrer during game creation
+     * @param _referee Address of the referee
+     * @param _referrer Address of the referrer
+     */
+    event Referred(address indexed _referee, address indexed _referrer);
 
     /**
      * @notice Thrown when the caller is not authorized
@@ -81,8 +83,18 @@ interface IGameFactory {
      */
     error NotAuthorized(address _caller);
 
+    /**
+     * @notice Thrown when the referrer address is invalid
+     * @param _referrer Address of the referrer
+     * @param _referee Address of the referee
+     */
     error InvalidReferrer(address _referrer, address _referee);
 
+    /**
+     * @notice Thrown when the referrer address is already set for a referee
+     * @param _referrer Address of the referrer
+     * @param _referee Address of the referee
+     */
     error ReferralAlreadySet(address _referee, address _referrer);
 
     /**
@@ -108,12 +120,6 @@ interface IGameFactory {
      * @param _maxFreeReveals The amount of free reveals a player can request
      */
     function setMaxFreeReveals(uint256 _maxFreeReveals) external;
-
-    /**
-     * @notice Changes the address of the Vault contract
-     * @param _vault The new Vault contract address
-     */
-    function setVault(Vault _vault) external;
 
     /**
      * @notice Changes the manager address for creating new games

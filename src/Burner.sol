@@ -46,6 +46,10 @@ contract Burner is IBurner, Ownable2Step {
     function burnTokens(uint256 _amountOutMinimum) external onlyOwner {
         uint256 usdtBalance = usdt.balanceOf(address(this));
 
+        if (usdtBalance == 0) {
+            revert NotEnoughUSDT();
+        }
+
         // Swap is used to convert all USDT tokens to MONT tokens
         _swap(usdtBalance, _amountOutMinimum);
 

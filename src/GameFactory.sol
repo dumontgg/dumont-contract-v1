@@ -18,10 +18,10 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
 contract GameFactory is IGameFactory, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    IERC20 public usdt;
-    Vault public vault;
-    address public revealer;
+    IERC20 public immutable usdt;
+    Vault public immutable vault;
 
+    address public revealer;
     uint256 public gameDuration;
     uint256 public claimableAfter;
     uint256 public maxFreeReveals;
@@ -125,16 +125,6 @@ contract GameFactory is IGameFactory, Ownable2Step {
     }
 
     /**
-     * @notice Changes the address of the Vault contract
-     * @param _vault The new Vault contract address
-     */
-    function setVault(Vault _vault) external onlyOwner {
-        emit VaultChanged(address(vault), address(_vault));
-
-        vault = _vault;
-    }
-
-    /**
      * @notice Changes the manager address for creating new games
      * @param _revealer The new manager address
      */
@@ -173,7 +163,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
         ++gameId;
         userGames[msg.sender] += 1;
 
-        emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
+        emit GameCreated(_gameId, gameAddress, msg.sender);
 
         if (_referrer != address(0)) {
             setReferrer(msg.sender, _referrer);
@@ -208,6 +198,6 @@ contract GameFactory is IGameFactory, Ownable2Step {
         referrals[_referee] = _referrer;
         referrerInvites[_referrer] += 1;
 
-        emit Referred(_referee, _referrer, block.timestamp);
+        emit Referred(_referee, _referrer);
     }
 }
