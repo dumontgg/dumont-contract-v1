@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+// todo:
 interface IGame {
     enum CardStatus {
         SECRETED,
@@ -44,13 +45,9 @@ interface IGame {
 
     error InvalidGameIndex();
 
-    error GameIsUnlocked();
-
     error NotYetTimeToClaim(uint256 _index);
 
     error GameExpired();
-
-    error GameIsLocked();
 
     error InvalidSalt(uint256 _index, uint256 _number, string _salt);
 }

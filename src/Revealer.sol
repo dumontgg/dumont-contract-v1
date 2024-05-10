@@ -25,9 +25,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Reveals a card
      * @param _card The details of the revealed card
      */
-    function revealCard(
-        RevealedCard calldata _card
-    ) public onlyRole(REVEALER_ROLE) {
+    function revealCard(RevealedCard calldata _card) external onlyRole(REVEALER_ROLE) {
         _revealCard(_card);
     }
 
@@ -35,9 +33,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Reveals multiple cards from a single or different games
      * @param _cards The details of the revealed cards
      */
-    function revealCardBatch(
-        RevealedCard[] calldata _cards
-    ) external onlyRole(REVEALER_ROLE) {
+    function revealCardBatch(RevealedCard[] calldata _cards) external onlyRole(REVEALER_ROLE) {
         for (uint256 i = 0; i < _cards.length; ++i) {
             _revealCard(_cards[i]);
         }
@@ -47,9 +43,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Initializes a game
      * @param _data The details of the game
      */
-    function initialize(
-        InitializeGame calldata _data
-    ) external onlyRole(REVEALER_ROLE) {
+    function initialize(InitializeGame calldata _data) external onlyRole(REVEALER_ROLE) {
         _initialize(_data);
     }
 
@@ -57,9 +51,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Initializes multiple games
      * @param _data The details of multiple games
      */
-    function initializeBatch(
-        InitializeGame[] calldata _data
-    ) external onlyRole(REVEALER_ROLE) {
+    function initializeBatch(InitializeGame[] calldata _data) external onlyRole(REVEALER_ROLE) {
         for (uint256 i = 0; i < _data.length; ++i) {
             _initialize(_data[i]);
         }
@@ -69,7 +61,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Calls the game contract and initializes it
      * @param _data The hashed deck of the game
      */
-    function _initialize(InitializeGame calldata _data) internal {
+    function _initialize(InitializeGame calldata _data) private {
         Game game = Game(_data.game);
 
         game.initialize(_data.hashedDeck);
@@ -81,9 +73,7 @@ contract Revealer is AccessControl, IRevealer {
      * @notice Calls the game contract and reveals a secreted card
      * @param _card The details of the hashed card
      */
-    function _revealCard(
-        RevealedCard calldata _card
-    ) public onlyRole(REVEALER_ROLE) {
+    function _revealCard(RevealedCard calldata _card) private {
         Game game = Game(_card.game);
 
         game.revealCard(_card.index, _card.number, _card.salt);

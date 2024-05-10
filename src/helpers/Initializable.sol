@@ -6,6 +6,11 @@ pragma solidity 0.8.23;
  * @dev Helper contract for managing initialization state
  */
 contract Initializable {
+    uint256 private constant INITIALIZED = 2;
+    uint256 private constant NOT_INITIALIZED = 1;
+
+    uint256 private initialized = NOT_INITIALIZED;
+
     /**
      * @notice Throws if called when the contract is not yet initialized
      */
@@ -15,11 +20,6 @@ contract Initializable {
      * @notice Throws if called when the contract already initialized
      */
     error AlreadyInitialized();
-
-    uint256 private constant INITIALIZED = 2;
-    uint256 private constant NOT_INITIALIZED = 1;
-
-    uint256 private initialized = NOT_INITIALIZED;
 
     /**
      * @dev Throws if called when the contract is not yet initialized
@@ -54,7 +54,7 @@ contract Initializable {
      * @dev Checks if the contract is initialized
      * @return bool true if the contract is initialized, false otherwise
      */
-    function isInitialized() public view returns (bool) {
+    function isInitialized() external view returns (bool) {
         return initialized == INITIALIZED;
     }
 }

@@ -21,8 +21,8 @@ contract Game is Initializable, IGame {
 
     bool public constant SHOULD_RECEIVE_REWARDS = true;
 
-    uint256 public cardsLeaked;
-    uint256 public cardsRevealed;
+    uint256 public cardsLeaked = 0;
+    uint256 public cardsRevealed = 0;
     uint256[13] public revealedCardNumbersCount;
     mapping(uint256 => Card) public cards;
 
@@ -35,39 +35,6 @@ contract Game is Initializable, IGame {
     uint256 public immutable gameDuration;
     uint256 public immutable gameCreatedAt;
     uint256 public immutable claimableAfter;
-
-    /**
-     * @notice Sets contract and player addresses
-     * @param _usdt The address of the USDT token
-     * @param _vault The Vault contract address
-     * @param _revealer The game server that submits the random hash of cards and reveals the guessed cards
-     * @param _player The player that created the game using the GameFactory contract
-     * @param _gameId The ID of the game stored in the GameFactory contract
-     * @param _gameDuration The duration of the game. After that, the game is unplayable
-     * @param _claimableAfter The duration during which the user can claim their win if the revealer does not reveal
-     * @param _maxLeaks The maximum number of leaks a player can request
-     */
-    constructor(
-        IERC20 _usdt,
-        Vault _vault,
-        address _revealer,
-        address _player,
-        uint256 _gameId,
-        uint256 _gameDuration,
-        uint256 _claimableAfter,
-        uint256 _maxLeaks
-    ) {
-        usdt = _usdt;
-        vault = _vault;
-        revealer = _revealer;
-        player = _player;
-        gameId = _gameId;
-        gameDuration = _gameDuration;
-        claimableAfter = _claimableAfter;
-        maxLeaks = _maxLeaks;
-
-        gameCreatedAt = block.timestamp;
-    }
 
     /**
      * @notice Modifier to restrict access to player only
@@ -100,6 +67,39 @@ contract Game is Initializable, IGame {
         }
 
         _;
+    }
+
+    /**
+     * @notice Sets contract and player addresses
+     * @param _usdt The address of the USDT token
+     * @param _vault The Vault contract address
+     * @param _revealer The game server that submits the random hash of cards and reveals the guessed cards
+     * @param _player The player that created the game using the GameFactory contract
+     * @param _gameId The ID of the game stored in the GameFactory contract
+     * @param _gameDuration The duration of the game. After that, the game is unplayable
+     * @param _claimableAfter The duration during which the user can claim their win if the revealer does not reveal
+     * @param _maxLeaks The maximum number of leaks a player can request
+     */
+    constructor(
+        IERC20 _usdt,
+        Vault _vault,
+        address _revealer,
+        address _player,
+        uint256 _gameId,
+        uint256 _gameDuration,
+        uint256 _claimableAfter,
+        uint256 _maxLeaks
+    ) {
+        usdt = _usdt;
+        vault = _vault;
+        revealer = _revealer;
+        player = _player;
+        gameId = _gameId;
+        gameDuration = _gameDuration;
+        claimableAfter = _claimableAfter;
+        maxLeaks = _maxLeaks;
+
+        gameCreatedAt = block.timestamp;
     }
 
     /**

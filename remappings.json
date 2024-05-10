@@ -1,0 +1,6 @@
+{
+  "remappings": [
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "@prb/math/=node_modules/@prb/math/"
+  ]
+}

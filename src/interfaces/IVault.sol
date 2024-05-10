@@ -51,11 +51,7 @@ interface IVault {
      * @param _amount The amount being withdrawn
      * @param _recipient The address receiving the withdrawal
      */
-    event Withdraw(
-        address indexed _token,
-        uint256 _amount,
-        address indexed _recipient
-    );
+    event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
 
     /**
      * @notice Thrown when the caller is not authorized to perform an action
@@ -67,11 +63,6 @@ interface IVault {
      * @notice Thrown when an attempt to send ether fails
      */
     error FailedToSendEther();
-
-    /**
-     * @notice Thrown when the requested amount is not available
-     */
-    error InsufficientAmount();
 
     /**
      * @notice Changes the address of the Burner contract
@@ -89,9 +80,7 @@ interface IVault {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external;
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external;
 
     /**
      * @notice Allows admins to deposit USDT into the contract
@@ -105,11 +94,7 @@ interface IVault {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external;
+    function withdraw(address _token, uint256 _amount, address _recipient) external;
 
     /**
      * @notice Allows the owner to withdraw ETH from the contract

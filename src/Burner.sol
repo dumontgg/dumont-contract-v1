@@ -18,10 +18,10 @@ import {ISwapRouter} from "./interfaces/Uniswap/ISwapRouter.sol";
 contract Burner is IBurner, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    IMONT public mont;
-    IERC20 public usdt;
-    ISwapRouter public swapRouter;
-    uint24 public uniswapPoolFee;
+    IMONT public immutable mont;
+    IERC20 public immutable usdt;
+    uint24 public immutable uniswapPoolFee;
+    ISwapRouter public immutable swapRouter;
 
     /**
      * @notice Sets related contract addresses
@@ -35,29 +35,6 @@ contract Burner is IBurner, Ownable2Step {
         usdt = _usdt;
         swapRouter = _swapRouter;
         uniswapPoolFee = _uniswapPoolFee;
-
-        usdt.forceApprove(address(_swapRouter), type(uint256).max);
-    }
-
-    /**
-     * @notice Changes the UniswapV3 pool by changing the fee of the pool
-     * @param _uniswapPoolFee The new Uniswap pool fee
-     * @dev Can only be called by the owner of the contract
-     */
-    function setUniswapPoolFee(uint24 _uniswapPoolFee) external onlyOwner {
-        emit UniswapPoolFeeChanged(uniswapPoolFee, _uniswapPoolFee);
-
-        uniswapPoolFee = _uniswapPoolFee;
-    }
-
-    /**
-     * @notice Changes the SwapRouter contract address
-     * @param _swapRouter The new SwapRouter contract address
-     */
-    function setSwapRouter(ISwapRouter _swapRouter) external onlyOwner {
-        emit SwapRouterChanged(address(swapRouter), address(_swapRouter));
-
-        swapRouter = _swapRouter;
 
         usdt.forceApprove(address(_swapRouter), type(uint256).max);
     }

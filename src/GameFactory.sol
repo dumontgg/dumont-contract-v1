@@ -29,8 +29,32 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
     uint256 public gameId = 0;
     mapping(address user => uint256 games) public userGames;
-    mapping(uint256 gameId => GameDetails gameDetails) public games;
     mapping(address referee => address referrer) public referrals;
+    mapping(address referrer => uint256 invites) public referrerInvites;
+    mapping(uint256 gameId => GameDetails gameDetails) private _games;
+
+    /**
+     * @notice Modifier to check if the caller is the Vault contract address
+     */
+    modifier onlyVault() {
+        if (msg.sender != address(vault)) {
+            revert NotAuthorized(msg.sender);
+        }
+
+        _;
+    }
+
+    /**
+     * @notice Modifier to check if the caller is the player of the specified game
+     * @param _gameId The ID of the game
+     */
+    modifier onlyPlayer(uint256 _gameId) {
+        if (_games[_gameId].player == msg.sender) {
+            revert NotAuthorized(msg.sender);
+        }
+
+        _;
+    }
 
     /**
      * @notice Initializes the GameFactory contract with specified parameters
@@ -58,29 +82,6 @@ contract GameFactory is IGameFactory, Ownable2Step {
         claimableAfter = _claimableAfter;
         maxFreeReveals = _maxFreeReveals;
         gameCreationFee = _gameCreationFee;
-    }
-
-    /**
-     * @notice Modifier to check if the caller is the Vault contract address
-     */
-    modifier onlyVault() {
-        if (msg.sender != address(vault)) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
-    }
-
-    /**
-     * @notice Modifier to check if the caller is the player of the specified game
-     * @param _gameId The ID of the game
-     */
-    modifier onlyPlayer(uint256 _gameId) {
-        if (games[_gameId].player == msg.sender) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
     }
 
     /**
@@ -158,12 +159,21 @@ contract GameFactory is IGameFactory, Ownable2Step {
         address gameAddress =
             address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
-        games[_gameId] = GameDetails({gameAddress: gameAddress, player: msg.sender, manager: revealer});
+        _games[_gameId] = GameDetails({
+            gameAddress: gameAddress,
+            player: msg.sender,
+            revealer: revealer,
+            gameDuration: gameDuration,
+            claimableAfter: claimableAfter,
+            maxFreeReveals: maxFreeReveals,
+            gameCreationFee: gameCreationFee,
+            gameCreatedAt: block.timestamp
+        });
+
+        ++gameId;
         userGames[msg.sender] += 1;
 
         emit GameCreated(_gameId, gameAddress, msg.sender, gameDuration);
-
-        ++gameId;
 
         if (_referrer != address(0)) {
             setReferrer(msg.sender, _referrer);
@@ -177,8 +187,8 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(uint256 _gameId) external view returns (GameDetails memory) {
-        return games[_gameId];
+    function games(uint256 _gameId) external view returns (GameDetails memory) {
+        return _games[_gameId];
     }
 
     /**
@@ -196,6 +206,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
         }
 
         referrals[_referee] = _referrer;
+        referrerInvites[_referrer] += 1;
 
         emit Referred(_referee, _referrer, block.timestamp);
     }

@@ -11,8 +11,13 @@ import {Vault} from "../Vault.sol";
 interface IGameFactory {
     struct GameDetails {
         address player;
-        address manager;
+        address revealer;
         address gameAddress;
+        uint256 gameDuration;
+        uint256 claimableAfter;
+        uint256 maxFreeReveals;
+        uint256 gameCreationFee;
+        uint256 gameCreatedAt;
     }
 
     /**
@@ -65,10 +70,7 @@ interface IGameFactory {
      * @param _gameDuration Duration of the game
      */
     event GameCreated(
-        uint256 indexed _gameId,
-        address indexed _gameAddress,
-        address indexed _player,
-        uint256 _gameDuration
+        uint256 indexed _gameId, address indexed _gameAddress, address indexed _player, uint256 _gameDuration
     );
 
     event Referred(address _referee, address _referrer, uint256 _timestamp);
@@ -133,7 +135,5 @@ interface IGameFactory {
      * @param _gameId The ID of the game
      * @return Details of the specified game
      */
-    function getGame(
-        uint256 _gameId
-    ) external view returns (GameDetails memory);
+    function games(uint256 _gameId) external view returns (GameDetails memory);
 }

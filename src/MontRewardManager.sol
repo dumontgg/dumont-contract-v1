@@ -19,14 +19,25 @@ import {IMontRewardManager} from "./interfaces/IMontRewardManager.sol";
 contract MontRewardManager is Ownable2Step, IMontRewardManager {
     using SafeERC20 for IMONT;
 
-    IMONT public mont;
-    IERC20 public usdt;
-    address public vault;
-    IQuoter public quoter;
-    uint24 public poolFee;
-    GameFactory public gameFactory;
+    IMONT public immutable mont;
+    IERC20 public immutable usdt;
+    address public immutable vault;
+    IQuoter public immutable quoter;
+    uint24 public immutable poolFee;
+    GameFactory public immutable gameFactory;
 
     mapping(address => uint256) public balances;
+
+    /**
+     * @notice Modifier to restrict access to only the Vault contract
+     */
+    modifier onlyVault() {
+        if (msg.sender != vault) {
+            revert Unauthorized();
+        }
+
+        _;
+    }
 
     /**
      * @notice Constructor to initialize contract state variables
@@ -45,47 +56,6 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
         vault = _vault;
         gameFactory = _gameFactory;
         quoter = _quoter;
-        poolFee = _poolFee;
-    }
-
-    /**
-     * @notice Modifier to restrict access to only the Vault contract
-     */
-    modifier onlyVault() {
-        if (msg.sender != vault) {
-            revert Unauthorized();
-        }
-
-        _;
-    }
-
-    /**
-     * @notice Changes the address of the Vault contract
-     * @param _vault New Vault contract address
-     */
-    function setVault(address _vault) external onlyOwner {
-        emit VaultChanged(vault, _vault);
-
-        vault = _vault;
-    }
-
-    /**
-     * @notice Changes the address of the GameFactory contract
-     * @param _gameFactory New GameFactory contract address
-     */
-    function setGameFactory(address _gameFactory) external onlyOwner {
-        emit GameFactoryChanged(address(gameFactory), _gameFactory);
-
-        gameFactory = GameFactory(_gameFactory);
-    }
-
-    /**
-     * @notice Changes the Uniswap pool fee tier
-     * @param _poolFee New Uniswap pool fee
-     */
-    function setPoolFee(uint24 _poolFee) external onlyOwner {
-        emit PoolFeeChanged(poolFee, _poolFee);
-
         poolFee = _poolFee;
     }
 

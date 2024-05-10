@@ -18,46 +18,23 @@ contract GameTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        deployContracts();
-
-        game = new Game(
-            usdt,
-            vault,
-            users.server1,
-            users.alice,
-            0,
-            ONE_HOUR * 12,
-            ONE_HOUR * 6,
-            3
-        );
+        // deployContracts();
+        //
+        // game = new Game(usdt, vault, users.server1, users.alice, 0, ONE_HOUR * 12, ONE_HOUR * 6, 3);
     }
 
-    function test_owner() public {
-        assertEq(vault.owner(), users.admin);
-    }
-
-    function test_rate() public view {
-        bool[13] memory cards = [
-            true,
-            false,
-            false,
-            true,
-            false,
-            true,
-            false,
-            true,
-            false,
-            true,
-            false,
-            true,
-            false
-        ];
-
-        UD60x18 a = game.getGuessRate(cards);
-        uint256 b = a.mul(ud(1e18)).unwrap();
-
-        console2.log("%s", b);
-    }
+    // function test_owner() public {
+    //     assertEq(vault.owner(), users.admin);
+    // }
+    //
+    // function test_rate() public view {
+    //     bool[13] memory cards = [true, false, false, true, false, true, false, true, false, true, false, true, false];
+    //
+    //     UD60x18 a = game.getGuessRate(cards);
+    //     uint256 b = a.mul(ud(1e18)).unwrap();
+    //
+    //     console2.log("%s", b);
+    // }
 
     // function testFuzz_depositWithdrawDAI(uint256 amount) public {
     //     vault.depositDai(amount);

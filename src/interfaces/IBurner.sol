@@ -18,40 +18,17 @@ interface IBurner {
      */
     event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
 
-    /**
-     * @notice Emitted when the UniswapV3 pool fee is changed
-     * @param _from The old Uniswap pool fee
-     * @param _to The new Uniswap pool fee
-     */
-    event UniswapPoolFeeChanged(uint24 indexed _from, uint24 indexed _to);
-
-    /**
-     * @notice Emitted when the swap router address is changed
-     * @param _from The old swap router address
-     * @param _to The new swap router address
-     */
-    event SwapRouterChanged(address indexed _from, address indexed _to);
-
+    // TODO:
     function mont() external returns (IMONT);
 
+    // TODO:
     function usdt() external returns (IERC20);
 
+    // TODO:
     function swapRouter() external returns (ISwapRouter);
 
+    // TODO:
     function uniswapPoolFee() external returns (uint24);
-
-    /**
-     * @notice Changes the UniswapV3 pool by changing the fee of the pool
-     * @param _uniswapPoolFee The new Uniswap pool fee
-     * @dev Can only be called by the owner of the contract
-     */
-    function setUniswapPoolFee(uint24 _uniswapPoolFee) external;
-
-    /**
-     * @notice Changes the SwapRouter contract address
-     * @param _swapRouter The new SwapRouter contract address
-     */
-    function setSwapRouter(ISwapRouter _swapRouter) external;
 
     /**
      * @notice Swaps USDT to MONT and burns MONT tokens

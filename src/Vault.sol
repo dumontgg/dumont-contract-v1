@@ -21,13 +21,25 @@ import {IVault} from "./interfaces/IVault.sol";
 contract Vault is IVault, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    IMONT public mont;
-    IERC20 public usdt;
+    IMONT public immutable mont;
+    IERC20 public immutable usdt;
+
     IBurner public burner;
     IGameFactory public gameFactory;
+    uint256 public minimumBetAmount;
     IMontRewardManager public montRewardManager;
 
-    uint256 public minimumBetAmount;
+    /**
+     * @notice Modifier to restrict access to game contracts only
+     * @param _gameId Id of the game
+     */
+    modifier onlyGame(uint256 _gameId) {
+        if (gameFactory.games(_gameId).gameAddress != msg.sender) {
+            revert NotAuthorized(msg.sender);
+        }
+
+        _;
+    }
 
     /**
      * @notice Constructor to set initial values
@@ -55,18 +67,6 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
-     * @notice Modifier to restrict access to game contracts only
-     * @param _gameId Id of the game
-     */
-    modifier onlyGame(uint256 _gameId) {
-        if (gameFactory.getGame(_gameId).manager != msg.sender) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
-    }
-
-    /**
      * @notice Changes the address of the Burner contract
      * @param _burner The new address of the Burner contract
      */
@@ -90,13 +90,8 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external onlyOwner {
-        emit RewardManagerChanged(
-            address(montRewardManager),
-            address(_montRewardManager)
-        );
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
+        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
 
         montRewardManager = _montRewardManager;
     }
@@ -117,11 +112,7 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external onlyOwner {
+    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -134,7 +125,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success, ) = _recipient.call{value: balance}("");
+        (bool success,) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -170,12 +161,7 @@ contract Vault is IVault, Ownable2Step {
         usdt.safeTransfer(address(burner), burnAmount);
 
         if (_receiveReward) {
-            montRewardManager.transferPlayerRewards(
-                _betAmount,
-                _totalAmount,
-                _player,
-                _isPlayerWinner
-            );
+            montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, _player, _isPlayerWinner);
         }
     }
 
@@ -192,7 +178,7 @@ contract Vault is IVault, Ownable2Step {
     /**
      * @notice Returns the maximum bet amount a player can place
      */
-    function getMaximumBetAmount() public view returns (uint256) {
+    function getMaximumBetAmount() external view returns (uint256) {
         uint256 usdtAmount = usdt.balanceOf(address(this));
 
         return (usdtAmount * 2) / 100;
@@ -201,7 +187,7 @@ contract Vault is IVault, Ownable2Step {
     /**
      * @notice Returns the minimum bet amount a player can place
      */
-    function getMinimumBetAmount() public view returns (uint256) {
+    function getMinimumBetAmount() external view returns (uint256) {
         return minimumBetAmount;
     }
 }

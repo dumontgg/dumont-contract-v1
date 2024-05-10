@@ -9,27 +9,6 @@ pragma solidity 0.8.23;
  */
 interface IMontRewardManager {
     /**
-     * @notice Emitted when the Vault contract address is changed
-     * @param _from The old Vault contract address
-     * @param _to The new Vault contract address
-     */
-    event VaultChanged(address indexed _from, address indexed _to);
-
-    /**
-     * @notice Emitted when the GameFactory contract address is changed
-     * @param _from The old GameFactory contract address
-     * @param _to The new GameFactory contract address
-     */
-    event GameFactoryChanged(address indexed _from, address indexed _to);
-
-    /**
-     * @notice Emitted when the Uniswap pool fee tier is changed
-     * @param _from The old pool fee tier
-     * @param _to The new pool fee tier
-     */
-    event PoolFeeChanged(uint24 indexed _from, uint24 indexed _to);
-
-    /**
      * @notice Emitted when MONT rewards are assigned to a player
      * @param _player The address of the player getting the rewards
      * @param _reward The amount of MONT rewards assigned
@@ -47,24 +26,6 @@ interface IMontRewardManager {
      * @notice Thrown when a caller is not authorized to perform an operation
      */
     error Unauthorized();
-
-    /**
-     * @notice Changes the address of the Vault contract
-     * @param _vault New Vault contract address
-     */
-    function setVault(address _vault) external;
-
-    /**
-     * @notice Changes the address of the GameFactory contract
-     * @param _gameFactory New GameFactory contract address
-     */
-    function setGameFactory(address _gameFactory) external;
-
-    /**
-     * @notice Changes the Uniswap pool fee tier
-     * @param _poolFee New Uniswap pool fee
-     */
-    function setPoolFee(uint24 _poolFee) external;
 
     /**
      * @notice Claims MONT tokens of the caller (player)

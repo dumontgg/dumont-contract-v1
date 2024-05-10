@@ -35,35 +35,19 @@ contract DeployCore2 is BaseScript {
         mont = new MONT(100_000_000e18, msg.sender);
         burner = new Burner(mont, usdt, uniswapSwapRouter, 3000);
         revealer = new Revealer();
-        gameFactory = new GameFactory(
-            usdt,
-            Vault(address(0)), // Vault
-            address(revealer),
-            1 days / 2,
-            1 days / 6,
-            3,
-            1e6
-        );
         vault = new Vault(
             mont,
             usdt,
             burner,
-            gameFactory,
+            GameFactory(address(0)),
             IMontRewardManager(address(0)), // MontRewardManager
             1e6
         );
-        montRewardManager = new MontRewardManager(
-            address(0), // Vault
-            mont,
-            usdt,
-            gameFactory,
-            uniswapQuoter,
-            3000
-        );
+        gameFactory = new GameFactory(usdt, vault, address(revealer), 1 days / 2, 1 days / 6, 3, 1e6);
+        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, uniswapQuoter, 3000);
 
-        gameFactory.setVault(vault);
-        montRewardManager.setVault(address(vault));
         vault.setMontRewardManager(montRewardManager);
+        vault.setGameFactory(gameFactory);
 
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer1);
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer2);

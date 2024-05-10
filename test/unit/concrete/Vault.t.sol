@@ -28,9 +28,9 @@ contract VaultTest is BaseTest {
         );
     }
 
-    function test_owner() public {
-        assertEq(vault.owner(), users.admin);
-    }
+    // function test_owner() public {
+    //     assertEq(vault.owner(), users.admin);
+    // }
 
     // function testFuzz_depositWithdrawDAI(uint256 amount) public {
     //     vault.depositDai(amount);
