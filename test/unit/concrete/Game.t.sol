@@ -14,37 +14,34 @@ import {MontRewardManager} from "../../../src/MontRewardManager.sol";
 
 contract GameTest is BaseTest {
     Game public game;
+    uint256 public id;
+    address public gameAddress;
 
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        // deployContracts();
-        //
-        // game = new Game(usdt, vault, users.server1, users.alice, 0, ONE_HOUR * 12, ONE_HOUR * 6, 3);
+        deployContracts();
+
+        vm.startPrank(users.adam);
+
+        usdt.approve(address(gameFactory), gameFactory.gameCreationFee());
+
+        (uint256 id_, address gameAddress_) = gameFactory.createGame(address(0));
+
+        id = id_;
+        game = Game(gameAddress_);
+        gameAddress = gameAddress_;
+
+        vm.stopPrank();
     }
 
-    // function test_owner() public {
-    //     assertEq(vault.owner(), users.admin);
-    // }
-    //
-    // function test_rate() public view {
-    //     bool[13] memory cards = [true, false, false, true, false, true, false, true, false, true, false, true, false];
-    //
-    //     UD60x18 a = game.getGuessRate(cards);
-    //     uint256 b = a.mul(ud(1e18)).unwrap();
-    //
-    //     console2.log("%s", b);
-    // }
+    function testVault() public {
+        assertEq(address(game.vault()), address(vault));
+    }
 
-    // function testFuzz_depositWithdrawDAI(uint256 amount) public {
-    //     vault.depositDai(amount);
-    //
-    //     uint256 preBalance = dai.balanceOf(address(this));
-    //
-    //     vault.withdrawToken(address(dai), amount, address(this));
-    //
-    //     uint256 postBalance = dai.balanceOf(address(this));
-    //
-    //     assertEq(preBalance + amount, postBalance);
-    // }
+    function testBaseConfigs() public {
+        assertEq(game.maxLeaks(), gameFactory.maxFreeReveals());
+        assertEq(game.gameDuration(), gameFactory.gameDuration());
+        assertEq(game.claimableAfter(), gameFactory.claimableAfter());
+    }
 }

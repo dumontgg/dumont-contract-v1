@@ -28,19 +28,75 @@ contract VaultTest is BaseTest {
         );
     }
 
-    // function test_owner() public {
-    //     assertEq(vault.owner(), users.admin);
-    // }
+    function test_owner() public {
+        assertEq(vault.owner(), users.admin);
+    }
 
-    // function testFuzz_depositWithdrawDAI(uint256 amount) public {
-    //     vault.depositDai(amount);
-    //
-    //     uint256 preBalance = dai.balanceOf(address(this));
-    //
-    //     vault.withdrawToken(address(dai), amount, address(this));
-    //
-    //     uint256 postBalance = dai.balanceOf(address(this));
-    //
-    //     assertEq(preBalance + amount, postBalance);
-    // }
+    function test_deposit() public changeCaller(users.admin) {
+        uint256 amount = 100e6;
+
+        usdt.approve(address(vault), amount);
+
+        uint256 balanceBefore = usdt.balanceOf(address(vault));
+
+        vault.deposit(amount);
+
+        uint256 balanceAfter = usdt.balanceOf(address(vault));
+
+        assertEq(balanceBefore + amount, balanceAfter);
+    }
+
+    function testFail_depositNotAuthorized() public {
+        uint256 amount = 100e6;
+
+        usdt.approve(address(vault), amount);
+
+        uint256 balanceBefore = usdt.balanceOf(address(vault));
+
+        vault.deposit(amount);
+
+        uint256 balanceAfter = usdt.balanceOf(address(vault));
+
+        assertEq(balanceBefore + amount, balanceAfter);
+    }
+
+    function test_depositAndWithdraw() public changeCaller(users.admin) {
+        uint256 amount = 100e6;
+
+        usdt.approve(address(vault), amount);
+
+        uint256 vaultBalanceBefore = usdt.balanceOf(address(vault));
+
+        vault.deposit(amount);
+
+        uint256 vaultBalanceAfter = usdt.balanceOf(address(vault));
+
+        assertEq(vaultBalanceBefore + amount, vaultBalanceAfter);
+
+        uint256 adminBalanceBefore = usdt.balanceOf(users.admin);
+
+        vault.withdraw(address(usdt), amount, users.admin);
+
+        uint256 adminBalanceAfter = usdt.balanceOf(users.admin);
+        uint256 vaultBalanceAfterWithdraw = usdt.balanceOf(address(vault));
+
+        assertEq(vaultBalanceBefore, vaultBalanceAfterWithdraw);
+        assertEq(adminBalanceBefore + amount, adminBalanceAfter);
+    }
+
+    function test_minimumBetAmount() public changeCaller(users.admin) {
+        vault.setMinimumBetAmount(2e6);
+
+        assertEq(vault.getMinimumBetAmount(), 2e6);
+    }
+
+    function test_maximumBetAmount() public changeCaller(users.admin) {
+        uint256 amount = 100e6;
+
+        usdt.approve(address(vault), amount);
+
+        vault.deposit(amount);
+
+        assertEq(vault.getMaximumBetAmount(), 2e6);
+    }
 }

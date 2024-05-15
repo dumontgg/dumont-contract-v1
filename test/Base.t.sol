@@ -25,11 +25,19 @@ abstract contract BaseTest is Test, Constants {
     Burner internal burner;
     GameFactory internal gameFactory;
     MONT internal mont;
+    PoolManager internal poolManager;
     MontRewardManager internal montRewardManager;
     Revealer internal revealer;
     ERC20Custom internal usdt;
     Vault internal vault;
-    PoolManager internal poolManager;
+
+    modifier changeCaller(address caller) {
+        vm.startPrank(caller);
+
+        _;
+
+        vm.stopPrank();
+    }
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
@@ -63,12 +71,11 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server1);
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
-        vault = new Vault(
-            mont, usdt, Burner(address(0x00)), GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e18
-        );
-        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 1e18, 3);
-        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);
         burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
+        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e18);
+
+        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
+        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);
 
         address token0 = address(mont);
         address token1 = address(usdt);
@@ -82,7 +89,6 @@ abstract contract BaseTest is Test, Constants {
 
         poolManager = new PoolManager(nfpm, token0, token1, 3000);
 
-        vault.setBurner(burner);
         vault.setGameFactory(gameFactory);
         vault.setMontRewardManager(montRewardManager);
 

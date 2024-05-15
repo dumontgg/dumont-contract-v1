@@ -25,6 +25,7 @@ contract Vault is IVault, Ownable2Step {
     IERC20 public immutable usdt;
 
     IBurner public burner;
+    uint256 public maximimBetRate; // 1% == 100
     IGameFactory public gameFactory;
     uint256 public minimumBetAmount;
     IMontRewardManager public montRewardManager;
@@ -61,6 +62,7 @@ contract Vault is IVault, Ownable2Step {
         mont = _mont;
         usdt = _usdt;
         burner = _burner;
+        maximimBetRate = 200;
         gameFactory = _gameFactory;
         minimumBetAmount = _minimumBetAmount;
         montRewardManager = _montRewardManager;
@@ -100,10 +102,10 @@ contract Vault is IVault, Ownable2Step {
      * @notice Allows admins to deposit USDT into the contract
      * @param _amount The amount of USDT to deposit
      */
-    function deposit(uint256 _amount) external {
+    function deposit(uint256 _amount) external onlyOwner {
         usdt.safeTransferFrom(msg.sender, address(this), _amount);
 
-        emit Deposit(msg.sender, _amount);
+        emit Deposit(_amount);
     }
 
     /**
@@ -176,12 +178,22 @@ contract Vault is IVault, Ownable2Step {
     }
 
     /**
+     * @notice Changes the percentage of USDT in the Vault that can be sent as the reward
+     * @param _maximumBetRate The new maximim bet rate
+     */
+    function setMaximumBetRate(uint256 _maximumBetRate) external onlyOwner {
+        emit MaximumBetRateChanged(maximimBetRate, _maximumBetRate);
+
+        maximimBetRate = _maximumBetRate;
+    }
+
+    /**
      * @notice Returns the maximum bet amount a player can place
      */
     function getMaximumBetAmount() external view returns (uint256) {
         uint256 usdtAmount = usdt.balanceOf(address(this));
 
-        return (usdtAmount * 2) / 100;
+        return (usdtAmount * maximimBetRate) / 10000;
     }
 
     /**

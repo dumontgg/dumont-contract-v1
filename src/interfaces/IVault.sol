@@ -33,10 +33,9 @@ interface IVault {
 
     /**
      * @notice Emitted when a deposit is made into the Vault
-     * @param _spender The address that initiated the deposit
      * @param _amount The amount deposited
      */
-    event Deposit(address indexed _spender, uint256 _amount);
+    event Deposit(uint256 _amount);
 
     /**
      * @notice Emitted when the minimum bet amount is changed
@@ -52,6 +51,13 @@ interface IVault {
      * @param _recipient The address receiving the withdrawal
      */
     event Withdraw(address indexed _token, uint256 _amount, address indexed _recipient);
+
+    /**
+     * @notice Emitted when the maximum bet rate is changed
+     * @param _from The old maximum rate
+     * @param _to The new maximum rate
+     */
+    event MaximumBetRateChanged(uint256 _from, uint256 _to);
 
     /**
      * @notice Thrown when the caller is not authorized to perform an action
