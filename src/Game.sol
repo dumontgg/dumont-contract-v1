@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
+
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
@@ -20,21 +22,24 @@ contract Game is Initializable, IGame {
     using SafeERC20 for IERC20;
 
     bool public constant SHOULD_RECEIVE_REWARDS = true;
+    uint256 public constant MAXIMUM_GUESS_NUMBER = 8191;
 
-    uint256 public cardsLeaked = 0;
     uint256 public cardsRevealed = 0;
+    uint256 public cardsFreeRevealed = 0;
+
     uint256[13] public revealedCardNumbersCount;
-    mapping(uint256 => Card) public cards;
+
+    mapping(uint256 => Card) private _cards;
 
     IERC20 public immutable usdt;
     Vault public immutable vault;
     address public immutable player;
     address public immutable revealer;
     uint256 public immutable gameId;
-    uint256 public immutable maxLeaks;
     uint256 public immutable gameDuration;
     uint256 public immutable gameCreatedAt;
     uint256 public immutable claimableAfter;
+    uint256 public immutable maxFreeReveals;
 
     /**
      * @notice Modifier to restrict access to player only
@@ -78,7 +83,7 @@ contract Game is Initializable, IGame {
      * @param _gameId The ID of the game stored in the GameFactory contract
      * @param _gameDuration The duration of the game. After that, the game is unplayable
      * @param _claimableAfter The duration during which the user can claim their win if the revealer does not reveal
-     * @param _maxLeaks The maximum number of leaks a player can request
+     * @param _maxFreeReveals The maximum number of free reveals a player can request
      */
     constructor(
         IERC20 _usdt,
@@ -88,7 +93,7 @@ contract Game is Initializable, IGame {
         uint256 _gameId,
         uint256 _gameDuration,
         uint256 _claimableAfter,
-        uint256 _maxLeaks
+        uint256 _maxFreeReveals
     ) {
         usdt = _usdt;
         vault = _vault;
@@ -97,7 +102,7 @@ contract Game is Initializable, IGame {
         gameId = _gameId;
         gameDuration = _gameDuration;
         claimableAfter = _claimableAfter;
-        maxLeaks = _maxLeaks;
+        maxFreeReveals = _maxFreeReveals;
 
         gameCreatedAt = block.timestamp;
     }
@@ -110,8 +115,8 @@ contract Game is Initializable, IGame {
         initializeContract();
 
         for (uint256 i = 0; i < 52;) {
-            cards[i].hash = _hashedDeck[i];
-            cards[i].status = CardStatus.SECRETED;
+            _cards[i].hash = _hashedDeck[i];
+            _cards[i].status = CardStatus.SECRETED;
 
             unchecked {
                 ++i;
@@ -125,16 +130,20 @@ contract Game is Initializable, IGame {
      * @param _betAmount The amount of USDT that the player bets
      * @param _guessedNumbers Numbers that the player guessed
      */
-    function guessCard(uint256 _index, uint256 _betAmount, bool[13] calldata _guessedNumbers)
+    function guessCard(uint256 _index, uint256 _betAmount, uint256 _guessedNumbers)
         external
         onlyPlayer
         onlyInitialized
         notExpired
     {
-        Card storage _card = cards[_index];
+        Card storage _card = _cards[_index];
 
         if (_index > 51) {
             revert InvalidGameIndex();
+        }
+
+        if (_guessedNumbers >= MAXIMUM_GUESS_NUMBER || _guessedNumbers == 0) {
+            revert InvalidNumbersGuessed(_guessedNumbers);
         }
 
         if (_card.status != CardStatus.SECRETED) {
@@ -163,16 +172,37 @@ contract Game is Initializable, IGame {
     }
 
     /**
+     * @notice Requests a secret card to be revealed for free
+     * @param _index Index of the card
+     */
+    function requestFreeRevealCard(uint256 _index) external onlyPlayer onlyInitialized notExpired {
+        Card storage _card = _cards[_index];
+
+        if (cardsFreeRevealed == maxFreeReveals) {
+            revert MaximumFreeRevealsRequested();
+        }
+
+        if (_card.status != CardStatus.SECRETED) {
+            revert CardIsNotSecret(_index);
+        }
+
+        ++cardsFreeRevealed;
+        _card.status = CardStatus.FREE_REVEAL_REQUESTED;
+
+        emit RevealFreeCardRequested(_index, block.timestamp);
+    }
+
+    /**
      * @notice Returns the rate of betting with selected numbers without considering the house edge
      * @param _numbers Selected numbers out of 13
      * @return rate The pure rate without considering the house edge
      */
-    function getGuessRate(bool[13] memory _numbers) public view returns (UD60x18 rate) {
+    function getGuessRate(uint256 _numbers) public view returns (UD60x18 rate) {
         uint256 remainingCards = 52 - cardsRevealed;
         uint256 remainingSelectedCard = 0;
 
         for (uint256 i = 0; i < 13; ++i) {
-            if (_numbers[i]) {
+            if ((_numbers & (1 << i)) > 0) {
                 remainingSelectedCard += 4 - revealedCardNumbersCount[i];
             }
         }
@@ -186,7 +216,7 @@ contract Game is Initializable, IGame {
      * @param _index Index of the card
      */
     function claimWin(uint256 _index) external onlyPlayer onlyInitialized {
-        Card storage _card = cards[_index];
+        Card storage _card = _cards[_index];
 
         if (_card.status != CardStatus.GUESSED) {
             revert CardIsNotGuessed(_index);
@@ -209,11 +239,23 @@ contract Game is Initializable, IGame {
      * @param _number The revealed number of the card
      * @param _salt The salt that was used to hash the card
      */
-    function revealCard(uint256 _index, uint256 _number, string calldata _salt) external onlyRevealer onlyInitialized {
-        Card storage _card = cards[_index];
+    function revealCard(uint256 _index, uint256 _number, bytes32 _salt, bool isFreeReveal)
+        external
+        onlyRevealer
+        onlyInitialized
+    {
+        uint256 rank = _number % 13;
 
-        if (_card.status != CardStatus.SECRETED) {
-            revert CardIsNotSecret(_index);
+        Card storage _card = _cards[_index];
+
+        if (isFreeReveal) {
+            if (_card.status != CardStatus.FREE_REVEAL_REQUESTED) {
+                revert CardStatusIsNotFreeRevealRequested(_index);
+            }
+        } else {
+            if (_card.status != CardStatus.GUESSED) {
+                revert CardIsNotSecret(_index);
+            }
         }
 
         verifySalt(_index, _number, _salt);
@@ -222,58 +264,22 @@ contract Game is Initializable, IGame {
         _card.revealedSalt = _salt;
         _card.revealedNumber = _number;
 
-        ++revealedCardNumbersCount[_number];
+        ++revealedCardNumbersCount[rank];
 
-        bool isWinner = isPlayerWinner(_card.guessedNumbers, _card.revealedNumber);
+        if (!isFreeReveal) {
+            bool isWinner = isPlayerWinner(_card.guessedNumbers, rank);
 
-        vault.transferPlayerRewards(
-            gameId, _card.betAmount, _card.totalAmount, player, isWinner, SHOULD_RECEIVE_REWARDS
-        );
+            vault.transferPlayerRewards(
+                gameId, _card.betAmount, _card.totalAmount, player, isWinner, SHOULD_RECEIVE_REWARDS
+            );
+        }
 
         emit CardRevealed(_index, _number, _salt);
     }
 
-    /**
-     * @notice Requests a secret card to be opened for free
-     * @param _index Index of the card
-     */
-    function requestLeakCard(uint256 _index) external onlyPlayer onlyInitialized notExpired {
-        Card storage _card = cards[_index];
-
-        if (cardsLeaked == maxLeaks) {
-            revert MaximumLeaksRequested();
-        }
-
-        if (_card.status != CardStatus.SECRETED) {
-            revert CardIsNotSecret(_index);
-        }
-
-        ++cardsLeaked;
-        _card.status = CardStatus.LEAK_REQUESTED;
-
-        emit RevealFreeCardRequested(_index, block.timestamp);
-    }
-
-    /**
-     * @notice Leaks a requested card for free
-     * @param _index Index of the card
-     * @param _number The revealed number of the card
-     * @param _salt The salt that was used to hash the card
-     */
-    function leakCard(uint256 _index, uint256 _number, string calldata _salt) external onlyRevealer onlyInitialized {
-        Card storage _card = cards[_index];
-
-        if (_card.status != CardStatus.LEAK_REQUESTED) {
-            revert CardIsNotLeakRequested(_index);
-        }
-
-        _card.status = CardStatus.REVEALED;
-        _card.revealedSalt = _salt;
-        _card.revealedNumber = _number;
-
-        ++revealedCardNumbersCount[_number];
-
-        emit CardRevealed(_index, _number, _salt);
+    // TODO:
+    function cards(uint256 _index) public view returns (Card memory) {
+        return _cards[_index];
     }
 
     /**
@@ -281,11 +287,11 @@ contract Game is Initializable, IGame {
      * @param _guessedNumbers Player's guesses
      * @param _number The revealed number of the card
      */
-    function isPlayerWinner(bool[13] memory _guessedNumbers, uint256 _number) private pure returns (bool isWinner) {
+    function isPlayerWinner(uint256 _guessedNumbers, uint256 _number) private pure returns (bool isWinner) {
         isWinner = false;
 
         for (uint256 i = 0; i < 13; ++i) {
-            if (_guessedNumbers[i] && i == _number) {
+            if ((_guessedNumbers & (1 << i)) > 0 && i == _number) {
                 isWinner = true;
 
                 break;
@@ -299,8 +305,8 @@ contract Game is Initializable, IGame {
      * @param _number The revealed number of the card
      * @param _salt The salt that was used to hash the card
      */
-    function verifySalt(uint256 _index, uint256 _number, string calldata _salt) private view {
-        Card memory card = cards[_index];
+    function verifySalt(uint256 _index, uint256 _number, bytes32 _salt) private view {
+        Card memory card = _cards[_index];
 
         bytes32 hash = keccak256(abi.encodePacked(_number, _salt));
 

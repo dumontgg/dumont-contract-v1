@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {GameFactory} from "./GameFactory.sol";
@@ -11,12 +12,13 @@ import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
 import {IMontRewardManager} from "./interfaces/IMontRewardManager.sol";
 
+// todo: why ownable?
 /**
  * @title Reward Manager Contract
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
  * @dev Only the Vault contract can call functions in this contract
  */
-contract MontRewardManager is Ownable2Step, IMontRewardManager {
+contract MontRewardManager is IMontRewardManager {
     using SafeERC20 for IMONT;
 
     IMONT public immutable mont;
@@ -97,6 +99,8 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
             reward = _totalAmount;
         }
 
+        console2.log("%s", reward);
+
         (bool isReferrerSet, address referrer) = checkReferrer(_player);
 
         if (!isReferrerSet) {
@@ -133,8 +137,10 @@ contract MontRewardManager is Ownable2Step, IMontRewardManager {
      * @notice Retrieves the current price of MONT token from Uniswap
      * @return price Current price of MONT token
      */
-    function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
+    function getMontPrice() private pure returns (uint256 price) {
+        // todo:
+        // price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
+        price = 100000 * 10e18;
     }
 
     /**

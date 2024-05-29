@@ -23,12 +23,12 @@ abstract contract BaseTest is Test, Constants {
     Users internal users;
 
     Burner internal burner;
+    ERC20Custom internal usdt;
     GameFactory internal gameFactory;
     MONT internal mont;
-    PoolManager internal poolManager;
     MontRewardManager internal montRewardManager;
+    PoolManager internal poolManager;
     Revealer internal revealer;
-    ERC20Custom internal usdt;
     Vault internal vault;
 
     modifier changeCaller(address caller) {
@@ -72,7 +72,7 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
         burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
-        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e18);
+        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
 
         gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
         montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);

@@ -7,7 +7,7 @@ interface IGame {
         SECRETED,
         GUESSED,
         CLAIMED,
-        LEAK_REQUESTED,
+        FREE_REVEAL_REQUESTED,
         REVEALED
     }
 
@@ -16,26 +16,26 @@ interface IGame {
         uint256 totalAmount;
         uint256 guessedAt;
         uint256 revealedNumber;
-        bool[13] guessedNumbers;
+        uint256 guessedNumbers;
         bytes32 hash;
+        bytes32 revealedSalt;
         CardStatus status;
-        string revealedSalt;
     }
 
-    event CardRevealed(uint256 indexed _index, uint256 indexed _number, string _salt);
+    event CardRevealed(uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
 
-    event PlayerGuessed(uint256 indexed _index, uint256 indexed _usdtAmount, bool[13] _guessedNumbers);
+    event PlayerGuessed(uint256 indexed _index, uint256 indexed _usdtAmount, uint256 _guessedNumbers);
 
     event RevealFreeCardRequested(uint256 indexed _index, uint256 _timestamp);
 
     event CardClaimed(uint256 indexed _index, uint256 _timestamp);
 
     error CardIsNotSecret(uint256 _index);
-    error MaximumLeaksRequested();
+    error MaximumFreeRevealsRequested();
 
     error CardIsNotGuessed(uint256 _index);
 
-    error CardIsNotLeakRequested(uint256 _index);
+    error CardStatusIsNotFreeRevealRequested(uint256 _index);
 
     error BetAmountIsLessThanMinimum();
 
@@ -45,9 +45,15 @@ interface IGame {
 
     error InvalidGameIndex();
 
+    error InvalidNumbersGuessed(uint256 _guessedNumbers);
+
     error NotYetTimeToClaim(uint256 _index);
 
     error GameExpired();
 
-    error InvalidSalt(uint256 _index, uint256 _number, string _salt);
+    error InvalidSalt(uint256 _index, uint256 _number, bytes32 _salt);
+
+    // TODO: add fucntions
+
+    function cards(uint256 _index) external view returns (Card memory);
 }

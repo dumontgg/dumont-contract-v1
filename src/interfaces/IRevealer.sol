@@ -8,9 +8,10 @@ pragma solidity 0.8.23;
 interface IRevealer {
     struct RevealedCard {
         address game;
+        bool isFreeReveal;
         uint256 index;
         uint256 number;
-        string salt;
+        bytes32 salt;
     }
 
     struct InitializeGame {
@@ -24,11 +25,7 @@ interface IRevealer {
      * @param _game The address of the game from which the card is revealed
      * @param _index The index of the revealed card
      */
-    event CardRevealed(
-        address indexed _revealer,
-        address indexed _game,
-        uint256 indexed _index
-    );
+    event CardRevealed(address indexed _revealer, address indexed _game, uint256 indexed _index);
 
     /**
      * @notice Emitted when a game is initialized

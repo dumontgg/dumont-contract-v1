@@ -166,6 +166,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
         emit GameCreated(_gameId, gameAddress, msg.sender);
 
         if (_referrer != address(0)) {
+            // todo: what if already set
             setReferrer(msg.sender, _referrer);
         }
 

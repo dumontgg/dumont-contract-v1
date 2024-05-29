@@ -76,7 +76,7 @@ contract Revealer is AccessControl, IRevealer {
     function _revealCard(RevealedCard calldata _card) private {
         Game game = Game(_card.game);
 
-        game.revealCard(_card.index, _card.number, _card.salt);
+        game.revealCard(_card.index, _card.number, _card.salt, _card.isFreeReveal);
 
         emit CardRevealed(msg.sender, _card.game, _card.index);
     }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -157,6 +159,9 @@ contract Vault is IVault, Ownable2Step {
             burnAmount = (_totalAmount * 8) / 100;
 
             uint256 reward = _totalAmount - ((_totalAmount - _betAmount) / 10);
+
+            console2.log("Final reward = %s", reward);
+
             usdt.safeTransfer(_player, reward);
         }
 
@@ -202,4 +207,6 @@ contract Vault is IVault, Ownable2Step {
     function getMinimumBetAmount() external view returns (uint256) {
         return minimumBetAmount;
     }
+
+    receive() external payable {}
 }
