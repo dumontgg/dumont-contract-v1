@@ -50,9 +50,7 @@ contract MontRewardManager is IMontRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee)
-        Ownable(msg.sender)
-    {
+    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;

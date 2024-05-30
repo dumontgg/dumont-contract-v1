@@ -43,7 +43,7 @@ contract ClaimWinTest is IntegrationTest {
         vm.stopPrank();
     }
 
-    function test_claimWinAfterTheTime() public {}
+    // function test_claimWinAfterTheTime() public {}
 
     // function testFail_claimWinShouldFailIfCalledBefore() public {}
     //
