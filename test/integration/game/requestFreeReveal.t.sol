@@ -6,7 +6,17 @@ import {Game} from "../../../src/Game.sol";
 import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
 
 contract RequestFreeReveal is IntegrationTest {
+    enum CardStatus {
+        SECRETED,
+        GUESSED,
+        CLAIMED,
+        FREE_REVEAL_REQUESTED,
+        REVEALED
+    }
+
     Game public game;
+
+    uint256 index = 0;
 
     function setUp() public virtual override {
         IntegrationTest.setUp();
@@ -31,10 +41,14 @@ contract RequestFreeReveal is IntegrationTest {
         vm.stopPrank();
     }
 
-    // function test_requestFreeReveal() public {}
-    //
+    function test_requestFreeReveal() public changeCaller(users.adam) {
+        game.requestFreeRevealCard(index);
+
+        assertEq(uint256(game.cards(index).status), uint256(CardStatus.FREE_REVEAL_REQUESTED));
+    }
+
     // function testFail_requestFreeRevealMoreThanMaximum() public {}
-    //
+
     // function testFail_requestFreeRevealTwice() public {}
     //
     // function test_requestFreeRevealShouldEmitEvents() public {}

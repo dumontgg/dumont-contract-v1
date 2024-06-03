@@ -156,13 +156,7 @@ contract Vault is IVault, Ownable2Step {
         uint256 burnAmount = (_betAmount * 8) / 100;
 
         if (_isPlayerWinner) {
-            burnAmount = (_totalAmount * 8) / 100;
-
-            uint256 reward = _totalAmount - ((_totalAmount - _betAmount) / 10);
-
-            console2.log("Final reward = %s", reward);
-
-            usdt.safeTransfer(_player, reward);
+            usdt.safeTransfer(_player, _totalAmount);
         }
 
         usdt.safeTransfer(address(burner), burnAmount);

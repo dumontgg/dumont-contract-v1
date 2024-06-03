@@ -6,6 +6,8 @@ import {Game} from "../../../src/Game.sol";
 import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
 
 contract ClaimWinTest is IntegrationTest {
+    event CardClaimed(uint256 indexed _index, uint256 _timestamp);
+
     Game public game;
 
     uint256 index = 0;
@@ -36,20 +38,82 @@ contract ClaimWinTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdt.approve(address(game), 100e6);
 
         game.guessCard(index, betAmount, amounts);
 
         vm.stopPrank();
     }
 
-    // function test_claimWinAfterTheTime() public {}
+    function test_claimWinAfterTheTime() public changeCaller(users.adam) {
+        assertEq(game.cards(index).guessedAt, block.timestamp);
+        assertEq(game.claimableAfter(), ONE_HOUR * 6);
 
-    // function testFail_claimWinShouldFailIfCalledBefore() public {}
-    //
-    // function test_claimWinShouldEmitEvents() public {}
-    //
-    // function test_claimWinShouldFailIfCardIsNotGuessed() public {}
-    //
-    // function test_claimWinShouldNotSetMontRewards() public {}
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        assertEq(block.timestamp, MAY_1_2023 + ONE_HOUR * 7);
+
+        game.claimWin(index);
+    }
+
+    function testFail_claimWinShouldFailIfCalledBefore() public changeCaller(users.adam) {
+        vm.warp(block.timestamp + (ONE_HOUR * 2));
+
+        assertEq(block.timestamp, MAY_1_2023 + ONE_HOUR * 2);
+
+        game.claimWin(index);
+    }
+
+    function test_claimWinShouldEmitEvents() public changeCaller(users.adam) {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        vm.expectEmit(true, true, false, false);
+
+        emit CardClaimed(index, block.timestamp);
+
+        game.claimWin(index);
+    }
+
+    function testFail_claimWinShouldNotBeCalledTwice() public changeCaller(users.adam) {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        game.claimWin(index);
+        game.claimWin(index);
+    }
+
+    function test_claimWinShouldTransferUSDT() public changeCaller(users.adam) {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        uint256 userBalanceBefore = usdt.balanceOf(address(users.adam));
+
+        game.claimWin(index);
+
+        uint256 userBalanceAfter = usdt.balanceOf(address(users.adam));
+
+        assertEq(userBalanceAfter, userBalanceBefore + game.cards(index).totalAmount);
+    }
+
+    function testFail_claimWinShouldFailIfCalledByUnauthorizedAddress() public {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        game.claimWin(index);
+    }
+
+    function testFail_claimWinShouldFailIfCardIsNotGuessed() public {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        game.claimWin(index + 1);
+    }
+
+    function test_claimWinShouldNotSetMontRewards() public changeCaller(users.adam) {
+        vm.warp(block.timestamp + (ONE_HOUR * 7));
+
+        uint256 userBalanceBefore = mont.balanceOf(address(users.adam));
+
+        game.claimWin(index);
+
+        uint256 userBalanceAfter = mont.balanceOf(address(users.adam));
+
+        assertEq(userBalanceAfter, userBalanceBefore);
+    }
 }
