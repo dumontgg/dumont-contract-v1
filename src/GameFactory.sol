@@ -146,8 +146,18 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress =
-            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
+        address gameAddress = address(
+            new Game(
+                usdt,
+                vault,
+                revealer,
+                msg.sender,
+                _gameId,
+                gameDuration,
+                claimableAfter,
+                maxFreeReveals
+            )
+        );
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,
@@ -165,10 +175,7 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
         emit GameCreated(_gameId, gameAddress, msg.sender);
 
-        if (_referrer != address(0)) {
-            // todo: what if already set
-            setReferrer(msg.sender, _referrer);
-        }
+        setReferrer(msg.sender, _referrer);
 
         return (_gameId, gameAddress);
     }
@@ -188,6 +195,10 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _referrer The player who invited the referee
      */
     function setReferrer(address _referee, address _referrer) private {
+        if (_referrer == address(0)) {
+            return;
+        }
+
         if (_referrer == _referee) {
             revert InvalidReferrer(_referrer, _referee);
         }

@@ -6,6 +6,7 @@ import {GameFactory} from "../src/GameFactory.sol";
 import {IMontRewardManager} from "../src/interfaces/IMontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
 import {Vault} from "../src/Vault.sol";
+import {ERC20Custom} from "./test/ERC20Custom.sol";
 import {MontRewardManager} from "../src/MontRewardManager.sol";
 import {MONT} from "../src/MONT.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/Uniswap/INonfungiblePositionManager.sol";
@@ -28,10 +29,11 @@ contract DeployCore2 is BaseScript {
             Revealer revealer,
             Vault vault,
             MontRewardManager montRewardManager,
-            MONT mont
+            MONT mont,
+            ERC20Custom usdt
         )
     {
-        MONT usdt = new MONT(100_000_000e18, msg.sender); // This should have a decimals of 6
+        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, msg.sender);
         mont = new MONT(100_000_000e18, msg.sender);
         burner = new Burner(mont, usdt, uniswapSwapRouter, 3000);
         revealer = new Revealer();
@@ -54,32 +56,34 @@ contract DeployCore2 is BaseScript {
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer3);
 
         // TODO: assign mont to burner
-        mont.transfer(address(montRewardManager), 100);
+        mont.transfer(address(montRewardManager), 1_000_000e18);
+
+        usdt.transfer(address(vault), 100_000e6);
 
         // create a pair in uniswap
-        createPool(address(mont), address(usdt));
+        // createPool(address(mont), address(usdt));
     }
 
     function createPool(address _mont, address _usdt) internal {
-        uint24 poolFee = 3000;
-
-        uniswapFactory.createPool(_mont, _usdt, poolFee);
-
-        // todo: use a trustless contract
-        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
-            token0: _mont,
-            token1: _usdt,
-            fee: poolFee,
-            tickLower: 0, // todo
-            tickUpper: 0, // todo:
-            amount0Desired: 0, // todo:
-            amount1Desired: 0, // todo
-            amount0Min: 0, // todo
-            amount1Min: 0, // todo
-            recipient: address(this), // todo
-            deadline: block.timestamp + 200 // todo
-        });
-
-        uniswapNFPM.mint(params);
+        // uint24 poolFee = 3000;
+        //
+        // uniswapFactory.createPool(_mont, _usdt, poolFee);
+        //
+        // // todo: use a trustless contract
+        // INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
+        //     token0: _mont,
+        //     token1: _usdt,
+        //     fee: poolFee,
+        //     tickLower: 0, // todo
+        //     tickUpper: 0, // todo:
+        //     amount0Desired: 0, // todo:
+        //     amount1Desired: 0, // todo
+        //     amount0Min: 0, // todo
+        //     amount1Min: 0, // todo
+        //     recipient: address(this), // todo
+        //     deadline: block.timestamp + 200 // todo
+        // });
+        //
+        // uniswapNFPM.mint(params);
     }
 }

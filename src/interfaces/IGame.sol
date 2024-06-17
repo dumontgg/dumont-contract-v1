@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-// todo:
+/**
+ * @title A single-player game contract where the player guesses card numbers
+ * @notice The server sets hashed numbers inside the contract, and the player can guess each card
+ * @dev The contract uses a commit-reveal mechanism to hide the deck of cards initially
+ */
 interface IGame {
     enum CardStatus {
         SECRETED,
@@ -22,38 +26,165 @@ interface IGame {
         CardStatus status;
     }
 
-    event CardRevealed(uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
+    /**
+     * @notice Emitted when revealCard is called for a specific card
+     * @param _index Index of the card
+     * @param _number Revealed number for the card
+     * @param _salt Revealed salt for the card
+     */
+    event CardRevealed(
+        uint256 indexed _index,
+        uint256 indexed _number,
+        bytes32 _salt
+    );
 
-    event PlayerGuessed(uint256 indexed _index, uint256 indexed _usdtAmount, uint256 _guessedNumbers);
+    /**
+     * @notice Emitted when guessCard is called for a specific card
+     * @param _index Index of the card
+     * @param _usdtAmount USDT amount betted for the card by the player
+     * @param _guessedNumbers Numbers guessed by the player
+     */
+    event CardGuessed(
+        uint256 indexed _index,
+        uint256 indexed _usdtAmount,
+        uint256 _guessedNumbers
+    );
 
+    /**
+     * @notice Emitted when requestFreeRevealCard is called
+     * @param _index Index of the card
+     * @param _timestamp Timestamp
+     */
     event RevealFreeCardRequested(uint256 indexed _index, uint256 _timestamp);
 
+    /**
+     * @notice Emitted when claimWin is called
+     * @param _index Index of the card
+     * @param _timestamp Timestamp
+     */
     event CardClaimed(uint256 indexed _index, uint256 _timestamp);
 
+    /**
+     * @notice Emitted when the game is initialize by a revealer
+     */
+    event GameInitialized();
+
+    /**
+     * @notice Thrown when card is not secreted but functions are called
+     * @param _index index Index of the card
+     */
     error CardIsNotSecret(uint256 _index);
+
+    /**
+     * @notice Thrown when maximum amount of free reveals is requested and more is being requested
+     */
     error MaximumFreeRevealsRequested();
 
+    /**
+     * @notice Thrown when the card is not guessed but function revealCard or else is called
+     * @param _index Index of the card
+     */
     error CardIsNotGuessed(uint256 _index);
 
+    /**
+     * @notice Thrown when the card status is not FREE_REVEAL_REQUESTED but revealCard is called
+     * @param _index Index of the card
+     */
     error CardStatusIsNotFreeRevealRequested(uint256 _index);
 
+    /**
+     * @notice Thrown when the bet amount for a card is less than the minumum specified by the vault
+     */
     error BetAmountIsLessThanMinimum();
 
+    /**
+     * @notice Thrown when the bet amount for a card is greater than the maximum specified by the vault
+     */
     error BetAmountIsGreaterThanMaximum();
 
+    /**
+     * @notice Thrown when the caller is not authorized
+     * @param _caller Address of the caller
+     */
     error NotAuthorized(address _caller);
 
+    /**
+     * @notice Thrown when game index is out of bound (0 - 51)
+     */
     error InvalidGameIndex();
 
+    /**
+     * @notice Thrown when no card or all cards are guessed
+     * @param _guessedNumbers The guessed numbers
+     */
     error InvalidNumbersGuessed(uint256 _guessedNumbers);
 
+    /**
+     * @notice Thrown when claimWin is called before the due time
+     * @param _index Index of the card
+     */
     error NotYetTimeToClaim(uint256 _index);
 
+    /**
+     * @notice Thrown when the game is expired
+     */
     error GameExpired();
 
+    /**
+     * @notice Thrown when the given salt is invalid
+     * @param _index Index of the card
+     * @param _number Revealed number
+     * @param _salt Revealed salt
+     */
     error InvalidSalt(uint256 _index, uint256 _number, bytes32 _salt);
 
-    // TODO: add fucntions
+    /**
+     * @notice Initializes the contract by committing the deck of cards
+     * @param _hashedDeck The hash of a random deck of cards
+     */
+    function initialize(bytes32[52] calldata _hashedDeck) external;
 
-    function cards(uint256 _index) external view returns (Card memory);
+    /**
+     * @notice Stores the player's guess
+     * @param _index Index of the card
+     * @param _betAmount The amount of USDT that the player bets
+     * @param _guessedNumbers Numbers that the player guessed
+     */
+    function guessCard(
+        uint256 _index,
+        uint256 _betAmount,
+        uint256 _guessedNumbers
+    ) external;
+
+    /**
+     * @notice Requests a secret card to be revealed for free
+     * @param _index Index of the card
+     */
+    function requestFreeRevealCard(uint256 _index) external;
+
+    /**
+     * @notice Claims the player as the winner for a specific card if the revealer does not reveal
+     * the card after the claimableAfter duration
+     * @param _index Index of the card
+     */
+    function claimWin(uint256 _index) external;
+
+    /**
+     * @notice Reveals a card and decides the winner and transfers rewards to the player
+     * @param _index Index of the card
+     * @param _number The revealed number of the card
+     * @param _salt The salt that was used to hash the card
+     */
+    function revealCard(
+        uint256 _index,
+        uint256 _number,
+        bytes32 _salt,
+        bool isFreeReveal
+    ) external;
+
+    /**
+     * @notice Get cards by their index from 0 to 51
+     * @param _index Index of the card
+     */
+    function cards(uint256 _index) external returns (Card memory);
 }

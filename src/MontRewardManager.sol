@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {console2} from "forge-std/console2.sol";
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -12,7 +10,6 @@ import {IMONT} from "./interfaces/IMONT.sol";
 import {IQuoter} from "./interfaces/Uniswap/IQuoter.sol";
 import {IMontRewardManager} from "./interfaces/IMontRewardManager.sol";
 
-// todo: why ownable?
 /**
  * @title Reward Manager Contract
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
@@ -97,13 +94,12 @@ contract MontRewardManager is IMontRewardManager {
             reward = _totalAmount;
         }
 
-        console2.log("%s", reward);
-
         (bool isReferrerSet, address referrer) = checkReferrer(_player);
 
         if (!isReferrerSet) {
             reward = (_totalAmount * 8) / 10;
         } else if (isReferrerSet) {
+            // todo: if referrer is set, the player gets +0.1
             balances[referrer] += reward / 10;
         }
 

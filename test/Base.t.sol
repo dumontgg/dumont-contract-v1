@@ -104,6 +104,6 @@ abstract contract BaseTest is Test, Constants {
         userAddress = makeAddr(_name);
 
         deal(userAddress, 100e18);
-        deal(address(usdt), userAddress, 100_000_000e18);
+        deal(address(usdt), userAddress, 100_000_000e6);
     }
 }
