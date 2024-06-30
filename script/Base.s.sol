@@ -5,8 +5,6 @@ import {Script} from "forge-std/Script.sol";
 
 import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
 import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
-import {IUniswapV3Factory} from "../src/interfaces/Uniswap/IUniswapV3Factory.sol";
-import {INonfungiblePositionManager} from "../src/interfaces/Uniswap//INonfungiblePositionManager.sol";
 
 abstract contract BaseScript is Script {
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
@@ -21,8 +19,8 @@ abstract contract BaseScript is Script {
 
     /// @dev The address of the revealers
     address internal revealer1 = 0x1E7A7Bb102c04e601dE48a68A88Ec6EE59C372b9;
-    address internal revealer2 = 0x2Db857B3ed73fff5C2Fe0ECb717c8A195D9A77Ce;
-    address internal revealer3 = 0xCDEA014880eBa84C4C1f35F9b41b6815923d98dD;
+    address internal revealer2 = 0x40fA98c764c1602E5Fb9D201f580B19978B2d4a0;
+    address internal revealer3 = 0x3e03984BF3b9Cfa9fC640eCe3ee7a55Fef14Fe15;
 
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
@@ -37,25 +35,9 @@ abstract contract BaseScript is Script {
     address internal UNISWAP_SWAP_ROUTER_SEPOLIA =
         0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
 
-    // TODO: fix addrss
-    address internal UNISWAP_FACTORY_MAINNET =
-        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
-    address internal UNISWAP_FACTORY_SEPOLIA =
-        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
-
-    // TODO: fix addrss
-    address internal UNISWAP_NFPM_MAINNET =
-        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
-    address internal UNISWAP_NFPM_SEPOLIA =
-        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
-
     // TODO: take env value and see the network selected and assign the right address to quoter and swaprouter
     IQuoter uniswapQuoter = IQuoter(UNISWAP_QUOTER_SEPOLIA);
     ISwapRouter uniswapSwapRouter = ISwapRouter(UNISWAP_SWAP_ROUTER_SEPOLIA);
-    IUniswapV3Factory uniswapFactory =
-        IUniswapV3Factory(UNISWAP_FACTORY_SEPOLIA);
-    INonfungiblePositionManager uniswapNFPM =
-        INonfungiblePositionManager(UNISWAP_NFPM_SEPOLIA);
 
     /// @dev Initializes the transaction broadcaster like this:
     ///

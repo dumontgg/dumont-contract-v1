@@ -166,16 +166,16 @@ contract Game is Initializable, IGame {
 
         usdt.safeTransferFrom(msg.sender, address(vault), _betAmount);
 
-        uint256 burnAmount = (totalWinningBetAmount * 8) / 100;
-
         uint256 reward = totalWinningBetAmount -
             ((totalWinningBetAmount - _betAmount) / 10);
 
         _card.betAmount = _betAmount;
-        _card.guessedAt = block.timestamp;
+        _card.totalAmount = reward;
+        // todo: write tests to check if this value if correct
+        _card.houseEdgeAmount = totalWinningBetAmount - reward;
+        _card.requestedAt = block.timestamp;
         _card.status = CardStatus.GUESSED;
         _card.guessedNumbers = _guessedNumbers;
-        _card.totalAmount = reward;
 
         emit CardGuessed(_index, _betAmount, _guessedNumbers);
     }
@@ -198,6 +198,7 @@ contract Game is Initializable, IGame {
         }
 
         ++cardsFreeRevealedRequests;
+        _card.requestedAt = block.timestamp;
         _card.status = CardStatus.FREE_REVEAL_REQUESTED;
 
         emit RevealFreeCardRequested(_index, block.timestamp);
@@ -233,7 +234,7 @@ contract Game is Initializable, IGame {
             revert CardIsNotGuessed(_index);
         }
 
-        if (_card.guessedAt + claimableAfter > block.timestamp) {
+        if (_card.requestedAt + claimableAfter > block.timestamp) {
             revert NotYetTimeToClaim(_index);
         }
 
@@ -243,7 +244,7 @@ contract Game is Initializable, IGame {
             gameId,
             _card.betAmount,
             _card.totalAmount,
-            player,
+            _card.houseEdgeAmount,
             true,
             !SHOULD_RECEIVE_REWARDS
         );
@@ -293,7 +294,7 @@ contract Game is Initializable, IGame {
                 gameId,
                 _card.betAmount,
                 _card.totalAmount,
-                player,
+                _card.houseEdgeAmount,
                 isWinner,
                 SHOULD_RECEIVE_REWARDS
             );

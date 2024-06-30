@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
 import {IntegrationTest} from "../Integration.t.sol";
 import {Game} from "../../../src/Game.sol";
 import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
@@ -8,9 +9,9 @@ import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
 contract MontRewardTest is IntegrationTest {
     Game public game;
 
-    uint256 index0 = 5;
-    uint256 numbers0 = 1; // index 0 is the wrong choice, because the card is an 11
-    uint256 amount0 = 1e6;
+    uint256 index0 = 0;
+    uint256 numbers0 = 32; // index 0 is the wrong choice, because the card is an 11
+    uint256 amount0 = 2e6;
 
     uint256 index1 = 1;
     uint256 numbers1 = 512; // index 1 is the right choice
@@ -30,36 +31,76 @@ contract MontRewardTest is IntegrationTest {
 
         game = Game(game0);
 
+        usdt.approve(address(game), type(uint256).max);
+
         vm.stopPrank();
 
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
+            game: address(game),
+            hashedDeck: deck
+        });
 
         revealer.initialize(params);
 
         vm.stopPrank();
 
+        assert(game.isInitialized());
+        assertEq(game.player(), users.adam);
+
         vm.startPrank(users.adam);
 
         game.guessCard(index0, amount0, numbers0);
-        // game.guessCard(index1, amount1, numbers1);
-        // game.requestFreeRevealCard(index2);
+        game.guessCard(index1, amount1, numbers1);
+        game.requestFreeRevealCard(index2);
 
         vm.stopPrank();
     }
 
-    function test_revealShouldSetMontRewards() public changeCaller(users.server1) {
-        // IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
-        //     game: address(game),
-        //     index: index0,
-        //     salt: cards[0].salt,
-        //     isFreeReveal: false,
-        //     number: cards[0].number
-        // });
-        //
-        // revealer.revealCard(params);
-        assertEq(true, true);
+    function test_revealShouldSetMontRewards()
+        public
+        changeCaller(users.server1)
+    {
+        IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
+            game: address(game),
+            index: index0,
+            salt: cards[0].salt,
+            isFreeReveal: false,
+            number: cards[0].number
+        });
+
+        uint256 usdtBalanceBefore = usdt.balanceOf(users.adam);
+        uint256 montBalanceBefore = montRewardManager.balances(users.adam);
+
+        revealer.revealCard(params);
+
+        uint256 usdtBalanceAfter = usdt.balanceOf(users.adam);
+        uint256 montBalanceAfter = montRewardManager.balances(users.adam);
+
+        console2.log("%s", montBalanceBefore);
+        console2.log("%s", montBalanceAfter);
+
+        assert(usdtBalanceBefore == usdtBalanceAfter); // since the player lost
+        assert(montBalanceBefore < montBalanceAfter); // losers get mont anyways
+
+        vm.stopPrank();
+
+        vm.startPrank(users.adam);
+
+        uint256 b = mont.balanceOf(address(montRewardManager));
+
+        console2.log("montrewardmanager balance of mont %s", b);
+
+        uint256 montBalanceBeforeClaim = mont.balanceOf(users.adam);
+
+        montRewardManager.claim();
+
+        uint256 montBalanceAfterClaim = mont.balanceOf(users.adam);
+
+        assert(montBalanceAfterClaim > montBalanceBeforeClaim);
+
+        vm.stopPrank();
     }
 
     //

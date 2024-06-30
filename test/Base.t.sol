@@ -7,12 +7,10 @@ import {Burner} from "../src/Burner.sol";
 import {Constants} from "./utils/Constants.sol";
 import {ERC20Custom} from "../script/test/ERC20Custom.sol";
 import {GameFactory} from "../src/GameFactory.sol";
-import {INonfungiblePositionManager} from "../src/interfaces/Uniswap/INonfungiblePositionManager.sol";
 import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
 import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
 import {MONT} from "../src/MONT.sol";
 import {MontRewardManager} from "../src/MontRewardManager.sol";
-import {PoolManager} from "../src/PoolManager.sol";
 import {Revealer} from "../src/Revealer.sol";
 import {USDT} from "./utils/tokens/USDT.t.sol";
 import {Users} from "./utils/Types.sol";
@@ -27,7 +25,6 @@ abstract contract BaseTest is Test, Constants {
     GameFactory internal gameFactory;
     MONT internal mont;
     MontRewardManager internal montRewardManager;
-    PoolManager internal poolManager;
     Revealer internal revealer;
     Vault internal vault;
 
@@ -41,7 +38,13 @@ abstract contract BaseTest is Test, Constants {
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
-        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, address(this));
+        usdt = new ERC20Custom(
+            "USD Tether",
+            "USDT",
+            6,
+            100_000_000,
+            address(this)
+        );
 
         users = Users({
             eve: createUser("Eve"),
@@ -58,6 +61,7 @@ abstract contract BaseTest is Test, Constants {
 
         deal(address(usdt), users.eve, 100_000_000e6);
         deal(address(mont), users.eve, 100_000_000e18);
+        deal(address(mont), users.admin, 100_000_000e18);
 
         // Warp to May 1, 2023 at 00:00 GMT to provide a more realistic testing environment.
         vm.warp(MAY_1_2023);
@@ -72,10 +76,32 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
         burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
-        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
+        vault = new Vault(
+            mont,
+            usdt,
+            burner,
+            GameFactory(address(0x00)),
+            MontRewardManager(address(0x00)),
+            1e6
+        );
 
-        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
-        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);
+        gameFactory = new GameFactory(
+            usdt,
+            vault,
+            address(revealer),
+            ONE_HOUR * 12,
+            ONE_HOUR * 6,
+            5,
+            1e6
+        );
+        montRewardManager = new MontRewardManager(
+            address(vault),
+            mont,
+            usdt,
+            gameFactory,
+            IQuoter(address(0x00)),
+            3000
+        );
 
         address token0 = address(mont);
         address token1 = address(usdt);
@@ -84,10 +110,6 @@ abstract contract BaseTest is Test, Constants {
             token0 = address(usdt);
             token1 = address(mont);
         }
-
-        INonfungiblePositionManager nfpm = INonfungiblePositionManager(address(0));
-
-        poolManager = new PoolManager(nfpm, token0, token1, 3000);
 
         vault.setGameFactory(gameFactory);
         vault.setMontRewardManager(montRewardManager);
@@ -100,7 +122,9 @@ abstract contract BaseTest is Test, Constants {
      * @param _name The name used to label the new address
      * @return userAddress Generated address of the user
      */
-    function createUser(string memory _name) internal returns (address userAddress) {
+    function createUser(
+        string memory _name
+    ) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
         deal(userAddress, 100e18);

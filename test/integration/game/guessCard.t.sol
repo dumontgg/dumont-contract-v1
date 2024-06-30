@@ -26,14 +26,20 @@ contract GuessCardTest is IntegrationTest {
     function initializeGame() private {
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
+            game: address(game),
+            hashedDeck: deck
+        });
 
         revealer.initialize(params);
 
         vm.stopPrank();
     }
 
-    function testFail_guessCardBeforeInitialization() public changeCaller(users.adam) {
+    function testFail_guessCardBeforeInitialization()
+        public
+        changeCaller(users.adam)
+    {
         uint256 cards = 0;
 
         cards += 1 << 5;
@@ -42,7 +48,10 @@ contract GuessCardTest is IntegrationTest {
     }
 
     function test_maximumBetAmount() public {
-        assertEq(vault.getMaximumBetAmount(), (usdt.balanceOf(address(vault)) * 2) / 100);
+        assertEq(
+            vault.getMaximumBetAmount(),
+            (usdt.balanceOf(address(vault)) * 2) / 100
+        );
     }
 
     function test_guessCardForTheFirstTime() public {
@@ -58,7 +67,7 @@ contract GuessCardTest is IntegrationTest {
         game.guessCard(0, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
-        assertEq(game.cards(0).guessedAt, block.timestamp);
+        assertEq(game.cards(0).requestedAt, block.timestamp);
         assertEq(game.cards(0).revealedNumber, 0);
 
         vm.stopPrank();
@@ -97,7 +106,7 @@ contract GuessCardTest is IntegrationTest {
         game.guessCard(0, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
-        assertEq(game.cards(0).guessedAt, block.timestamp);
+        assertEq(game.cards(0).requestedAt, block.timestamp);
         assertEq(game.cards(0).revealedNumber, 0);
 
         amount = 1e6;
@@ -108,7 +117,7 @@ contract GuessCardTest is IntegrationTest {
         game.guessCard(1, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
-        assertEq(game.cards(0).guessedAt, block.timestamp);
+        assertEq(game.cards(0).requestedAt, block.timestamp);
         assertEq(game.cards(0).revealedNumber, 0);
 
         vm.stopPrank();

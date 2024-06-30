@@ -31,18 +31,6 @@ contract Vault is IVault, Ownable2Step {
     IMontRewardManager public montRewardManager;
 
     /**
-     * @notice Modifier to restrict access to game contracts only
-     * @param _gameId Id of the game
-     */
-    modifier onlyGame(uint256 _gameId) {
-        if (gameFactory.games(_gameId).gameAddress != msg.sender) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
-    }
-
-    /**
      * @notice Constructor to set initial values
      * @param _mont Address of the Dumont token contract
      * @param _usdt Address of the USDT token contract
@@ -92,8 +80,13 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
-        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external onlyOwner {
+        emit RewardManagerChanged(
+            address(montRewardManager),
+            address(_montRewardManager)
+        );
 
         montRewardManager = _montRewardManager;
     }
@@ -114,7 +107,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdraw(_token, _amount, _recipient);
@@ -127,7 +124,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -139,28 +136,45 @@ contract Vault is IVault, Ownable2Step {
      * @param _gameId Id of the game
      * @param _betAmount Amount of the bet in USDT
      * @param _totalAmount Amount of the bet multiplied by the odds
-     * @param _player The address of the player
-     * @param _isPlayerWinner cc
-     * @param _receiveReward cc
+     * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
+     * @param _isPlayerWinner Whether or not the player won or not
+     * @param _receiveMontReward Whether or not the player should receive MONT rewards
      */
     function transferPlayerRewards(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _totalAmount,
-        address _player,
+        uint256 _houseEdgeAmount,
         bool _isPlayerWinner,
-        bool _receiveReward
-    ) external onlyGame(_gameId) {
-        uint256 burnAmount = (_betAmount * 8) / 100;
+        bool _receiveMontReward
+    ) external {
+        IGameFactory.GameDetails memory game = gameFactory.games(_gameId);
 
-        if (_isPlayerWinner) {
-            usdt.safeTransfer(_player, _totalAmount);
+        if (game.gameAddress != msg.sender) {
+            revert NotAuthorized(msg.sender);
         }
 
-        usdt.safeTransfer(address(burner), burnAmount);
+        uint256 houseEdge = _betAmount / 10;
 
-        if (_receiveReward) {
-            montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, _player, _isPlayerWinner);
+        if (_isPlayerWinner) {
+            houseEdge = _houseEdgeAmount;
+        }
+
+        uint256 burnAmount = (houseEdge * 8) / 10;
+
+        if (_isPlayerWinner) {
+            usdt.safeTransfer(game.player, _totalAmount);
+            usdt.safeTransfer(address(burner), burnAmount);
+        }
+
+        if (_receiveMontReward) {
+            montRewardManager.transferPlayerRewards(
+                _betAmount,
+                _totalAmount,
+                houseEdge,
+                game.player,
+                _isPlayerWinner
+            );
         }
     }
 

@@ -18,7 +18,8 @@ interface IGame {
     struct Card {
         uint256 betAmount;
         uint256 totalAmount;
-        uint256 guessedAt;
+        uint256 houseEdgeAmount;
+        uint256 requestedAt;
         uint256 revealedNumber;
         uint256 guessedNumbers;
         bytes32 hash;

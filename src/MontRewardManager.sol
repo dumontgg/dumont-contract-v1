@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -47,7 +49,14 @@ contract MontRewardManager is IMontRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee) {
+    constructor(
+        address _vault,
+        IMONT _mont,
+        IERC20 _usdt,
+        GameFactory _gameFactory,
+        IQuoter _quoter,
+        uint24 _poolFee
+    ) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -76,19 +85,29 @@ contract MontRewardManager is IMontRewardManager {
      * @notice Transfers MONT rewards to the player based on game outcome
      * @param _betAmount Amount of the bet
      * @param _totalAmount Total amount of the bet multiplied by the odds
+     * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _player Address of the player
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferPlayerRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
-        external
-        onlyVault
-        returns (uint256 reward)
-    {
-        uint256 houseFee = calculateHouseFee(_betAmount, _totalAmount, _isPlayerWinner);
+    function transferPlayerRewards(
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        uint256 _houseEdgeAmount,
+        address _player,
+        bool _isPlayerWinner
+    ) external onlyVault returns (uint256 reward) {
+        uint256 houseFee = calculateHouseFee(
+            _betAmount,
+            _houseEdgeAmount,
+            _isPlayerWinner
+        );
+
         uint256 price = getMontPrice();
 
-        reward = ((houseFee * 8) / 10) / price;
+        uint256 houseFeeFixedPoint = houseFee * 1e18;
+
+        reward = ((houseFeeFixedPoint * 8) / 10) / price;
 
         if (reward > _totalAmount) {
             reward = _totalAmount;
@@ -97,9 +116,10 @@ contract MontRewardManager is IMontRewardManager {
         (bool isReferrerSet, address referrer) = checkReferrer(_player);
 
         if (!isReferrerSet) {
-            reward = (_totalAmount * 8) / 10;
+            reward = (reward * 8) / 10;
         } else if (isReferrerSet) {
-            // todo: if referrer is set, the player gets +0.1
+            reward = (reward * 9) / 10;
+
             balances[referrer] += reward / 10;
         }
 
@@ -111,16 +131,16 @@ contract MontRewardManager is IMontRewardManager {
     /**
      * @notice Calculates the house fee based on game outcome
      * @param _betAmount Amount of the bet
-     * @param _totalAmount Total amount of the bet multiplied by the odds
+     * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(uint256 _betAmount, uint256 _totalAmount, bool _isPlayerWinner)
-        private
-        pure
-        returns (uint256 houseFee)
-    {
-        houseFee = _totalAmount / 10;
+    function calculateHouseFee(
+        uint256 _betAmount,
+        uint256 _houseEdgeAmount,
+        bool _isPlayerWinner
+    ) private pure returns (uint256 houseFee) {
+        houseFee = _houseEdgeAmount;
 
         if (!_isPlayerWinner) {
             houseFee = _betAmount / 10;
@@ -134,7 +154,7 @@ contract MontRewardManager is IMontRewardManager {
     function getMontPrice() private pure returns (uint256 price) {
         // todo:
         // price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
-        price = 100000 * 10e18;
+        price = 5e14;
     }
 
     /**
@@ -143,7 +163,9 @@ contract MontRewardManager is IMontRewardManager {
      * @return isReferrerSet If the referrer is set for the referee (player)
      * @return referrer Address of the referrer of the referee (player)
      */
-    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(
+        address _referee
+    ) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {

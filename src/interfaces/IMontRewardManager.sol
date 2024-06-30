@@ -37,11 +37,16 @@ interface IMontRewardManager {
      * @notice Transfers MONT rewards to the player based on game outcome
      * @param _betAmount Amount of the bet
      * @param _totalAmount Total amount of the bet multiplied by the odds
+     * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _player Address of the player
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
      */
-    function transferPlayerRewards(uint256 _betAmount, uint256 _totalAmount, address _player, bool _isPlayerWinner)
-        external
-        returns (uint256 reward);
+    function transferPlayerRewards(
+        uint256 _betAmount,
+        uint256 _totalAmount,
+        uint256 _houseEdgeAmount,
+        address _player,
+        bool _isPlayerWinner
+    ) external returns (uint256 reward);
 }
