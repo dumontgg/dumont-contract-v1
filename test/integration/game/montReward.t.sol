@@ -78,19 +78,12 @@ contract MontRewardTest is IntegrationTest {
         uint256 usdtBalanceAfter = usdt.balanceOf(users.adam);
         uint256 montBalanceAfter = montRewardManager.balances(users.adam);
 
-        console2.log("%s", montBalanceBefore);
-        console2.log("%s", montBalanceAfter);
-
         assert(usdtBalanceBefore == usdtBalanceAfter); // since the player lost
         assert(montBalanceBefore < montBalanceAfter); // losers get mont anyways
 
         vm.stopPrank();
 
         vm.startPrank(users.adam);
-
-        uint256 b = mont.balanceOf(address(montRewardManager));
-
-        console2.log("montrewardmanager balance of mont %s", b);
 
         uint256 montBalanceBeforeClaim = mont.balanceOf(users.adam);
 

@@ -12,10 +12,10 @@ import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
 import {MONT} from "../src/MONT.sol";
 import {MontRewardManager} from "../src/MontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
+import {SWAP_ROUTER} from "./fork/Addresses.t.sol";
 import {USDT} from "./utils/tokens/USDT.t.sol";
 import {Users} from "./utils/Types.sol";
 import {Vault} from "../src/Vault.sol";
-import {SWAP_ROUTER} from "./fork/Addresses.t.sol";
 
 abstract contract BaseTest is Test, Constants {
     Users internal users;
