@@ -47,14 +47,7 @@ contract MontRewardManager is IMontRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(
-        address _vault,
-        IMONT _mont,
-        IERC20 _usdt,
-        GameFactory _gameFactory,
-        IQuoter _quoter,
-        uint24 _poolFee
-    ) {
+    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -95,11 +88,7 @@ contract MontRewardManager is IMontRewardManager {
         address _player,
         bool _isPlayerWinner
     ) external onlyVault returns (uint256 reward) {
-        uint256 houseFee = calculateHouseFee(
-            _betAmount,
-            _houseEdgeAmount,
-            _isPlayerWinner
-        );
+        uint256 houseFee = calculateHouseFee(_betAmount, _houseEdgeAmount, _isPlayerWinner);
 
         uint256 price = getMontPrice();
 
@@ -133,11 +122,11 @@ contract MontRewardManager is IMontRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(
-        uint256 _betAmount,
-        uint256 _houseEdgeAmount,
-        bool _isPlayerWinner
-    ) private pure returns (uint256 houseFee) {
+    function calculateHouseFee(uint256 _betAmount, uint256 _houseEdgeAmount, bool _isPlayerWinner)
+        private
+        pure
+        returns (uint256 houseFee)
+    {
         houseFee = _houseEdgeAmount;
 
         if (!_isPlayerWinner) {
@@ -161,9 +150,7 @@ contract MontRewardManager is IMontRewardManager {
      * @return isReferrerSet If the referrer is set for the referee (player)
      * @return referrer Address of the referrer of the referee (player)
      */
-    function checkReferrer(
-        address _referee
-    ) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {

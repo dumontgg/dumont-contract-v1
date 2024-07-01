@@ -11,7 +11,6 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
 import {Initializable} from "./helpers/Initializable.sol";
 import {Vault} from "./Vault.sol";
 
-// todo: check expired game in tests
 /**
  * @title A single-player game contract where the player guesses card numbers
  * @notice The server sets hashed numbers inside the contract, and the player can guess each card
