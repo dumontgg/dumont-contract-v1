@@ -165,7 +165,6 @@ contract Game is Initializable, IGame {
 
         _card.betAmount = _betAmount;
         _card.totalAmount = reward;
-        // todo: write tests to check if this value if correct
         _card.houseEdgeAmount = totalWinningBetAmount - reward;
         _card.requestedAt = block.timestamp;
         _card.status = CardStatus.GUESSED;

@@ -30,7 +30,6 @@ abstract contract BaseScript is Script {
     address internal UNISWAP_SWAP_ROUTER_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address internal UNISWAP_SWAP_ROUTER_SEPOLIA = 0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
 
-    // TODO: take env value and see the network selected and assign the right address to quoter and swaprouter
     IQuoter uniswapQuoter = IQuoter(UNISWAP_QUOTER_SEPOLIA);
     ISwapRouter uniswapSwapRouter = ISwapRouter(UNISWAP_SWAP_ROUTER_SEPOLIA);
 

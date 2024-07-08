@@ -131,10 +131,8 @@ contract MontRewardManager is IMontRewardManager {
      * @notice Retrieves the current price of MONT token from Uniswap
      * @return price Current price of MONT token
      */
-    function getMontPrice() private pure returns (uint256 price) {
-        // todo:
-        // price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
-        price = 5e14;
+    function getMontPrice() private returns (uint256 price) {
+        price = quoter.quoteExactInputSingle(address(mont), address(usdt), poolFee, 1e18, 0);
     }
 
     /**
