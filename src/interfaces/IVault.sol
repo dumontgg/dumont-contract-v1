@@ -18,6 +18,13 @@ interface IVault {
     event BurnerChanged(address indexed _from, address indexed _to);
 
     /**
+     * @notice Emitted when the player received USDT by guessing a card correctly
+     * @param _player The player address that received the reward
+     * @param _rewards The amount of USDT rewards that the player received
+     */
+    event PlayerRewardsTransferred(address indexed _player, uint256 _rewards);
+
+    /**
      * @notice Emitted when the address of the GameFactory contract changes
      * @param _from The old GameFactory contract address
      * @param _to The new GameFactory contract address
@@ -35,7 +42,7 @@ interface IVault {
      * @notice Emitted when a deposit is made into the Vault
      * @param _amount The amount deposited
      */
-    event Deposit(uint256 _amount);
+    event Deposited(uint256 _amount);
 
     /**
      * @notice Emitted when the minimum bet amount is changed
@@ -50,11 +57,7 @@ interface IVault {
      * @param _amount The amount being withdrawn
      * @param _recipient The address receiving the withdrawal
      */
-    event Withdraw(
-        address indexed _token,
-        uint256 _amount,
-        address indexed _recipient
-    );
+    event Withdrawn(address indexed _token, uint256 _amount, address indexed _recipient);
 
     /**
      * @notice Emitted when the maximum bet rate is changed
@@ -90,9 +93,7 @@ interface IVault {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external;
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external;
 
     /**
      * @notice Allows admins to deposit USDT into the contract
@@ -106,11 +107,7 @@ interface IVault {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external;
+    function withdraw(address _token, uint256 _amount, address _recipient) external;
 
     /**
      * @notice Allows the owner to withdraw ETH from the contract

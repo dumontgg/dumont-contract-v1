@@ -34,29 +34,6 @@ contract GameFactory is IGameFactory, Ownable2Step {
     mapping(uint256 gameId => GameDetails gameDetails) private _games;
 
     /**
-     * @notice Modifier to check if the caller is the Vault contract address
-     */
-    modifier onlyVault() {
-        if (msg.sender != address(vault)) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
-    }
-
-    /**
-     * @notice Modifier to check if the caller is the player of the specified game
-     * @param _gameId The ID of the game
-     */
-    modifier onlyPlayer(uint256 _gameId) {
-        if (_games[_gameId].player == msg.sender) {
-            revert NotAuthorized(msg.sender);
-        }
-
-        _;
-    }
-
-    /**
      * @notice Initializes the GameFactory contract with specified parameters
      * @param _usdt The address of the USDT token
      * @param _vault The address of the vault that will call the createGame function

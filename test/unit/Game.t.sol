@@ -26,9 +26,7 @@ contract GameTest is BaseTest {
 
         usdt.approve(address(gameFactory), gameFactory.gameCreationFee());
 
-        (uint256 id_, address gameAddress_) = gameFactory.createGame(
-            address(0)
-        );
+        (uint256 id_, address gameAddress_) = gameFactory.createGame(address(0));
 
         id = id_;
         game = Game(gameAddress_);
@@ -52,10 +50,7 @@ contract GameTest is BaseTest {
 
         bytes32[52] memory deck;
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
-            game: address(game),
-            hashedDeck: deck
-        });
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
 
         revealer.initialize(params);
 

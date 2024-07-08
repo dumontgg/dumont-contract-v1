@@ -21,14 +21,17 @@ import {IVault} from "./interfaces/IVault.sol";
 contract Vault is IVault, Ownable2Step {
     using SafeERC20 for IERC20;
 
+    address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     IMONT public immutable mont;
     IERC20 public immutable usdt;
 
     IBurner public burner;
-    uint256 public maximimBetRate; // 1% == 100
     IGameFactory public gameFactory;
-    uint256 public minimumBetAmount;
     IMontRewardManager public montRewardManager;
+
+    uint256 public maximimBetRate;
+    uint256 public minimumBetAmount;
 
     /**
      * @notice Constructor to set initial values
@@ -80,13 +83,8 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external onlyOwner {
-        emit RewardManagerChanged(
-            address(montRewardManager),
-            address(_montRewardManager)
-        );
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
+        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
 
         montRewardManager = _montRewardManager;
     }
@@ -98,7 +96,7 @@ contract Vault is IVault, Ownable2Step {
     function deposit(uint256 _amount) external onlyOwner {
         usdt.safeTransferFrom(msg.sender, address(this), _amount);
 
-        emit Deposit(_amount);
+        emit Deposited(_amount);
     }
 
     /**
@@ -107,14 +105,10 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external onlyOwner {
+    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
-        emit Withdraw(_token, _amount, _recipient);
+        emit Withdrawn(_token, _amount, _recipient);
     }
 
     /**
@@ -124,11 +118,13 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success, ) = _recipient.call{value: balance}("");
+        (bool success,) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
         }
+
+        emit Withdrawn(ETH, balance, _recipient);
     }
 
     /**
@@ -165,16 +161,12 @@ contract Vault is IVault, Ownable2Step {
         if (_isPlayerWinner) {
             usdt.safeTransfer(game.player, _totalAmount);
             usdt.safeTransfer(address(burner), burnAmount);
+
+            emit PlayerRewardsTransferred(game.player, _totalAmount);
         }
 
         if (_receiveMontReward) {
-            montRewardManager.transferPlayerRewards(
-                _betAmount,
-                _totalAmount,
-                houseEdge,
-                game.player,
-                _isPlayerWinner
-            );
+            montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, houseEdge, game.player, _isPlayerWinner);
         }
     }
 

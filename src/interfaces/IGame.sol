@@ -33,11 +33,7 @@ interface IGame {
      * @param _number Revealed number for the card
      * @param _salt Revealed salt for the card
      */
-    event CardRevealed(
-        uint256 indexed _index,
-        uint256 indexed _number,
-        bytes32 _salt
-    );
+    event CardRevealed(uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
 
     /**
      * @notice Emitted when guessCard is called for a specific card
@@ -45,11 +41,7 @@ interface IGame {
      * @param _usdtAmount USDT amount betted for the card by the player
      * @param _guessedNumbers Numbers guessed by the player
      */
-    event CardGuessed(
-        uint256 indexed _index,
-        uint256 indexed _usdtAmount,
-        uint256 _guessedNumbers
-    );
+    event CardGuessed(uint256 indexed _index, uint256 indexed _usdtAmount, uint256 _guessedNumbers);
 
     /**
      * @notice Emitted when requestFreeRevealCard is called
@@ -151,11 +143,7 @@ interface IGame {
      * @param _betAmount The amount of USDT that the player bets
      * @param _guessedNumbers Numbers that the player guessed
      */
-    function guessCard(
-        uint256 _index,
-        uint256 _betAmount,
-        uint256 _guessedNumbers
-    ) external;
+    function guessCard(uint256 _index, uint256 _betAmount, uint256 _guessedNumbers) external;
 
     /**
      * @notice Requests a secret card to be revealed for free
@@ -176,12 +164,7 @@ interface IGame {
      * @param _number The revealed number of the card
      * @param _salt The salt that was used to hash the card
      */
-    function revealCard(
-        uint256 _index,
-        uint256 _number,
-        bytes32 _salt,
-        bool isFreeReveal
-    ) external;
+    function revealCard(uint256 _index, uint256 _number, bytes32 _salt, bool isFreeReveal) external;
 
     /**
      * @notice Get cards by their index from 0 to 51

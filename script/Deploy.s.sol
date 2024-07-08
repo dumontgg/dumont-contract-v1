@@ -28,13 +28,7 @@ contract DeployCore is BaseScript {
             ERC20Custom usdt
         )
     {
-        usdt = new ERC20Custom(
-            "USD Tether",
-            "USDT",
-            6,
-            100_000_000,
-            msg.sender
-        );
+        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, msg.sender);
         mont = new MONT(100_000_000e18, msg.sender);
         burner = new Burner(mont, usdt, uniswapSwapRouter, 3000);
         revealer = new Revealer();
@@ -46,23 +40,8 @@ contract DeployCore is BaseScript {
             IMontRewardManager(address(0)), // MontRewardManager
             1e6
         );
-        gameFactory = new GameFactory(
-            usdt,
-            vault,
-            address(revealer),
-            1 days / 2,
-            1 days / 6,
-            3,
-            1e6
-        );
-        montRewardManager = new MontRewardManager(
-            address(vault),
-            mont,
-            usdt,
-            gameFactory,
-            uniswapQuoter,
-            3000
-        );
+        gameFactory = new GameFactory(usdt, vault, address(revealer), 1 days / 2, 1 days / 6, 3, 1e6);
+        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, uniswapQuoter, 3000);
 
         vault.setMontRewardManager(montRewardManager);
         vault.setGameFactory(gameFactory);

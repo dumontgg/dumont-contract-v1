@@ -38,13 +38,7 @@ abstract contract BaseTest is Test, Constants {
 
     function setUp() public virtual {
         mont = new MONT(100_000_000, address(this));
-        usdt = new ERC20Custom(
-            "USD Tether",
-            "USDT",
-            6,
-            100_000_000,
-            address(this)
-        );
+        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, address(this));
 
         users = Users({
             eve: createUser("Eve"),
@@ -76,32 +70,10 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
         burner = new Burner(mont, usdt, SWAP_ROUTER, 500);
-        vault = new Vault(
-            mont,
-            usdt,
-            burner,
-            GameFactory(address(0x00)),
-            MontRewardManager(address(0x00)),
-            1e6
-        );
+        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
 
-        gameFactory = new GameFactory(
-            usdt,
-            vault,
-            address(revealer),
-            ONE_HOUR * 12,
-            ONE_HOUR * 6,
-            5,
-            1e6
-        );
-        montRewardManager = new MontRewardManager(
-            address(vault),
-            mont,
-            usdt,
-            gameFactory,
-            IQuoter(address(0x00)),
-            3000
-        );
+        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
+        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, IQuoter(address(0x00)), 3000);
 
         address token0 = address(mont);
         address token1 = address(usdt);
@@ -122,9 +94,7 @@ abstract contract BaseTest is Test, Constants {
      * @param _name The name used to label the new address
      * @return userAddress Generated address of the user
      */
-    function createUser(
-        string memory _name
-    ) internal returns (address userAddress) {
+    function createUser(string memory _name) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
         deal(userAddress, 100e18);

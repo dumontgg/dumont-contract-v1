@@ -26,20 +26,14 @@ contract GuessCardTest is IntegrationTest {
     function initializeGame() private {
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
-            game: address(game),
-            hashedDeck: deck
-        });
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
 
         revealer.initialize(params);
 
         vm.stopPrank();
     }
 
-    function testFail_guessCardBeforeInitialization()
-        public
-        changeCaller(users.adam)
-    {
+    function testFail_guessCardBeforeInitialization() public changeCaller(users.adam) {
         uint256 cards = 0;
 
         cards += 1 << 5;
@@ -48,10 +42,7 @@ contract GuessCardTest is IntegrationTest {
     }
 
     function test_maximumBetAmount() public {
-        assertEq(
-            vault.getMaximumBetAmount(),
-            (usdt.balanceOf(address(vault)) * 2) / 100
-        );
+        assertEq(vault.getMaximumBetAmount(), (usdt.balanceOf(address(vault)) * 2) / 100);
     }
 
     function test_guessCardForTheFirstTime() public {

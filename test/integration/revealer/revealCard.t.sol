@@ -14,11 +14,7 @@ contract RevealCardTest is IntegrationTest {
         REVEALED
     }
 
-    event CardRevealed(
-        uint256 indexed _index,
-        uint256 indexed _number,
-        bytes32 _salt
-    );
+    event CardRevealed(uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
 
     error NotAuthorized(address _caller);
     error CardIsNotSecret(uint256 _index);
@@ -43,9 +39,9 @@ contract RevealCardTest is IntegrationTest {
         vm.startPrank(users.adam);
 
         usdt.approve(address(gameFactory), 100e6);
-        (, address game0) = gameFactory.createGame(address(0));
+        (, address game0Address) = gameFactory.createGame(address(0));
 
-        game = Game(game0);
+        game = Game(game0Address);
 
         usdt.approve(address(game), 100e6);
 
@@ -53,10 +49,7 @@ contract RevealCardTest is IntegrationTest {
 
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
-            game: address(game),
-            hashedDeck: deck
-        });
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
 
         revealer.initialize(params);
 
@@ -84,19 +77,13 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        assertEq(
-            uint256(game.cards(index0).status),
-            uint256(CardStatus.REVEALED)
-        );
+        assertEq(uint256(game.cards(index0).status), uint256(CardStatus.REVEALED));
         assertEq(game.cards(index0).revealedNumber, cards[0].number);
         assertEq(game.cards(index0).hash, cards[0].hash);
         assertEq(game.cards(index0).revealedSalt, cards[0].salt);
     }
 
-    function test_revealCardWithTheRightData()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardWithTheRightData() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -107,19 +94,13 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        assertEq(
-            uint256(game.cards(index0).status),
-            uint256(CardStatus.REVEALED)
-        );
+        assertEq(uint256(game.cards(index0).status), uint256(CardStatus.REVEALED));
         assertEq(game.cards(index0).revealedNumber, cards[0].number);
         assertEq(game.cards(index0).hash, cards[0].hash);
         assertEq(game.cards(index0).revealedSalt, cards[0].salt);
     }
 
-    function test_revertIfRevealCardIsCalledWithWrongData()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revertIfRevealCardIsCalledWithWrongData() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -128,33 +109,19 @@ contract RevealCardTest is IntegrationTest {
             number: cards[1].number
         });
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                InvalidSalt.selector,
-                index0,
-                cards[1].number,
-                cards[1].salt
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidSalt.selector, index0, cards[1].number, cards[1].salt));
 
         revealer.revealCard(params);
     }
 
-    function test_revertIfRevealCardIsCalledDirectly()
-        public
-        changeCaller(users.server1)
-    {
-        vm.expectRevert(
-            abi.encodeWithSelector(NotAuthorized.selector, users.server1)
-        );
+    function test_revertIfRevealCardIsCalledDirectly() public changeCaller(users.server1) {
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, users.server1));
 
         game.revealCard(index0, cards[0].number, cards[0].salt, false);
     }
 
     function test_revealMultipleCards() public changeCaller(users.server1) {
-        IRevealer.RevealedCard[] memory params = new IRevealer.RevealedCard[](
-            2
-        );
+        IRevealer.RevealedCard[] memory params = new IRevealer.RevealedCard[](2);
 
         params[0] = IRevealer.RevealedCard({
             game: address(game),
@@ -175,10 +142,7 @@ contract RevealCardTest is IntegrationTest {
         revealer.revealCardBatch(params);
     }
 
-    function testFail_revertUnauthorizedRevealCard()
-        public
-        changeCaller(users.bob)
-    {
+    function testFail_revertUnauthorizedRevealCard() public changeCaller(users.bob) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -190,10 +154,7 @@ contract RevealCardTest is IntegrationTest {
         revealer.revealCard(params);
     }
 
-    function test_revealGuessCardAsFreeRevealShouldRevert()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealGuessCardAsFreeRevealShouldRevert() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -202,20 +163,12 @@ contract RevealCardTest is IntegrationTest {
             number: cards[0].number
         });
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CardStatusIsNotFreeRevealRequested.selector,
-                index0
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CardStatusIsNotFreeRevealRequested.selector, index0));
 
         revealer.revealCard(params);
     }
 
-    function test_revealFreeRevealCardAsGuessCardShouldRevert()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealFreeRevealCardAsGuessCardShouldRevert() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: 2,
@@ -226,17 +179,12 @@ contract RevealCardTest is IntegrationTest {
 
         uint256 index2 = 2;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CardIsNotSecret.selector, index2)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, index2));
 
         revealer.revealCard(params);
     }
 
-    function test_revealCardShouldChangeCardsRevealedVariable()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardShouldChangeCardsRevealedVariable() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: 0,
@@ -262,10 +210,7 @@ contract RevealCardTest is IntegrationTest {
         assertEq(game.cardsRevealed(), 2);
     }
 
-    function test_revealCardShouldNotChangeFreeRevealedVariable()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardShouldNotChangeFreeRevealedVariable() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: 0,
@@ -293,10 +238,7 @@ contract RevealCardTest is IntegrationTest {
         assertEq(game.revealedCardNumbersCount(9), 1);
     }
 
-    function test_revealCardShouldTransferUSDTIfWon()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardShouldTransferUSDTIfWon() public changeCaller(users.server1) {
         uint256 balanceBefore = usdt.balanceOf(game.player());
 
         uint256 amount = game.cards(0).totalAmount;
@@ -316,10 +258,7 @@ contract RevealCardTest is IntegrationTest {
         assertEq(balanceAfter, balanceBefore + amount);
     }
 
-    function test_revealCardShouldNotTransferUSDTIfLost()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardShouldNotTransferUSDTIfLost() public changeCaller(users.server1) {
         uint256 balanceBefore = usdt.balanceOf(game.player());
 
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
@@ -337,10 +276,7 @@ contract RevealCardTest is IntegrationTest {
         assertEq(balanceAfter, balanceBefore);
     }
 
-    function test_revealTheSameCardTwiceShouldRevert()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealTheSameCardTwiceShouldRevert() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -351,17 +287,12 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CardIsNotSecret.selector, index0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, index0));
 
         revealer.revealCard(params);
     }
 
-    function test_revealCardShouldEmitEvents()
-        public
-        changeCaller(users.server1)
-    {
+    function test_revealCardShouldEmitEvents() public changeCaller(users.server1) {
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
             index: index0,
@@ -375,5 +306,27 @@ contract RevealCardTest is IntegrationTest {
         emit CardRevealed(index0, cards[0].number, cards[0].salt);
 
         revealer.revealCard(params);
+    }
+
+    function test_initializeBatch() public {
+        vm.startPrank(users.adam);
+        (, address game0Address) = gameFactory.createGame(address(0));
+        (, address game1Address) = gameFactory.createGame(address(0));
+        vm.stopPrank();
+
+        vm.startPrank(users.server1);
+
+        IRevealer.InitializeGame[] memory params = new IRevealer.InitializeGame[](2);
+
+        IRevealer.InitializeGame memory game0Params = IRevealer.InitializeGame({game: game0Address, hashedDeck: deck});
+
+        IRevealer.InitializeGame memory game1Params = IRevealer.InitializeGame({game: game1Address, hashedDeck: deck});
+
+        params[0] = game0Params;
+        params[1] = game1Params;
+
+        revealer.initializeBatch(params);
+
+        vm.stopPrank();
     }
 }

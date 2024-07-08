@@ -96,7 +96,7 @@ contract MontRewardTest is IntegrationTest {
     function test_revealShouldSetMontToReferrer() public {
         vm.startPrank(users.adam);
 
-        (uint256 game0, address game0Address) = gameFactory.createGame(users.eve);
+        (, address game0Address) = gameFactory.createGame(users.eve);
 
         vm.stopPrank();
         vm.startPrank(users.server1);
@@ -145,7 +145,7 @@ contract MontRewardTest is IntegrationTest {
     function test_revealShouldSetMoreMontIfReferrerIsSet() public {
         vm.startPrank(users.adam);
 
-        (uint256 game0, address game0Address) = gameFactory.createGame(address(0));
+        (, address game0Address) = gameFactory.createGame(address(0));
 
         vm.stopPrank();
         vm.startPrank(users.server1);
@@ -180,7 +180,7 @@ contract MontRewardTest is IntegrationTest {
 
         uint256 amuontWithoutReferrer = montRewardManager.claim();
 
-        (uint256 game1, address game1Address) = gameFactory.createGame(users.eve);
+        (, address game1Address) = gameFactory.createGame(users.eve);
 
         vm.stopPrank();
         vm.startPrank(users.server1);

@@ -28,17 +28,6 @@ contract MontRewardManager is IMontRewardManager {
     mapping(address => uint256) public balances;
 
     /**
-     * @notice Modifier to restrict access to only the Vault contract
-     */
-    modifier onlyVault() {
-        if (msg.sender != vault) {
-            revert Unauthorized();
-        }
-
-        _;
-    }
-
-    /**
      * @notice Constructor to initialize contract state variables
      * @param _vault Address of the Vault contract
      * @param _mont Address of the MONT token contract
@@ -87,7 +76,11 @@ contract MontRewardManager is IMontRewardManager {
         uint256 _houseEdgeAmount,
         address _player,
         bool _isPlayerWinner
-    ) external onlyVault returns (uint256 reward) {
+    ) external returns (uint256 reward) {
+        if (msg.sender != vault) {
+            revert Unauthorized();
+        }
+
         uint256 houseFee = calculateHouseFee(_betAmount, _houseEdgeAmount, _isPlayerWinner);
 
         uint256 price = getMontPrice();
