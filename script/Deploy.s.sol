@@ -29,7 +29,7 @@ contract DeployCore is BaseScript {
         )
     {
         usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, msg.sender);
-        mont = new MONT(100_000_000e18, msg.sender);
+        mont = new MONT(100_000_000, msg.sender);
         burner = new Burner(mont, usdt, uniswapSwapRouter, 3000);
         revealer = new Revealer();
         vault = new Vault(
