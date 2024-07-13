@@ -8,28 +8,33 @@ pragma solidity 0.8.23;
  */
 interface ITaxBasedLocker {
     /**
-     * @dev Emitted when the contract is initialized.
+     * @notice Emitted when the contract is initialized.
      */
     event Initialized();
 
     /**
-     * @dev Emitted when tokens are withdrawn by the owner.
+     * @notice Emitted when tokens are withdrawn by the owner.
      * @param owner The address of the owner withdrawing the tokens.
      * @param withdrawableAmount The amount of tokens withdrawn.
      */
     event Withdrawn(address indexed owner, uint256 withdrawableAmount);
 
     /**
-     * @dev Emitted when tokens are burned due to early withdrawal.
+     * @notice Emitted when tokens are burned due to early withdrawal.
      * @param owner The address of the owner whose tokens are burned.
      * @param burnableAmount The amount of tokens burned.
      */
     event Burned(address indexed owner, uint256 burnableAmount);
 
     /**
-     * @dev Thrown when the contract has already been initialized.
+     * @notice Thrown when the contract has already been initialized.
      */
     error AlreadyInitialized();
+
+    /**
+     * @notice Thrown when the locked amount parameter is zero
+     */
+    error InvalidAmount();
 
     /**
      * @dev Thrown when there are not enough tokens to initialize the contract.

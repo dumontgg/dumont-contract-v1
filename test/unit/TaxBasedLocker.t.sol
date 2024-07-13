@@ -9,6 +9,7 @@ contract TaxBasedLockerTest is BaseTest {
     event Withdrawn(address indexed owner, uint256 withdrawableAmount);
     event Burned(address indexed owner, uint256 burnableAmount);
 
+    error InvalidAmount();
     error AlreadyInitialized();
     error OwnableUnauthorizedAccount(address _caller);
 
@@ -39,7 +40,10 @@ contract TaxBasedLockerTest is BaseTest {
         assertEq(mont.balanceOf(address(locker)), lockAmount);
     }
 
-    function testAlreadyInitializedShouldRevert() public changeCaller(users.admin) {
+    function test_alreadyInitializedShouldRevert()
+        public
+        changeCaller(users.admin)
+    {
         locker.initialize(lockAmount);
 
         vm.expectRevert(AlreadyInitialized.selector);
@@ -47,7 +51,7 @@ contract TaxBasedLockerTest is BaseTest {
         locker.initialize(lockAmount);
     }
 
-    function testWithdrawEarly() public changeCaller(users.admin) {
+    function test_withdrawEarly() public changeCaller(users.admin) {
         locker.initialize(lockAmount);
 
         // Fast forward 5 years
@@ -71,7 +75,7 @@ contract TaxBasedLockerTest is BaseTest {
         assertEq(totalSupplyAfter, totalSupplyBefore - burnableAmount);
     }
 
-    function testWithdrawAfterLockPeriod() public changeCaller(users.admin) {
+    function test_withdrawAfterLockPeriod() public changeCaller(users.admin) {
         locker.initialize(lockAmount);
 
         // Fast forward 10 years
@@ -93,7 +97,7 @@ contract TaxBasedLockerTest is BaseTest {
         assertEq(totalSupplyAfter, totalSupplyBefore);
     }
 
-    function testEmitEvents() public changeCaller(users.admin) {
+    function test_emitEvents() public changeCaller(users.admin) {
         vm.expectEmit(true, true, false, true);
         emit Initialized();
         locker.initialize(lockAmount);
@@ -112,14 +116,28 @@ contract TaxBasedLockerTest is BaseTest {
         locker.withdraw();
     }
 
-    function testOnlyOwnerCanInitialize() public {
+    function test_callingInitializeWithLockedAmountSetToZeroShouldRevert()
+        public
+    {
+        vm.prank(users.admin);
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidAmount.selector));
+        locker.initialize(0);
+    }
+
+    function test_onlyOwnerCanInitialize() public {
         vm.prank(users.bob);
 
-        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, users.bob));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUnauthorizedAccount.selector,
+                users.bob
+            )
+        );
         locker.initialize(lockAmount); // This should fail
     }
 
-    function testOnlyOwnerCanWithdraw() public {
+    function test_onlyOwnerCanWithdraw() public {
         vm.prank(users.admin);
         locker.initialize(lockAmount);
 
@@ -127,7 +145,12 @@ contract TaxBasedLockerTest is BaseTest {
         vm.warp(block.timestamp + (5 * 365 days));
 
         vm.prank(users.bob);
-        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, users.bob));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUnauthorizedAccount.selector,
+                users.bob
+            )
+        );
         locker.withdraw(); // This should fail
     }
 }

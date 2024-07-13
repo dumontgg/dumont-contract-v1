@@ -60,12 +60,20 @@ contract TaxBasedLocker is ITaxBasedLocker, Ownable {
             revert AlreadyInitialized();
         }
 
+        if (_lockedAmount == 0) {
+            revert InvalidAmount();
+        }
+
         lockedAmount = _lockedAmount;
 
         uint256 balance = token.balanceOf(address(this));
 
         if (balance < lockedAmount) {
-            token.safeTransferFrom(owner(), address(this), lockedAmount - balance);
+            token.safeTransferFrom(
+                owner(),
+                address(this),
+                lockedAmount - balance
+            );
         }
 
         startTime = block.timestamp;
@@ -122,7 +130,8 @@ contract TaxBasedLocker is ITaxBasedLocker, Ownable {
         if (elapsedTime >= lockPeriod) {
             return lockedAmount;
         } else {
-            uint256 withdrawableAmount = (lockedAmount * elapsedTime) / lockPeriod;
+            uint256 withdrawableAmount = (lockedAmount * elapsedTime) /
+                lockPeriod;
             return withdrawableAmount;
         }
     }
