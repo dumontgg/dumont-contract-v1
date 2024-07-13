@@ -18,6 +18,9 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
 contract GameFactory is IGameFactory, Ownable2Step {
     using SafeERC20 for IERC20;
 
+    // This uses 6 decimals because the contract uses USDT as the fee token
+    uint256 public constant MAXIMUM_GAME_CREATION_FEE = 100e6;
+
     IERC20 public immutable usdt;
     Vault public immutable vault;
 
@@ -66,6 +69,13 @@ contract GameFactory is IGameFactory, Ownable2Step {
      * @param _gameCreationFee The new fee amount in USDT
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
+        if (_gameCreationFee > MAXIMUM_GAME_CREATION_FEE) {
+            revert GameCreationFeeIsTooHigh(
+                _gameCreationFee,
+                MAXIMUM_GAME_CREATION_FEE
+            );
+        }
+
         emit GameFeeChanged(gameCreationFee, _gameCreationFee);
 
         gameCreationFee = _gameCreationFee;
@@ -123,8 +133,18 @@ contract GameFactory is IGameFactory, Ownable2Step {
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress =
-            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
+        address gameAddress = address(
+            new Game(
+                usdt,
+                vault,
+                revealer,
+                msg.sender,
+                _gameId,
+                gameDuration,
+                claimableAfter,
+                maxFreeReveals
+            )
+        );
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,

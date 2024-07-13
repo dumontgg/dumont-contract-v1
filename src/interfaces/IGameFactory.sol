@@ -68,7 +68,11 @@ interface IGameFactory {
      * @param _gameAddress Address of the game
      * @param _player Address of the player
      */
-    event GameCreated(uint256 indexed _gameId, address indexed _gameAddress, address indexed _player);
+    event GameCreated(
+        uint256 indexed _gameId,
+        address indexed _gameAddress,
+        address indexed _player
+    );
 
     /**
      * @notice Emitted when a player sets a referrer during game creation
@@ -96,6 +100,13 @@ interface IGameFactory {
      * @param _referee Address of the referee
      */
     error ReferralAlreadySet(address _referee, address _referrer);
+
+    /**
+     * @notice Thrown when the new game creation fee is higher than MAXIMUM_CREATION_FEE
+     * @param _newFee The new creation fee amount
+     * @param _maxFee The maximum creation fee amount
+     */
+    error GameCreationFeeIsTooHigh(uint256 _newFee, uint256 _maxFee);
 
     /**
      * @notice Changes the fee required to create a new game
