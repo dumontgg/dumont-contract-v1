@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IMONT} from "../src/interfaces/IMONT.sol";
+import {Initializable} from "./helpers/Initializable.sol";
 import {ITaxBasedLocker} from "./interfaces/ITaxBasedLocker.sol";
 
 /**
@@ -12,7 +13,7 @@ import {ITaxBasedLocker} from "./interfaces/ITaxBasedLocker.sol";
  * @notice Locks tokens for a specified period and applies a burn penalty for early withdrawals.
  * @dev Provides functions for initializing the contract, withdrawing tokens, and calculating the withdrawable amount.
  */
-contract TaxBasedLocker is ITaxBasedLocker, Ownable {
+contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
     using SafeERC20 for IMONT;
 
     uint256 public startTime;
@@ -55,10 +56,10 @@ contract TaxBasedLocker is ITaxBasedLocker, Ownable {
      * - {AlreadyInitialized} if the contract is already initialized.
      * - {NotEnoughTokens} if the caller does not have enough tokens.
      */
-    function initialize(uint256 _lockedAmount) external onlyOwner {
-        if (lockedAmount > 0) {
-            revert AlreadyInitialized();
-        }
+    function initialize(
+        uint256 _lockedAmount
+    ) external onlyNotInitialized onlyOwner {
+        initializeContract();
 
         if (_lockedAmount == 0) {
             revert InvalidAmount();
@@ -93,7 +94,7 @@ contract TaxBasedLocker is ITaxBasedLocker, Ownable {
      * Emits a {Withdrawn} event indicating the amount withdrawn.
      * Emits a {Burnn} event indicating the amount burned.
      */
-    function withdraw() external onlyOwner {
+    function withdraw() external onlyOwner onlyInitialized {
         if (lockedAmount == 0) {
             revert NotEnoughTokens();
         }

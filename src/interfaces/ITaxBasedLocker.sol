@@ -27,11 +27,6 @@ interface ITaxBasedLocker {
     event Burned(address indexed owner, uint256 burnableAmount);
 
     /**
-     * @notice Thrown when the contract has already been initialized.
-     */
-    error AlreadyInitialized();
-
-    /**
      * @notice Thrown when the locked amount parameter is zero
      */
     error InvalidAmount();
