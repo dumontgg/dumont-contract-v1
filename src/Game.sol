@@ -186,6 +186,10 @@ contract Game is Initializable, IGame {
     ) external onlyPlayer onlyInitialized notExpired {
         Card storage _card = _cards[_index];
 
+        if (_index > 51) {
+            revert InvalidGameIndex();
+        }
+
         if (cardsFreeRevealedRequests == maxFreeReveals) {
             revert MaximumFreeRevealsRequested();
         }
