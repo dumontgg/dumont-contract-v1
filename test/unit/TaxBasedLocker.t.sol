@@ -12,6 +12,7 @@ contract TaxBasedLockerTest is BaseTest {
     error InvalidAmount();
     error AlreadyInitialized();
     error OwnableUnauthorizedAccount(address _caller);
+    error InvalidLockedAmount(uint256 _currentBalance, uint256 _lockedAmount);
 
     TaxBasedLocker locker;
 
@@ -152,5 +153,17 @@ contract TaxBasedLockerTest is BaseTest {
             )
         );
         locker.withdraw(); // This should fail
+    }
+
+    function test_havingMoreBalanceThanLockedAmountWillRevert() public {
+        vm.prank(users.admin);
+
+        mont.transfer(address(locker), 200e18);
+
+        vm.prank(users.admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(InvalidLockedAmount.selector, 200e18, 100e18)
+        );
+        locker.initialize(100e18);
     }
 }

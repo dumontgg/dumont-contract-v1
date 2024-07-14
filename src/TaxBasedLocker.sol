@@ -69,6 +69,10 @@ contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
 
         uint256 balance = token.balanceOf(address(this));
 
+        if (balance > _lockedAmount) {
+            revert InvalidLockedAmount(balance, _lockedAmount);
+        }
+
         if (balance < lockedAmount) {
             token.safeTransferFrom(
                 owner(),

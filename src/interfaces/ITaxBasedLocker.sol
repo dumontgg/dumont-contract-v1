@@ -32,9 +32,16 @@ interface ITaxBasedLocker {
     error InvalidAmount();
 
     /**
-     * @dev Thrown when there are not enough tokens to initialize the contract.
+     * @notice Thrown when there are not enough tokens to initialize the contract.
      */
     error NotEnoughTokens();
+
+    /**
+     * @notice Thrown when the locked amount parameter is less than the balance of the contract
+     * @param _currentBalance The current balance of the tokens in the contract
+     * @param _lockedAmount The locked amount parameter
+     */
+    error InvalidLockedAmount(uint256 _currentBalance, uint256 _lockedAmount);
 
     /**
      * @notice Initializes the contract with a specified amount of tokens to lock.
