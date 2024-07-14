@@ -146,6 +146,13 @@ interface IGame {
     error DivisionByZeroSelectedCards(uint256 _numbers);
 
     /**
+     * @notice Thrown when the card is not revealed after CLAIMABLE_AFTER and the operator
+     tries to reveal the card
+     * @param _index Index of the card
+    */
+    error CardIsAlreadyClaimable(uint256 _index);
+
+    /**
      * @notice Initializes the contract by committing the deck of cards
      * @param _hashedDeck The hash of a random deck of cards
      */

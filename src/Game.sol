@@ -273,6 +273,10 @@ contract Game is Initializable, IGame {
 
         Card storage _card = _cards[_index];
 
+        if (_card.requestedAt + claimableAfter <= block.timestamp) {
+            revert CardIsAlreadyClaimable(_index);
+        }
+
         if (isFreeReveal) {
             if (_card.status != CardStatus.FREE_REVEAL_REQUESTED) {
                 revert CardStatusIsNotFreeRevealRequested(_index);

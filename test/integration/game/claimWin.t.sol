@@ -30,7 +30,10 @@ contract ClaimWinTest is IntegrationTest {
 
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
+            game: address(game),
+            hashedDeck: deck
+        });
 
         revealer.initialize(params);
 
@@ -56,7 +59,10 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index);
     }
 
-    function testFail_claimWinShouldFailIfCalledBefore() public changeCaller(users.adam) {
+    function testFail_claimWinShouldFailIfCalledBefore()
+        public
+        changeCaller(users.adam)
+    {
         vm.warp(block.timestamp + (ONE_HOUR * 2));
 
         assertEq(block.timestamp, MAY_1_2023 + ONE_HOUR * 2);
@@ -74,7 +80,10 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index);
     }
 
-    function testFail_claimWinShouldNotBeCalledTwice() public changeCaller(users.adam) {
+    function testFail_claimWinShouldNotBeCalledTwice()
+        public
+        changeCaller(users.adam)
+    {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
         game.claimWin(index);
@@ -90,7 +99,10 @@ contract ClaimWinTest is IntegrationTest {
 
         uint256 userBalanceAfter = usdt.balanceOf(address(users.adam));
 
-        assertEq(userBalanceAfter, userBalanceBefore + game.cards(index).totalAmount);
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + game.cards(index).totalAmount
+        );
     }
 
     function testFail_claimWinShouldFailIfCalledByUnauthorizedAddress() public {
@@ -105,7 +117,10 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index + 1);
     }
 
-    function test_claimWinShouldNotSetMontRewards() public changeCaller(users.adam) {
+    function test_claimWinShouldNotSetMontRewards()
+        public
+        changeCaller(users.adam)
+    {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
         uint256 userBalanceBefore = mont.balanceOf(address(users.adam));
