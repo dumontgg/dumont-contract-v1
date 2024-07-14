@@ -190,7 +190,10 @@ contract GameFactory is IGameFactory, Ownable2Step {
             revert InvalidReferrer(_referrer, _referee);
         }
 
-        if (referrals[_referee] != address(0)) {
+        if (
+            referrals[_referee] != address(0) &&
+            referrals[_referee] != _referrer
+        ) {
             revert ReferralAlreadySet(_referee, referrals[_referee]);
         }
 
