@@ -216,6 +216,10 @@ contract Game is Initializable, IGame {
             }
         }
 
+        if (remainingSelectedCard == 0) {
+            revert DivisionByZeroSelectedCards(_numbers);
+        }
+
         rate = ud(remainingCards).div(ud(remainingSelectedCard));
     }
 
