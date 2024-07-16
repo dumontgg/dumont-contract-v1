@@ -83,8 +83,13 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
-        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external onlyOwner {
+        emit RewardManagerChanged(
+            address(montRewardManager),
+            address(_montRewardManager)
+        );
 
         montRewardManager = _montRewardManager;
     }
@@ -105,7 +110,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdrawn(_token, _amount, _recipient);
@@ -118,7 +127,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -134,15 +143,13 @@ contract Vault is IVault, Ownable2Step {
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Whether or not the player won or not
-     * @param _receiveMontReward Whether or not the player should receive MONT rewards
      */
     function transferPlayerRewards(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _totalAmount,
         uint256 _houseEdgeAmount,
-        bool _isPlayerWinner,
-        bool _receiveMontReward
+        bool _isPlayerWinner
     ) external {
         IGameFactory.GameDetails memory game = gameFactory.games(_gameId);
 
@@ -165,9 +172,13 @@ contract Vault is IVault, Ownable2Step {
             emit PlayerRewardsTransferred(game.player, _totalAmount);
         }
 
-        if (_receiveMontReward) {
-            montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, houseEdge, game.player, _isPlayerWinner);
-        }
+        montRewardManager.transferPlayerRewards(
+            _betAmount,
+            _totalAmount,
+            houseEdge,
+            game.player,
+            _isPlayerWinner
+        );
     }
 
     /**

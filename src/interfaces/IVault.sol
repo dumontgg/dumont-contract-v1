@@ -57,7 +57,11 @@ interface IVault {
      * @param _amount The amount being withdrawn
      * @param _recipient The address receiving the withdrawal
      */
-    event Withdrawn(address indexed _token, uint256 _amount, address indexed _recipient);
+    event Withdrawn(
+        address indexed _token,
+        uint256 _amount,
+        address indexed _recipient
+    );
 
     /**
      * @notice Emitted when the maximum bet rate is changed
@@ -93,7 +97,9 @@ interface IVault {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(IMontRewardManager _montRewardManager) external;
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external;
 
     /**
      * @notice Allows admins to deposit USDT into the contract
@@ -107,7 +113,11 @@ interface IVault {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(address _token, uint256 _amount, address _recipient) external;
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external;
 
     /**
      * @notice Allows the owner to withdraw ETH from the contract
@@ -122,15 +132,13 @@ interface IVault {
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Whether or not the player won or not
-     * @param _receiveMontReward Whether or not the player should receive MONT rewards
      */
     function transferPlayerRewards(
         uint256 _gameId,
         uint256 _betAmount,
         uint256 _totalAmount,
         uint256 _houseEdgeAmount,
-        bool _isPlayerWinner,
-        bool _receiveMontReward
+        bool _isPlayerWinner
     ) external;
 
     /**

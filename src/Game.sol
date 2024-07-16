@@ -250,8 +250,7 @@ contract Game is Initializable, IGame {
             _card.betAmount,
             _card.totalAmount,
             _card.houseEdgeAmount,
-            true,
-            !SHOULD_RECEIVE_REWARDS
+            true
         );
 
         emit CardClaimed(_index, block.timestamp);
@@ -304,8 +303,7 @@ contract Game is Initializable, IGame {
                 _card.betAmount,
                 _card.totalAmount,
                 _card.houseEdgeAmount,
-                isWinner,
-                SHOULD_RECEIVE_REWARDS
+                isWinner
             );
         }
 
@@ -353,7 +351,10 @@ contract Game is Initializable, IGame {
     ) private view {
         Card memory card = _cards[_index];
 
-        bytes32 hash = keccak256(abi.encodePacked(_number, _salt));
+        bytes32 hash = keccak256(
+            // abi.encodePacked(address(this), _number, _salt)
+            abi.encodePacked(_number, _salt)
+        );
 
         if (card.hash != hash) {
             revert InvalidSalt(_index, _number, _salt);

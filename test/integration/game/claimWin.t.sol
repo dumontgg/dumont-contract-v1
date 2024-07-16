@@ -117,18 +117,22 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index + 1);
     }
 
-    function test_claimWinShouldNotSetMontRewards()
+    function test_claimWinShouldSetMontRewards()
         public
         changeCaller(users.adam)
     {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
-        uint256 userBalanceBefore = mont.balanceOf(address(users.adam));
+        uint256 userBalanceBefore = montRewardManager.balances(
+            address(users.adam)
+        );
 
         game.claimWin(index);
 
-        uint256 userBalanceAfter = mont.balanceOf(address(users.adam));
+        uint256 userBalanceAfter = montRewardManager.balances(
+            address(users.adam)
+        );
 
-        assertEq(userBalanceAfter, userBalanceBefore);
+        assert(userBalanceAfter > userBalanceBefore);
     }
 }
