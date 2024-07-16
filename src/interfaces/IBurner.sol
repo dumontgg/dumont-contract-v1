@@ -16,7 +16,10 @@ interface IBurner {
      * @param _usdtAmount The amount of USDT swapped
      * @param _montAmount The amount of MONT burned
      */
-    event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
+    event MONTTokensBurned(
+        uint256 indexed _usdtAmount,
+        uint256 indexed _montAmount
+    );
 
     /**
      * @notice Throws when there are not enough USDT tokens to burn
@@ -46,6 +49,7 @@ interface IBurner {
     /**
      * @notice Swaps USDT to MONT and burns MONT tokens
      * @param _amountOutMinimum The minimum amount of MONT to burn
+     * @param _deadline Deadline of the swap
      */
-    function burnTokens(uint256 _amountOutMinimum) external;
+    function burnTokens(uint256 _amountOutMinimum, uint256 _deadline) external;
 }

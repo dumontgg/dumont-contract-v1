@@ -30,7 +30,12 @@ contract Burner is IBurner, Ownable2Step {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
+    constructor(
+        IMONT _mont,
+        IERC20 _usdt,
+        ISwapRouter _swapRouter,
+        uint24 _uniswapPoolFee
+    ) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         swapRouter = _swapRouter;
@@ -42,8 +47,12 @@ contract Burner is IBurner, Ownable2Step {
     /**
      * @notice Swaps USDT to MONT and burns MONT tokens
      * @param _amountOutMinimum The minimum amount of MONT to burn
+     * @param _deadline Deadline of the swap
      */
-    function burnTokens(uint256 _amountOutMinimum) external onlyOwner {
+    function burnTokens(
+        uint256 _amountOutMinimum,
+        uint256 _deadline
+    ) external onlyOwner {
         uint256 usdtBalance = usdt.balanceOf(address(this));
 
         if (usdtBalance == 0) {
@@ -51,7 +60,7 @@ contract Burner is IBurner, Ownable2Step {
         }
 
         // Swap is used to convert all USDT tokens to MONT tokens
-        _swap(usdtBalance, _amountOutMinimum);
+        _swap(usdtBalance, _amountOutMinimum, _deadline);
 
         uint256 montBalance = mont.balanceOf(address(this));
 
@@ -65,17 +74,22 @@ contract Burner is IBurner, Ownable2Step {
      * @param _amountIn The amount of USDT to swap
      * @param _amountOutMinimum The minimum amount of MONT to receive
      */
-    function _swap(uint256 _amountIn, uint256 _amountOutMinimum) private returns (uint256 amountOut) {
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            fee: uniswapPoolFee,
-            amountIn: _amountIn,
-            tokenIn: address(usdt),
-            tokenOut: address(mont),
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountOutMinimum: _amountOutMinimum,
-            sqrtPriceLimitX96: 0
-        });
+    function _swap(
+        uint256 _amountIn,
+        uint256 _amountOutMinimum,
+        uint256 _deadline
+    ) private returns (uint256 amountOut) {
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                fee: uniswapPoolFee,
+                amountIn: _amountIn,
+                tokenIn: address(usdt),
+                tokenOut: address(mont),
+                recipient: address(this),
+                deadline: _deadline,
+                amountOutMinimum: _amountOutMinimum,
+                sqrtPriceLimitX96: 0
+            });
 
         amountOut = swapRouter.exactInputSingle(params);
     }
