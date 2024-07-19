@@ -24,14 +24,17 @@ abstract contract BaseScript is Script {
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
 
+    address internal UNISWAP_QUOTER_BASE = 0x61fFE014bA17989E743c5F6cB21bF9697530B21e; // todo
     address internal UNISWAP_QUOTER_MAINNET = 0x61fFE014bA17989E743c5F6cB21bF9697530B21e;
     address internal UNISWAP_QUOTER_SEPOLIA = 0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3;
 
+    address internal UNISWAP_SWAP_ROUTER_BASE = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // todo
     address internal UNISWAP_SWAP_ROUTER_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address internal UNISWAP_SWAP_ROUTER_SEPOLIA = 0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
 
-    IQuoter uniswapQuoter = IQuoter(UNISWAP_QUOTER_SEPOLIA);
-    ISwapRouter uniswapSwapRouter = ISwapRouter(UNISWAP_SWAP_ROUTER_SEPOLIA);
+    // todo: use env
+    IQuoter uniswapQuoter = IQuoter(UNISWAP_QUOTER_SEPOLIA); // todo
+    ISwapRouter uniswapSwapRouter = ISwapRouter(UNISWAP_SWAP_ROUTER_SEPOLIA); // todo
 
     /// @dev Initializes the transaction broadcaster like this:
     ///
