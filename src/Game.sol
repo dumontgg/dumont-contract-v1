@@ -329,10 +329,7 @@ contract Game is Initializable, IGame {
     function verifySalt(uint256 _index, uint256 _number, bytes32 _salt) private view {
         Card memory card = _cards[_index];
 
-        bytes32 hash = keccak256(
-            // abi.encodePacked(address(this), _number, _salt)
-            abi.encodePacked(_number, _salt)
-        );
+        bytes32 hash = keccak256(abi.encodePacked(address(this), _number, _salt));
 
         if (card.hash != hash) {
             revert InvalidSalt(_index, _number, _salt);

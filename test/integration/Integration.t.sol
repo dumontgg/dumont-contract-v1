@@ -10,7 +10,7 @@ abstract contract IntegrationTest is BaseTest, RandomDeck {
 
         deployContracts();
 
-        setCards();
+        setCards(users.adam);
 
         vm.startPrank(users.admin);
 

@@ -24,16 +24,15 @@ contract ClaimWinTest is IntegrationTest {
         usdt.approve(address(gameFactory), 100e6);
         (, address game0) = gameFactory.createGame(address(0));
 
+        setCards(game0);
+
         game = Game(game0);
 
         vm.stopPrank();
 
         vm.startPrank(users.server1);
 
-        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({
-            game: address(game),
-            hashedDeck: deck
-        });
+        IRevealer.InitializeGame memory params = IRevealer.InitializeGame({game: address(game), hashedDeck: deck});
 
         revealer.initialize(params);
 
@@ -59,10 +58,7 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index);
     }
 
-    function testFail_claimWinShouldFailIfCalledBefore()
-        public
-        changeCaller(users.adam)
-    {
+    function testFail_claimWinShouldFailIfCalledBefore() public changeCaller(users.adam) {
         vm.warp(block.timestamp + (ONE_HOUR * 2));
 
         assertEq(block.timestamp, MAY_1_2023 + ONE_HOUR * 2);
@@ -80,10 +76,7 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index);
     }
 
-    function testFail_claimWinShouldNotBeCalledTwice()
-        public
-        changeCaller(users.adam)
-    {
+    function testFail_claimWinShouldNotBeCalledTwice() public changeCaller(users.adam) {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
         game.claimWin(index);
@@ -99,10 +92,7 @@ contract ClaimWinTest is IntegrationTest {
 
         uint256 userBalanceAfter = usdt.balanceOf(address(users.adam));
 
-        assertEq(
-            userBalanceAfter,
-            userBalanceBefore + game.cards(index).totalAmount
-        );
+        assertEq(userBalanceAfter, userBalanceBefore + game.cards(index).totalAmount);
     }
 
     function testFail_claimWinShouldFailIfCalledByUnauthorizedAddress() public {
@@ -117,21 +107,14 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index + 1);
     }
 
-    function test_claimWinShouldSetMontRewards()
-        public
-        changeCaller(users.adam)
-    {
+    function test_claimWinShouldSetMontRewards() public changeCaller(users.adam) {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
-        uint256 userBalanceBefore = montRewardManager.balances(
-            address(users.adam)
-        );
+        uint256 userBalanceBefore = montRewardManager.balances(address(users.adam));
 
         game.claimWin(index);
 
-        uint256 userBalanceAfter = montRewardManager.balances(
-            address(users.adam)
-        );
+        uint256 userBalanceAfter = montRewardManager.balances(address(users.adam));
 
         assert(userBalanceAfter > userBalanceBefore);
     }

@@ -34,6 +34,8 @@ contract RequestFreeReveal is IntegrationTest {
         usdt.approve(address(gameFactory), 100e6);
         (, address game0) = gameFactory.createGame(address(0));
 
+        setCards(game0);
+
         game = Game(game0);
 
         vm.stopPrank();
