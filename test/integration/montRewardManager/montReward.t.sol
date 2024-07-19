@@ -100,6 +100,8 @@ contract MontRewardTest is IntegrationTest {
 
         (, address game0Address) = gameFactory.createGame(users.eve);
 
+        setCards(game0Address);
+
         vm.stopPrank();
         vm.startPrank(users.server1);
 
@@ -149,6 +151,8 @@ contract MontRewardTest is IntegrationTest {
 
         (, address game0Address) = gameFactory.createGame(address(0));
 
+        setCards(game0Address);
+
         vm.stopPrank();
         vm.startPrank(users.server1);
 
@@ -184,10 +188,14 @@ contract MontRewardTest is IntegrationTest {
 
         (, address game1Address) = gameFactory.createGame(users.eve);
 
+        setCards(game1Address);
+
         vm.stopPrank();
         vm.startPrank(users.server1);
 
         params.game = game1Address;
+        params.hashedDeck = deck;
+
         revealParams.game = game1Address;
 
         revealer.initialize(params);
