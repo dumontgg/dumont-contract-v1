@@ -6,6 +6,7 @@ import {console} from "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
 
 import {GameFactory} from "./GameFactory.sol";
 import {IMONT} from "./interfaces/IMONT.sol";
@@ -38,14 +39,7 @@ contract MontRewardManager is IMontRewardManager {
      * @param _quoter Address of the Uniswap quoter contract
      * @param _poolFee Uniswap pool fee tier
      */
-    constructor(
-        address _vault,
-        IMONT _mont,
-        IERC20 _usdt,
-        GameFactory _gameFactory,
-        IQuoter _quoter,
-        uint24 _poolFee
-    ) {
+    constructor(address _vault, IMONT _mont, IERC20 _usdt, GameFactory _gameFactory, IQuoter _quoter, uint24 _poolFee) {
         mont = _mont;
         usdt = _usdt;
         vault = _vault;
@@ -90,27 +84,25 @@ contract MontRewardManager is IMontRewardManager {
             revert Unauthorized();
         }
 
-        uint256 houseFee = calculateHouseFee(
-            _betAmount,
-            _houseEdgeAmount,
-            _isPlayerWinner
-        );
+        // A number in like 100e6
+        uint256 houseFee = calculateHouseFee(_betAmount, _houseEdgeAmount, _isPlayerWinner);
+        UD60x18 inversePrice = getMontPrice();
 
-        uint256 price = getMontPrice();
+        // (0.8 * HouseFee) / P
+        /*
+         * The numerator is multiplied to 1e30. Because:
+         * 1. USDT has 6 decimals, we multiply it by 1e12 to make it 18 decimals
+         * 2. To get better precision, we multiply it my 1e18 and after the calculations are over
+         * we divide it by 1e18 again
+         */
+        reward = ud(((houseFee * 8) / 10) * 1e30).div(inversePrice).unwrap() / 1e18;
 
-        uint256 houseFeeFixedPoint = houseFee * 1e18;
+        // Total Amount has 6 decimals, to make it 18 decimals, we multiply it by 1e12
+        uint256 reward2 = _totalAmount * 1e12;
 
-        reward = ((houseFeeFixedPoint * 8) / 10) / price;
-
-        console.log("USDT bet amount:        ", _betAmount);
-        console.log("USDT total won amount:  ", _totalAmount);
-        console.log("MONT expected reward:   ", reward);
-
-        if (reward > _totalAmount) {
-            reward = _totalAmount;
+        if (reward > reward2) {
+            reward = reward2;
         }
-
-        console.log("MONT actual reward:     ", reward);
 
         (bool isReferrerSet, address referrer) = checkReferrer(_player);
 
@@ -120,6 +112,8 @@ contract MontRewardManager is IMontRewardManager {
             reward = (reward * 9) / 10;
 
             balances[referrer] += reward / 10;
+
+            emit MontRewardAssigned(referrer, reward / 10);
         }
 
         balances[_player] += reward;
@@ -134,11 +128,11 @@ contract MontRewardManager is IMontRewardManager {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(
-        uint256 _betAmount,
-        uint256 _houseEdgeAmount,
-        bool _isPlayerWinner
-    ) private pure returns (uint256 houseFee) {
+    function calculateHouseFee(uint256 _betAmount, uint256 _houseEdgeAmount, bool _isPlayerWinner)
+        private
+        pure
+        returns (uint256 houseFee)
+    {
         houseFee = _houseEdgeAmount;
 
         if (!_isPlayerWinner) {
@@ -148,16 +142,12 @@ contract MontRewardManager is IMontRewardManager {
 
     /**
      * @notice Retrieves the current price of MONT token from Uniswap
-     * @return price Current price of MONT token
+     * @return inversePrice Current price of MONT token
      */
-    function getMontPrice() private returns (uint256 price) {
-        price = quoter.quoteExactInputSingle(
-            address(mont),
-            address(usdt),
-            poolFee,
-            1e18,
-            0
-        );
+    function getMontPrice() private returns (UD60x18 inversePrice) {
+        uint256 price = quoter.quoteExactInputSingle(address(usdt), address(mont), poolFee, 1e6, 0);
+
+        inversePrice = ud(1e18).div(ud(price)).mul(ud(1e18));
     }
 
     /**
@@ -166,9 +156,7 @@ contract MontRewardManager is IMontRewardManager {
      * @return isReferrerSet If the referrer is set for the referee (player)
      * @return referrer Address of the referrer of the referee (player)
      */
-    function checkReferrer(
-        address _referee
-    ) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {
