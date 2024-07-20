@@ -23,6 +23,13 @@ interface IMontRewardManager {
     event MontClaimed(address indexed _player, uint256 _amount);
 
     /**
+     * @notice Emitted when the TWAP interval changes
+     * @param _from The old TWAP interval in seconds
+     * @param _to The new TWAP interval in seconds
+     */
+    event TwapIntervalChanged(uint32 _from, uint32 _to);
+
+    /**
      * @notice Thrown when a caller is not authorized to perform an operation
      */
     error Unauthorized();
@@ -49,4 +56,10 @@ interface IMontRewardManager {
         address _player,
         bool _isPlayerWinner
     ) external returns (uint256 reward);
+
+    /**
+     * @notice Changes the TWAP interval in seconds
+     * @param _twapInterval The new TWAP interval in seconds
+     */
+    function setTwapInterval(uint32 _twapInterval) external;
 }

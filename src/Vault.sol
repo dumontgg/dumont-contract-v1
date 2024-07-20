@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IBurner} from "./interfaces/IBurner.sol";
@@ -18,7 +17,7 @@ import {IVault} from "./interfaces/IVault.sol";
  * @notice Manages USDT deposits, withdrawals, and game rewards
  * @dev All deposits and withdrawals happen through this contract
  */
-contract Vault is IVault, Ownable2Step {
+contract Vault is IVault, Ownable {
     using SafeERC20 for IERC20;
 
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -83,8 +82,13 @@ contract Vault is IVault, Ownable2Step {
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
-        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
+    function setMontRewardManager(
+        IMontRewardManager _montRewardManager
+    ) external onlyOwner {
+        emit RewardManagerChanged(
+            address(montRewardManager),
+            address(_montRewardManager)
+        );
 
         montRewardManager = _montRewardManager;
     }
@@ -105,7 +109,11 @@ contract Vault is IVault, Ownable2Step {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient
+    ) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdrawn(_token, _amount, _recipient);
@@ -118,7 +126,7 @@ contract Vault is IVault, Ownable2Step {
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success,) = _recipient.call{value: balance}("");
+        (bool success, ) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -164,7 +172,13 @@ contract Vault is IVault, Ownable2Step {
             emit PlayerRewardsTransferred(game.player, _totalAmount);
         }
 
-        montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, houseEdge, game.player, _isPlayerWinner);
+        montRewardManager.transferPlayerRewards(
+            _betAmount,
+            _totalAmount,
+            houseEdge,
+            game.player,
+            _isPlayerWinner
+        );
     }
 
     /**

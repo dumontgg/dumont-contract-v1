@@ -7,12 +7,11 @@ import {Burner} from "../src/Burner.sol";
 import {Constants} from "./utils/Constants.sol";
 import {ERC20Custom} from "../script/test/ERC20Custom.sol";
 import {GameFactory} from "../src/GameFactory.sol";
-import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
 import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
 import {MONT} from "../src/MONT.sol";
 import {MontRewardManager} from "../src/MontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
-import {QUOTER, SWAP_ROUTER, SHIBA, USDC} from "./fork/Addresses.t.sol";
+import {SWAP_ROUTER, SHIBA, USDC, UNISWAP_V3_FACTORY} from "./fork/Addresses.t.sol";
 import {USDT} from "./utils/tokens/USDT.t.sol";
 import {Users} from "./utils/Types.sol";
 import {Vault} from "../src/Vault.sol";
@@ -73,10 +72,33 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
         burner = new Burner(mont, usdt, SWAP_ROUTER, 3000);
-        vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
+        vault = new Vault(
+            mont,
+            usdt,
+            burner,
+            GameFactory(address(0x00)),
+            MontRewardManager(address(0x00)),
+            1e6
+        );
 
-        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
-        montRewardManager = new MontRewardManager(address(vault), mont, usdt, gameFactory, QUOTER, 10000);
+        gameFactory = new GameFactory(
+            usdt,
+            vault,
+            address(revealer),
+            ONE_HOUR * 12,
+            ONE_HOUR * 6,
+            5,
+            1e6
+        );
+        montRewardManager = new MontRewardManager(
+            address(vault),
+            mont,
+            usdt,
+            gameFactory,
+            address(UNISWAP_V3_FACTORY),
+            3000,
+            1500
+        );
 
         address token0 = address(mont);
         address token1 = address(usdt);
@@ -97,7 +119,9 @@ abstract contract BaseTest is Test, Constants {
      * @param _name The name used to label the new address
      * @return userAddress Generated address of the user
      */
-    function createUser(string memory _name) internal returns (address userAddress) {
+    function createUser(
+        string memory _name
+    ) internal returns (address userAddress) {
         userAddress = makeAddr(_name);
 
         deal(userAddress, 100e18);

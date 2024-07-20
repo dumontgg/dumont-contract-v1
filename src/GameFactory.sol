@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Game} from "./Game.sol";
@@ -15,7 +14,7 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice Facilitates the creation of new games
  * @dev This contract can only be called by the Vault contract to create new games
  */
-contract GameFactory is IGameFactory, Ownable2Step {
+contract GameFactory is IGameFactory, Ownable {
     using SafeERC20 for IERC20;
 
     // This uses 6 decimals because the contract uses USDT as the fee token
