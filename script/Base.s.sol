@@ -3,12 +3,12 @@ pragma solidity 0.8.23;
 
 import {Script} from "forge-std/Script.sol";
 
-import {IQuoter} from "../src/interfaces/Uniswap/IQuoter.sol";
 import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
 
 abstract contract BaseScript is Script {
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
-    string internal constant TEST_MNEMONIC = "test test test test test test test test test test test junk";
+    string internal constant TEST_MNEMONIC =
+        "test test test test test test test test test test test junk";
 
     /// @dev Needed for the deterministic deployments.
     bytes32 internal constant ZERO_SALT = bytes32(0);
@@ -24,17 +24,23 @@ abstract contract BaseScript is Script {
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
 
-    address internal UNISWAP_QUOTER_BASE = 0x61fFE014bA17989E743c5F6cB21bF9697530B21e; // todo
-    address internal UNISWAP_QUOTER_MAINNET = 0x61fFE014bA17989E743c5F6cB21bF9697530B21e;
-    address internal UNISWAP_QUOTER_SEPOLIA = 0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3;
+    address internal UNISWAP_SWAP_ROUTER_BASE =
+        0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // todo
+    address internal UNISWAP_SWAP_ROUTER_MAINNET =
+        0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address internal UNISWAP_SWAP_ROUTER_SEPOLIA =
+        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
 
-    address internal UNISWAP_SWAP_ROUTER_BASE = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // todo
-    address internal UNISWAP_SWAP_ROUTER_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
-    address internal UNISWAP_SWAP_ROUTER_SEPOLIA = 0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
+    address internal UNISWAP_V3_FACTORY_BASE =
+        0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // todo
+    address internal UNISWAP_V3_FACTORY_MAINNET =
+        0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address internal UNISWAP_V3_FACTORY_SEPOLIA =
+        0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E;
 
     // todo: use env
-    IQuoter uniswapQuoter = IQuoter(UNISWAP_QUOTER_SEPOLIA); // todo
     ISwapRouter uniswapSwapRouter = ISwapRouter(UNISWAP_SWAP_ROUTER_SEPOLIA); // todo
+    address uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA; // todo
 
     /// @dev Initializes the transaction broadcaster like this:
     ///
@@ -49,12 +55,15 @@ abstract contract BaseScript is Script {
         if (from != address(0)) {
             broadcaster = from;
         } else {
-            mnemonic = vm.envOr({name: "MNEMONIC", defaultValue: TEST_MNEMONIC});
+            mnemonic = vm.envOr({
+                name: "MNEMONIC",
+                defaultValue: TEST_MNEMONIC
+            });
 
-            (broadcaster,) = deriveRememberKey({mnemonic: mnemonic, index: 0});
-            (revealer1,) = deriveRememberKey({mnemonic: mnemonic, index: 1});
-            (revealer2,) = deriveRememberKey({mnemonic: mnemonic, index: 2});
-            (revealer3,) = deriveRememberKey({mnemonic: mnemonic, index: 3});
+            (broadcaster, ) = deriveRememberKey({mnemonic: mnemonic, index: 0});
+            (revealer1, ) = deriveRememberKey({mnemonic: mnemonic, index: 1});
+            (revealer2, ) = deriveRememberKey({mnemonic: mnemonic, index: 2});
+            (revealer3, ) = deriveRememberKey({mnemonic: mnemonic, index: 3});
         }
     }
 
