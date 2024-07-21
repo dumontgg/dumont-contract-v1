@@ -86,7 +86,7 @@ contract DeployCore is BaseScript {
             MIN_DELAY,
             EMPTY_ADDRESS_ARRAY,
             EMPTY_ADDRESS_ARRAY,
-            address(this)
+            msg.sender
         );
 
         vault.setMontRewardManager(montRewardManager);
