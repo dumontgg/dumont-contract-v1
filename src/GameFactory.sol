@@ -181,7 +181,7 @@ contract GameFactory is IGameFactory, Ownable {
      * @param _referrer The player who invited the referee
      */
     function setReferrer(address _referee, address _referrer) private {
-        if (_referrer == address(0)) {
+        if (_referrer == address(0) || referrals[_referee] == _referrer) {
             return;
         }
 
@@ -189,10 +189,7 @@ contract GameFactory is IGameFactory, Ownable {
             revert InvalidReferrer(_referrer, _referee);
         }
 
-        if (
-            referrals[_referee] != address(0) &&
-            referrals[_referee] != _referrer
-        ) {
+        if (referrals[_referee] != address(0)) {
             revert ReferralAlreadySet(_referee, referrals[_referee]);
         }
 
