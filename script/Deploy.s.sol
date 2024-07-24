@@ -18,7 +18,7 @@ import {BaseScript} from "./Base.s.sol";
 contract DeployCore is BaseScript {
     address[] public EMPTY_ADDRESS_ARRAY;
 
-    uint256 MIN_DELAY = 1 days / 6;
+    uint256 MIN_DELAY = 0;
     uint256 GAME_DURATION = 1 days / 2;
     uint256 CLAIMABLE_AFTER = 1 days / 6;
     uint256 MAX_FREE_REVEALS = 3;
@@ -104,5 +104,26 @@ contract DeployCore is BaseScript {
 
         vault.transferOwnership(address(timeLockController));
         gameFactory.transferOwnership(address(timeLockController));
+
+        createPoolAndMintLiquidity(address(usdt), address(mont));
+    }
+
+    function createPoolAndMintLiquidity(
+        address _usdt,
+        address _mont
+    ) public returns (address pool) {
+        if (_usdt > _mont) {
+            uint256 amount0 = 2_000_000_000e18;
+            uint256 amount1 = 500_000e6;
+            uint160 sqrt = 560_227_709_747_861_389_312;
+
+            pool = createPool(_mont, _usdt, 3000, sqrt, amount0, amount1);
+        } else {
+            uint256 amount0 = 500_000e6;
+            uint256 amount1 = 2_000_000_000e18;
+            uint160 sqrt = 11_204_554_194_957_228_823_252_587_668_406_534_144;
+
+            pool = createPool(_usdt, _mont, 3000, sqrt, amount0, amount1);
+        }
     }
 }
