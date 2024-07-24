@@ -6,11 +6,11 @@ import {Game} from "../../../src/Game.sol";
 import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
 
 contract RequestFreeReveal is IntegrationTest {
-    event RevealFreeCardRequested(uint256 indexed _index, uint256 _timestamp);
+    event RevealFreeCardRequested(uint256 indexed _gameId, uint256 indexed _index, uint256 _timestamp);
 
-    error MaximumFreeRevealsRequested();
-    error NotAuthorized(address _caller);
-    error CardIsNotSecret(uint256 _index);
+    error MaximumFreeRevealsRequested(uint256 _gameId);
+    error NotAuthorized(uint256 _gameId, address _caller);
+    error CardIsNotSecret(uint256 _gameId, uint256 _index);
 
     enum CardStatus {
         SECRETED,
@@ -21,6 +21,7 @@ contract RequestFreeReveal is IntegrationTest {
     }
 
     Game public game;
+    uint256 public gameId;
 
     uint256 index = 0;
 
@@ -32,11 +33,12 @@ contract RequestFreeReveal is IntegrationTest {
         vm.startPrank(users.adam);
 
         usdt.approve(address(gameFactory), 100e6);
-        (, address game0) = gameFactory.createGame(address(0));
+        (uint256 _gameId, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);
 
         game = Game(game0);
+        gameId = _gameId;
 
         vm.stopPrank();
 
@@ -61,7 +63,7 @@ contract RequestFreeReveal is IntegrationTest {
         // will run maxFreeReveals + 1 times
         for (uint256 i = 0; i <= game.maxFreeReveals(); i++) {
             if (i == game.maxFreeReveals()) {
-                vm.expectRevert(abi.encodeWithSelector(MaximumFreeRevealsRequested.selector));
+                vm.expectRevert(abi.encodeWithSelector(MaximumFreeRevealsRequested.selector, gameId));
             }
 
             game.requestFreeRevealCard(i);
@@ -71,7 +73,7 @@ contract RequestFreeReveal is IntegrationTest {
     function test_revertIfRequestFreeRevealIsCalledTwiceOnTheSameIndex() public changeCaller(users.adam) {
         game.requestFreeRevealCard(0);
 
-        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, gameId, 0));
 
         game.requestFreeRevealCard(0);
     }
@@ -79,7 +81,7 @@ contract RequestFreeReveal is IntegrationTest {
     function test_requestFreeRevealShouldEmitEvents() public changeCaller(users.adam) {
         vm.expectEmit(true, true, false, false);
 
-        emit RevealFreeCardRequested(index, block.timestamp);
+        emit RevealFreeCardRequested(gameId, index, block.timestamp);
 
         game.requestFreeRevealCard(index);
     }
@@ -93,7 +95,7 @@ contract RequestFreeReveal is IntegrationTest {
     function test_revertIfUnauthorizedCallerCalledRequestFreeReveal() public {
         vm.startPrank(users.eve);
 
-        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, users.eve));
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, gameId, users.eve));
 
         game.requestFreeRevealCard(index);
 

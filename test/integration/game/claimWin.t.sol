@@ -6,9 +6,10 @@ import {Game} from "../../../src/Game.sol";
 import {IRevealer} from "../../../src/interfaces/IRevealer.sol";
 
 contract ClaimWinTest is IntegrationTest {
-    event CardClaimed(uint256 indexed _index, uint256 _timestamp);
+    event CardClaimed(uint256 indexed _gameId, uint256 indexed _index, uint256 _timestamp);
 
     Game public game;
+    uint256 public gameId;
 
     uint256 index = 0;
     uint256 amounts = 1;
@@ -22,11 +23,12 @@ contract ClaimWinTest is IntegrationTest {
         vm.startPrank(users.adam);
 
         usdt.approve(address(gameFactory), 100e6);
-        (, address game0) = gameFactory.createGame(address(0));
+        (uint256 _gameId, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);
 
         game = Game(game0);
+        gameId = _gameId;
 
         vm.stopPrank();
 
@@ -71,7 +73,7 @@ contract ClaimWinTest is IntegrationTest {
 
         vm.expectEmit(true, true, false, false);
 
-        emit CardClaimed(index, block.timestamp);
+        emit CardClaimed(gameId, index, block.timestamp);
 
         game.claimWin(index);
     }

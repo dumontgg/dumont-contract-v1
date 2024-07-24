@@ -14,15 +14,16 @@ contract RevealCardTest is IntegrationTest {
         REVEALED
     }
 
-    event CardRevealed(uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
+    event CardRevealed(uint256 indexed _gameId, uint256 indexed _index, uint256 indexed _number, bytes32 _salt);
 
-    error NotAuthorized(address _caller);
-    error CardIsNotSecret(uint256 _index);
-    error CardIsAlreadyClaimable(uint256 _index);
-    error CardStatusIsNotFreeRevealRequested(uint256 _index);
-    error InvalidSalt(uint256 _index, uint256 _number, bytes32 _salt);
+    error NotAuthorized(uint256 _gameId, address _caller);
+    error CardIsNotSecret(uint256 _gameId, uint256 _index);
+    error CardIsAlreadyClaimable(uint256 _gameId, uint256 _index);
+    error CardStatusIsNotFreeRevealRequested(uint256 _gameId, uint256 _index);
+    error InvalidSalt(uint256 _gameId, uint256 _index, uint256 _number, bytes32 _salt);
 
     Game public game;
+    uint256 public gameId;
 
     uint256 index0 = 0;
     uint256 numbers0 = 1; // index 0 is the wrong choice, because the card is an 11
@@ -40,11 +41,12 @@ contract RevealCardTest is IntegrationTest {
         vm.startPrank(users.adam);
 
         usdt.approve(address(gameFactory), 100e6);
-        (, address game0Address) = gameFactory.createGame(address(0));
+        (uint256 _gameId, address game0Address) = gameFactory.createGame(address(0));
 
         setCards(game0Address);
 
         game = Game(game0Address);
+        gameId = _gameId;
 
         usdt.approve(address(game), 100e6);
 
@@ -114,7 +116,7 @@ contract RevealCardTest is IntegrationTest {
             number: cards[0].number
         });
 
-        vm.expectRevert(abi.encodeWithSelector(CardIsAlreadyClaimable.selector, index0));
+        vm.expectRevert(abi.encodeWithSelector(CardIsAlreadyClaimable.selector, gameId, index0));
         revealer.revealCard(params);
     }
 
@@ -127,13 +129,13 @@ contract RevealCardTest is IntegrationTest {
             number: cards[1].number
         });
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidSalt.selector, index0, cards[1].number, cards[1].salt));
+        vm.expectRevert(abi.encodeWithSelector(InvalidSalt.selector, gameId, index0, cards[1].number, cards[1].salt));
 
         revealer.revealCard(params);
     }
 
     function test_revertIfRevealCardIsCalledDirectly() public changeCaller(users.server1) {
-        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, users.server1));
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, gameId, users.server1));
 
         game.revealCard(index0, cards[0].number, cards[0].salt, false);
     }
@@ -181,7 +183,7 @@ contract RevealCardTest is IntegrationTest {
             number: cards[0].number
         });
 
-        vm.expectRevert(abi.encodeWithSelector(CardStatusIsNotFreeRevealRequested.selector, index0));
+        vm.expectRevert(abi.encodeWithSelector(CardStatusIsNotFreeRevealRequested.selector, gameId, index0));
 
         revealer.revealCard(params);
     }
@@ -197,7 +199,7 @@ contract RevealCardTest is IntegrationTest {
 
         uint256 index2 = 2;
 
-        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, index2));
+        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, gameId, index2));
 
         revealer.revealCard(params);
     }
@@ -305,7 +307,7 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, index0));
+        vm.expectRevert(abi.encodeWithSelector(CardIsNotSecret.selector, gameId, index0));
 
         revealer.revealCard(params);
     }
@@ -321,7 +323,7 @@ contract RevealCardTest is IntegrationTest {
 
         vm.expectEmit(true, true, true, false);
 
-        emit CardRevealed(index0, cards[0].number, cards[0].salt);
+        emit CardRevealed(gameId, index0, cards[0].number, cards[0].salt);
 
         revealer.revealCard(params);
     }
