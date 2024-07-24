@@ -43,7 +43,7 @@ contract Game is Initializable, IGame {
      */
     modifier onlyPlayer() {
         if (msg.sender != player) {
-            revert NotAuthorized(msg.sender);
+            revert NotAuthorized(gameId, msg.sender);
         }
 
         _;
@@ -54,7 +54,7 @@ contract Game is Initializable, IGame {
      */
     modifier onlyRevealer() {
         if (msg.sender != revealer) {
-            revert NotAuthorized(msg.sender);
+            revert NotAuthorized(gameId, msg.sender);
         }
 
         _;
@@ -65,7 +65,7 @@ contract Game is Initializable, IGame {
      */
     modifier notExpired() {
         if (gameDuration + gameCreatedAt < block.timestamp) {
-            revert GameExpired();
+            revert GameExpired(gameId);
         }
 
         _;
@@ -120,7 +120,7 @@ contract Game is Initializable, IGame {
             }
         }
 
-        emit GameInitialized();
+        emit GameInitialized(gameId);
     }
 
     /**
@@ -138,25 +138,25 @@ contract Game is Initializable, IGame {
         Card storage _card = _cards[_index];
 
         if (_index > 51) {
-            revert InvalidGameIndex();
+            revert InvalidGameIndex(gameId, _index);
         }
 
         if (_guessedNumbers >= MAXIMUM_GUESS_NUMBER || _guessedNumbers == 0) {
-            revert InvalidNumbersGuessed(_guessedNumbers);
+            revert InvalidNumbersGuessed(gameId, _guessedNumbers);
         }
 
         if (_card.status != CardStatus.SECRETED) {
-            revert CardIsNotSecret(_index);
+            revert CardIsNotSecret(gameId, _index);
         }
 
         if (_betAmount < vault.minimumBetAmount()) {
-            revert BetAmountIsLessThanMinimum();
+            revert BetAmountIsLessThanMinimum(gameId);
         }
 
         uint256 totalWinningBetAmount = getGuessRate(_guessedNumbers).mul(ud(_betAmount)).unwrap();
 
         if (totalWinningBetAmount > vault.getMaximumBetAmount()) {
-            revert BetAmountIsGreaterThanMaximum();
+            revert BetAmountIsGreaterThanMaximum(gameId, totalWinningBetAmount);
         }
 
         usdt.safeTransferFrom(msg.sender, address(vault), _betAmount);
@@ -170,7 +170,7 @@ contract Game is Initializable, IGame {
         _card.status = CardStatus.GUESSED;
         _card.guessedNumbers = _guessedNumbers;
 
-        emit CardGuessed(_index, _betAmount, _guessedNumbers);
+        emit CardGuessed(gameId, _index, _betAmount, _guessedNumbers);
     }
 
     /**
@@ -181,22 +181,22 @@ contract Game is Initializable, IGame {
         Card storage _card = _cards[_index];
 
         if (_index > 51) {
-            revert InvalidGameIndex();
+            revert InvalidGameIndex(gameId, _index);
         }
 
         if (cardsFreeRevealedRequests == maxFreeReveals) {
-            revert MaximumFreeRevealsRequested();
+            revert MaximumFreeRevealsRequested(gameId);
         }
 
         if (_card.status != CardStatus.SECRETED) {
-            revert CardIsNotSecret(_index);
+            revert CardIsNotSecret(gameId, _index);
         }
 
         ++cardsFreeRevealedRequests;
         _card.requestedAt = block.timestamp;
         _card.status = CardStatus.FREE_REVEAL_REQUESTED;
 
-        emit RevealFreeCardRequested(_index, block.timestamp);
+        emit RevealFreeCardRequested(gameId, _index, block.timestamp);
     }
 
     /**
@@ -215,11 +215,11 @@ contract Game is Initializable, IGame {
         }
 
         if (remainingSelectedCard == 0) {
-            revert DivisionByZeroSelectedCards(_numbers);
+            revert DivisionByZeroSelectedCards(gameId, _numbers);
         }
 
         if (remainingCards == remainingSelectedCard) {
-            revert InvalidSelectedCards(_numbers);
+            revert InvalidSelectedCards(gameId, _numbers);
         }
 
         rate = ud(remainingCards).div(ud(remainingSelectedCard));
@@ -234,18 +234,18 @@ contract Game is Initializable, IGame {
         Card storage _card = _cards[_index];
 
         if (_card.status != CardStatus.GUESSED) {
-            revert CardIsNotGuessed(_index);
+            revert CardIsNotGuessed(gameId, _index);
         }
 
         if (_card.requestedAt + claimableAfter > block.timestamp) {
-            revert NotYetTimeToClaim(_index);
+            revert NotYetTimeToClaim(gameId, _index);
         }
 
         _card.status = CardStatus.CLAIMED;
 
         vault.transferPlayerRewards(gameId, _card.betAmount, _card.totalAmount, _card.houseEdgeAmount, true);
 
-        emit CardClaimed(_index, block.timestamp);
+        emit CardClaimed(gameId, _index, block.timestamp);
     }
 
     /**
@@ -264,16 +264,16 @@ contract Game is Initializable, IGame {
         Card storage _card = _cards[_index];
 
         if (_card.requestedAt + claimableAfter <= block.timestamp) {
-            revert CardIsAlreadyClaimable(_index);
+            revert CardIsAlreadyClaimable(gameId, _index);
         }
 
         if (isFreeReveal) {
             if (_card.status != CardStatus.FREE_REVEAL_REQUESTED) {
-                revert CardStatusIsNotFreeRevealRequested(_index);
+                revert CardStatusIsNotFreeRevealRequested(gameId, _index);
             }
         } else {
             if (_card.status != CardStatus.GUESSED) {
-                revert CardIsNotSecret(_index);
+                revert CardIsNotSecret(gameId, _index);
             }
         }
 
@@ -292,7 +292,7 @@ contract Game is Initializable, IGame {
             vault.transferPlayerRewards(gameId, _card.betAmount, _card.totalAmount, _card.houseEdgeAmount, isWinner);
         }
 
-        emit CardRevealed(_index, _number, _salt);
+        emit CardRevealed(gameId, _index, _number, _salt);
     }
 
     /**
@@ -332,7 +332,7 @@ contract Game is Initializable, IGame {
         bytes32 hash = keccak256(abi.encodePacked(address(this), _number, _salt));
 
         if (card.hash != hash) {
-            revert InvalidSalt(_index, _number, _salt);
+            revert InvalidSalt(gameId, _index, _number, _salt);
         }
     }
 }
