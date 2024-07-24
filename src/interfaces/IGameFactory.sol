@@ -68,11 +68,7 @@ interface IGameFactory {
      * @param _gameAddress Address of the game
      * @param _player Address of the player
      */
-    event GameCreated(
-        uint256 indexed _gameId,
-        address indexed _gameAddress,
-        address indexed _player
-    );
+    event GameCreated(uint256 indexed _gameId, address indexed _gameAddress, address indexed _player);
 
     /**
      * @notice Emitted when a player sets a referrer during game creation
@@ -153,4 +149,14 @@ interface IGameFactory {
      * @return Details of the specified game
      */
     function games(uint256 _gameId) external view returns (GameDetails memory);
+
+    /**
+     * @notice Pauses the GameFactory from creating new games
+     */
+    function pause() external;
+
+    /**
+     * @notice Unpauses the GameFactory from creating new games
+     */
+    function unpause() external;
 }

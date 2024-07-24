@@ -7,6 +7,8 @@ import {GameFactory} from "../../src/GameFactory.sol";
 contract GameFactoryTest is BaseTest {
     event GameFeeChanged(uint256 indexed _from, uint256 indexed _to);
 
+    error EnforcedPause();
+    error OwnableUnauthorizedAccount(address _caller);
     error GameCreationFeeIsTooHigh(uint256 _newFee, uint256 _maxFee);
 
     GameFactory public factory;
@@ -67,18 +69,10 @@ contract GameFactoryTest is BaseTest {
         assertEq(factory.gameCreationFee(), newFee);
     }
 
-    function test_calllingGameCreationFeeGreaterThanMaximumShouldRevert()
-        public
-    {
+    function test_calllingGameCreationFeeGreaterThanMaximumShouldRevert() public {
         uint256 newFee = 200e6;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                GameCreationFeeIsTooHigh.selector,
-                200e6,
-                100e6
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(GameCreationFeeIsTooHigh.selector, 200e6, 100e6));
         factory.setGameCreationFee(newFee);
     }
 
@@ -88,10 +82,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee());
 
-        assertEq(
-            usdt.allowance(users.adam, address(factory)),
-            factory.gameCreationFee()
-        );
+        assertEq(usdt.allowance(users.adam, address(factory)), factory.gameCreationFee());
 
         factory.createGame(address(0));
 
@@ -120,10 +111,10 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee() * 4);
 
-        (uint256 id0, ) = factory.createGame(address(0));
-        (uint256 id1, ) = factory.createGame(address(0));
-        (uint256 id2, ) = factory.createGame(address(0));
-        (uint256 id3, ) = factory.createGame(address(0));
+        (uint256 id0,) = factory.createGame(address(0));
+        (uint256 id1,) = factory.createGame(address(0));
+        (uint256 id2,) = factory.createGame(address(0));
+        (uint256 id3,) = factory.createGame(address(0));
 
         assertEq(id0, 0);
         assertEq(id1, 1);
@@ -140,7 +131,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee() * 4);
 
-        (uint256 id0, ) = factory.createGame(address(0));
+        (uint256 id0,) = factory.createGame(address(0));
 
         assertEq(factory.games(id0).maxFreeReveals, 10);
 
@@ -152,7 +143,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee() * 4);
 
-        (uint256 id1, ) = factory.createGame(address(0));
+        (uint256 id1,) = factory.createGame(address(0));
 
         assertEq(factory.games(id1).maxFreeReveals, 5);
 
@@ -192,7 +183,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee());
 
-        (uint256 id0, ) = factory.createGame(address(0));
+        (uint256 id0,) = factory.createGame(address(0));
 
         assertEq(factory.games(id0).gameDuration, 10);
 
@@ -204,7 +195,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee());
 
-        (uint256 id1, ) = factory.createGame(address(0));
+        (uint256 id1,) = factory.createGame(address(0));
 
         assertEq(factory.games(id1).gameDuration, 1 days);
 
@@ -216,7 +207,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee());
 
-        (uint256 id0, ) = factory.createGame(address(0));
+        (uint256 id0,) = factory.createGame(address(0));
 
         assertEq(factory.games(id0).claimableAfter, 10);
 
@@ -228,7 +219,7 @@ contract GameFactoryTest is BaseTest {
 
         usdt.approve(address(factory), factory.gameCreationFee());
 
-        (uint256 id1, ) = factory.createGame(address(0));
+        (uint256 id1,) = factory.createGame(address(0));
 
         assertEq(factory.games(id1).claimableAfter, 2 days);
 
@@ -299,5 +290,30 @@ contract GameFactoryTest is BaseTest {
         factory.createGame(users.adam);
 
         vm.stopPrank();
+    }
+
+    function test_createNewGameWhenPauseShouldRevert() public {
+        factory.pause();
+
+        vm.prank(users.adam);
+        vm.expectRevert(abi.encodeWithSelector(EnforcedPause.selector));
+
+        factory.createGame(users.adam);
+    }
+
+    function test_unauthorizedCallsToPauseShouldRevert() public {
+        vm.prank(users.adam);
+        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, users.adam));
+
+        factory.pause();
+    }
+
+    function test_unauthorizedCallsToUnPauseShouldRevert() public {
+        factory.pause();
+
+        vm.prank(users.adam);
+        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, users.adam));
+
+        factory.unpause();
     }
 }

@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Game} from "./Game.sol";
@@ -14,7 +15,7 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @notice Facilitates the creation of new games
  * @dev This contract can only be called by the Vault contract to create new games
  */
-contract GameFactory is IGameFactory, Ownable {
+contract GameFactory is IGameFactory, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     // This uses 6 decimals because the contract uses USDT as the fee token
@@ -64,15 +65,26 @@ contract GameFactory is IGameFactory, Ownable {
     }
 
     /**
+     * @notice Pauses the GameFactory from creating new games
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses the GameFactory from creating new games
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
      * @notice Changes the fee required to create a new game
      * @param _gameCreationFee The new fee amount in USDT
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
         if (_gameCreationFee > MAXIMUM_GAME_CREATION_FEE) {
-            revert GameCreationFeeIsTooHigh(
-                _gameCreationFee,
-                MAXIMUM_GAME_CREATION_FEE
-            );
+            revert GameCreationFeeIsTooHigh(_gameCreationFee, MAXIMUM_GAME_CREATION_FEE);
         }
 
         emit GameFeeChanged(gameCreationFee, _gameCreationFee);
@@ -127,23 +139,13 @@ contract GameFactory is IGameFactory, Ownable {
      * if the player does not want to set one
      * @return The ID of the newly created game
      */
-    function createGame(address _referrer) external returns (uint256, address) {
+    function createGame(address _referrer) external whenNotPaused returns (uint256, address) {
         uint256 _gameId = nextGameId;
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress = address(
-            new Game(
-                usdt,
-                vault,
-                revealer,
-                msg.sender,
-                _gameId,
-                gameDuration,
-                claimableAfter,
-                maxFreeReveals
-            )
-        );
+        address gameAddress =
+            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,
