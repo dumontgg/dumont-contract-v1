@@ -95,6 +95,8 @@ contract DeployCore is BaseScript {
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer1);
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer2);
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer3);
+        revealer.grantRole(revealer.REVEALER_ROLE(), revealer4);
+        revealer.grantRole(revealer.REVEALER_ROLE(), revealer5);
 
         usdt.transfer(address(vault), VAULT_INITIAL_USDT_SUPPLY);
         mont.transfer(

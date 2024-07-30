@@ -24,9 +24,11 @@ abstract contract BaseScript is Script {
     address internal broadcaster;
 
     /// @dev The address of the revealers
-    address internal revealer1 = 0x1E7A7Bb102c04e601dE48a68A88Ec6EE59C372b9;
-    address internal revealer2 = 0x40fA98c764c1602E5Fb9D201f580B19978B2d4a0;
-    address internal revealer3 = 0x3e03984BF3b9Cfa9fC640eCe3ee7a55Fef14Fe15;
+    address internal revealer1 = 0xA328A350142026000dd2A9529dbE171ebFDE6427;
+    address internal revealer2 = 0x44c7F0C629e84C4f22E74A737D2D0134F0b9B757;
+    address internal revealer3 = 0xFc2c52EB8Ce44C92cef2B361Fac4D9d5E5D27af5;
+    address internal revealer4 = 0xFE77Cd80E4A50A7ad5B7A38c5C8De6Ebc3e7a335;
+    address internal revealer5 = 0x3e03984BF3b9Cfa9fC640eCe3ee7a55Fef14Fe15;
 
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
