@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {console2} from "forge-std/console2.sol";
+
 import {TimelockController} from "@openzeppelin/contracts/governance/TimeLockController.sol";
 
 import {Burner} from "../src/Burner.sol";
 import {GameFactory} from "../src/GameFactory.sol";
+import {GameFactoryProxy} from "../src/GameFactoryProxy.sol";
 import {IMontRewardManager} from "../src/interfaces/IMontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
 import {Vault} from "../src/Vault.sol";
@@ -42,7 +45,8 @@ contract DeployCore is BaseScript {
             MontRewardManager montRewardManager,
             MONT mont,
             ERC20Custom usdt,
-            TimelockController timeLockController
+            TimelockController timeLockController,
+            GameFactoryProxy gameFactoryProxy
         )
     {
         // todo: use env to check if we should create the USDT token or use its address
@@ -73,11 +77,22 @@ contract DeployCore is BaseScript {
             MAX_FREE_REVEALS,
             GAME_CREATION_FEE
         );
+
+        bytes memory emptyByte;
+        gameFactoryProxy = new GameFactoryProxy(
+            address(gameFactory),
+            msg.sender,
+            emptyByte
+        );
+        GameFactory realGameFactoryProxy = GameFactory(
+            address(gameFactoryProxy)
+        );
+
         montRewardManager = new MontRewardManager(
             address(vault),
             mont,
             usdt,
-            gameFactory,
+            realGameFactoryProxy,
             uniswapV3Factory,
             MONT_USDT_POOL_FEE,
             TWAP_INTERVAL
@@ -90,7 +105,7 @@ contract DeployCore is BaseScript {
         );
 
         vault.setMontRewardManager(montRewardManager);
-        vault.setGameFactory(gameFactory);
+        vault.setGameFactory(realGameFactoryProxy);
 
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer1);
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer2);
@@ -108,6 +123,16 @@ contract DeployCore is BaseScript {
         gameFactory.transferOwnership(address(timeLockController));
 
         createPoolAndMintLiquidity(address(usdt), address(mont));
+
+        console2.log("BURNER=%s", address(burner));
+        console2.log("GAME_FACTORY=%s", address(gameFactoryProxy));
+        console2.log("REVEALER=%s", address(revealer));
+        console2.log("VAULT=%s", address(vault));
+        console2.log("MONT_REWAERD_MANAGER=%s", address(montRewardManager));
+        console2.log("MONT=%s", address(mont));
+        console2.log("USDT=%s", address(usdt));
+        console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
+        console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
     }
 
     function createPoolAndMintLiquidity(
