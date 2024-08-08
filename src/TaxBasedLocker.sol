@@ -16,10 +16,14 @@ import {ITaxBasedLocker} from "./interfaces/ITaxBasedLocker.sol";
 contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
     using SafeERC20 for IMONT;
 
+    /// @notice Start time of the lockup period
     uint256 public startTime;
+    /// @notice Amount that is locked in MONT
     uint256 public lockedAmount;
 
+    /// @notice Address of the MONT token
     IMONT public immutable token;
+    /// @notice The duration of the lockup
     uint256 public immutable lockPeriod;
 
     /**
@@ -56,9 +60,7 @@ contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
      * - {AlreadyInitialized} if the contract is already initialized.
      * - {NotEnoughTokens} if the caller does not have enough tokens.
      */
-    function initialize(
-        uint256 _lockedAmount
-    ) external onlyNotInitialized onlyOwner {
+    function initialize(uint256 _lockedAmount) external onlyNotInitialized onlyOwner {
         initializeContract();
 
         if (_lockedAmount == 0) {
@@ -74,11 +76,7 @@ contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
         }
 
         if (balance < lockedAmount) {
-            token.safeTransferFrom(
-                owner(),
-                address(this),
-                lockedAmount - balance
-            );
+            token.safeTransferFrom(owner(), address(this), lockedAmount - balance);
         }
 
         startTime = block.timestamp;
@@ -135,8 +133,7 @@ contract TaxBasedLocker is Initializable, Ownable, ITaxBasedLocker {
         if (elapsedTime >= lockPeriod) {
             return lockedAmount;
         } else {
-            uint256 withdrawableAmount = (lockedAmount * elapsedTime) /
-                lockPeriod;
+            uint256 withdrawableAmount = (lockedAmount * elapsedTime) / lockPeriod;
             return withdrawableAmount;
         }
     }

@@ -11,31 +11,41 @@ import {Initializable} from "./helpers/Initializable.sol";
 import {Vault} from "./Vault.sol";
 
 /**
- * @title A single-player game contract where the player guesses card numbers
- * @notice The server sets hashed numbers inside the contract, and the player can guess each card
+ * @notice A single-player game contract where the player guesses card numbers
+ * The server sets hashed numbers inside the contract, and the player can guess each card
  * @dev The contract uses a commit-reveal mechanism to hide the deck of cards initially
  */
 contract Game is Initializable, IGame {
     using SafeERC20 for IERC20;
 
-    bool public constant SHOULD_RECEIVE_REWARDS = true;
     uint256 public constant MAXIMUM_GUESS_NUMBER = 8191;
 
+    /// @notice Number of revealed cards
     uint256 public cardsRevealed = 0;
+    /// @notice Number of free cards reveals
     uint256 public cardsFreeRevealedRequests = 0;
-
+    /// @notice Number of reveals per rank
     uint256[13] public revealedCardNumbersCount;
 
     mapping(uint256 => Card) private _cards;
 
+    /// @notice Address of the USDT token
     IERC20 public immutable usdt;
+    /// @notice Address of the Vault token
     Vault public immutable vault;
+    /// @notice Address of the player
     address public immutable player;
+    /// @notice Address of the Revealer contract
     address public immutable revealer;
+    /// @notice Game ID number
     uint256 public immutable gameId;
+    /// @notice Duration of the game
     uint256 public immutable gameDuration;
+    /// @notice Game created timestamp
     uint256 public immutable gameCreatedAt;
+    /// @notice Duration at which the revealer can reveal the cards
     uint256 public immutable claimableAfter;
+    /// @notice Maximum amount of free reveals
     uint256 public immutable maxFreeReveals;
 
     /**
@@ -107,6 +117,7 @@ contract Game is Initializable, IGame {
     /**
      * @notice Initializes the contract by committing the deck of cards
      * @param _hashedDeck The hash of a random deck of cards
+     * @dev Emits GameInitialized event
      */
     function initialize(bytes32[52] calldata _hashedDeck) external onlyNotInitialized onlyRevealer {
         initializeContract();
@@ -128,6 +139,7 @@ contract Game is Initializable, IGame {
      * @param _index Index of the card
      * @param _betAmount The amount of USDT that the player bets
      * @param _guessedNumbers Numbers that the player guessed
+     * @dev Emits CardGuessed event
      */
     function guessCard(uint256 _index, uint256 _betAmount, uint256 _guessedNumbers)
         external
@@ -176,6 +188,7 @@ contract Game is Initializable, IGame {
     /**
      * @notice Requests a secret card to be revealed for free
      * @param _index Index of the card
+     * @dev Emits RevealFreeCardRequested event
      */
     function requestFreeRevealCard(uint256 _index) external onlyPlayer onlyInitialized notExpired {
         Card storage _card = _cards[_index];
@@ -229,6 +242,7 @@ contract Game is Initializable, IGame {
      * @notice Claims the player as the winner for a specific card if the revealer does not reveal
      * the card after the claimableAfter duration
      * @param _index Index of the card
+     * @dev Emits CardClaimed event
      */
     function claimWin(uint256 _index) external onlyPlayer onlyInitialized {
         Card storage _card = _cards[_index];
@@ -253,6 +267,7 @@ contract Game is Initializable, IGame {
      * @param _index Index of the card
      * @param _number The revealed number of the card
      * @param _salt The salt that was used to hash the card
+     * @dev Emits CardRevealed event
      */
     function revealCard(uint256 _index, uint256 _number, bytes32 _salt, bool isFreeReveal)
         external

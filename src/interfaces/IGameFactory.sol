@@ -6,7 +6,6 @@ import {Vault} from "../Vault.sol";
 /**
  * @title GameFactory Contract
  * @notice Facilitates the creation of new games
- * @dev This contract can only be called by the Vault contract to create new games
  */
 interface IGameFactory {
     struct GameDetails {

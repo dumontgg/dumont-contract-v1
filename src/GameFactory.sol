@@ -13,26 +13,35 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
 /**
  * @title GameFactory Contract
  * @notice Facilitates the creation of new games
- * @dev This contract can only be called by the Vault contract to create new games
  */
 contract GameFactory is IGameFactory, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
-    // This uses 6 decimals because the contract uses USDT as the fee token
+    /// @notice This uses 6 decimals because the contract uses USDT as the fee token
     uint256 public constant MAXIMUM_GAME_CREATION_FEE = 100e6;
 
+    /// @notice Address of the USDT token
     IERC20 public immutable usdt;
+    /// @notice Address of the Vault contract
     Vault public immutable vault;
-
+    /// @notice Address of the Revealer contract
     address public revealer;
+    /// @notice Duration of newly created games
     uint256 public gameDuration;
+    /// @notice Duration at which the revealer can reveal the cards of newly created games
     uint256 public claimableAfter;
+    /// @notice Maximum amount of free reveals for newly created games
     uint256 public maxFreeReveals;
+    /// @notice Fee of game creation in USDT
     uint256 public gameCreationFee;
-
+    /// @notice ID of the next Game
     uint256 public nextGameId = 0;
+
+    /// @notice Number of games a user has created
     mapping(address user => uint256 games) public userGames;
+    /// @notice Referrals program
     mapping(address referee => address referrer) public referrals;
+    /// @notice Number of players a referrer has invited
     mapping(address referrer => uint256 invites) public referrerInvites;
     mapping(uint256 gameId => GameDetails gameDetails) private _games;
 
@@ -66,6 +75,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
 
     /**
      * @notice Pauses the GameFactory from creating new games
+     * @dev Emits Paused event
      */
     function pause() external onlyOwner {
         _pause();
@@ -73,6 +83,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
 
     /**
      * @notice Unpauses the GameFactory from creating new games
+     * @dev Emits Unpaused event
      */
     function unpause() external onlyOwner {
         _unpause();
@@ -81,6 +92,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     /**
      * @notice Changes the fee required to create a new game
      * @param _gameCreationFee The new fee amount in USDT
+     * @dev Emits GameFeeChanged event
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
         if (_gameCreationFee > MAXIMUM_GAME_CREATION_FEE) {
@@ -95,6 +107,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     /**
      * @notice Changes the duration of future games
      * @param _gameDuration The new duration in seconds
+     * @dev Emits GameDurationChanged event
      */
     function setGameDuration(uint256 _gameDuration) external onlyOwner {
         emit GameDurationChanged(gameDuration, _gameDuration);
@@ -105,6 +118,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     /**
      * @notice Changes the claimable duration of future games
      * @param _claimableAfter The new duration in seconds
+     * @dev Emits ClaimableAfterChanged event
      */
     function setClaimableAfter(uint256 _claimableAfter) external onlyOwner {
         emit ClaimableAfterChanged(claimableAfter, _claimableAfter);
@@ -115,6 +129,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     /**
      * @notice Changes the maximum amount of free reveals a player can request for future games
      * @param _maxFreeReveals The amount of free reveals a player can request
+     * @dev Emits MaxFreeRevealsChanged event
      */
     function setMaxFreeReveals(uint256 _maxFreeReveals) external onlyOwner {
         emit MaxFreeRevealsChanged(maxFreeReveals, _maxFreeReveals);
@@ -125,6 +140,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     /**
      * @notice Changes the manager address for creating new games
      * @param _revealer The new manager address
+     * @dev Emits RevealerChanged event
      */
     function setRevealer(address _revealer) external onlyOwner {
         emit RevealerChanged(revealer, _revealer);
@@ -137,14 +153,17 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      * @dev The caller must pay at least the gameCreationFee amount to create a game
      * @param _referrer The referrer of the player. Could be the 0x00 address if already set or
      * if the player does not want to set one
-     * @return The ID of the newly created game
+     * @dev Emits GameCreated event
+     * @return id The ID of the newly created game
+     * @return gameAddress The address of the newly created game
      */
-    function createGame(address _referrer) external whenNotPaused returns (uint256, address) {
+    function createGame(address _referrer) external whenNotPaused returns (uint256 id, address gameAddress) {
         uint256 _gameId = nextGameId;
 
         usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
 
-        address gameAddress =
+        id = _gameId;
+        gameAddress =
             address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
         _games[_gameId] = GameDetails({

@@ -20,16 +20,23 @@ import {IVault} from "./interfaces/IVault.sol";
 contract Vault is IVault, Ownable {
     using SafeERC20 for IERC20;
 
+    /// @notice Address of ETH, used for events
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
+    /// @notice Address of the MONT token
     IMONT public immutable mont;
+    /// @notice Address of the USDT token
     IERC20 public immutable usdt;
-
+    /// @notice Address of the Burner contract
     IBurner public burner;
+    /// @notice Address of the GameFactory contract
     IGameFactory public gameFactory;
+    /// @notice Address of the MontRewardManager contract
     IMontRewardManager public montRewardManager;
 
+    /// @notice Maximum total bet amount in percentage. Default is 200, means 2%
     uint256 public maximimBetRate;
+    /// @notice Minimum bet amount. Default is 1000000, means 1 USDT
     uint256 public minimumBetAmount;
 
     /**
@@ -61,6 +68,7 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Changes the address of the Burner contract
      * @param _burner The new address of the Burner contract
+     * @dev Emits BurnerChanged event
      */
     function setBurner(IBurner _burner) external onlyOwner {
         emit BurnerChanged(address(burner), address(_burner));
@@ -71,6 +79,7 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Changes the address of the GameFactory contract
      * @param _gameFactory The new address of the GameFactory contract
+     * @dev Emits GameFactoryChanged event
      */
     function setGameFactory(IGameFactory _gameFactory) external onlyOwner {
         emit GameFactoryChanged(address(gameFactory), address(_gameFactory));
@@ -81,14 +90,10 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
+     * @dev Emits RewardManagerChanged event
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external onlyOwner {
-        emit RewardManagerChanged(
-            address(montRewardManager),
-            address(_montRewardManager)
-        );
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external onlyOwner {
+        emit RewardManagerChanged(address(montRewardManager), address(_montRewardManager));
 
         montRewardManager = _montRewardManager;
     }
@@ -96,6 +101,7 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Allows admins to deposit USDT into the contract
      * @param _amount The amount of USDT to deposit
+     * @dev Emits Deposited event
      */
     function deposit(uint256 _amount) external onlyOwner {
         usdt.safeTransferFrom(msg.sender, address(this), _amount);
@@ -108,12 +114,9 @@ contract Vault is IVault, Ownable {
      * @param _token The address of the ERC20 token to withdraw
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
+     * @dev Emits Withdrawn event
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external onlyOwner {
+    function withdraw(address _token, uint256 _amount, address _recipient) external onlyOwner {
         IERC20(_token).safeTransfer(_recipient, _amount);
 
         emit Withdrawn(_token, _amount, _recipient);
@@ -122,11 +125,12 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Allows the owner to withdraw ETH from the contract
      * @param _recipient The address to receive the withdrawn ETH
+     * @dev Emits Withdrawn event
      */
     function withdrawETH(address _recipient) external onlyOwner {
         uint256 balance = address(this).balance;
 
-        (bool success, ) = _recipient.call{value: balance}("");
+        (bool success,) = _recipient.call{value: balance}("");
 
         if (!success) {
             revert FailedToSendEther();
@@ -142,6 +146,7 @@ contract Vault is IVault, Ownable {
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Whether or not the player won or not
+     * @dev Emits PlayerRewardsTransferred event
      */
     function transferPlayerRewards(
         uint256 _gameId,
@@ -172,18 +177,13 @@ contract Vault is IVault, Ownable {
             emit PlayerRewardsTransferred(game.player, _totalAmount);
         }
 
-        montRewardManager.transferPlayerRewards(
-            _betAmount,
-            _totalAmount,
-            houseEdge,
-            game.player,
-            _isPlayerWinner
-        );
+        montRewardManager.transferPlayerRewards(_betAmount, _totalAmount, houseEdge, game.player, _isPlayerWinner);
     }
 
     /**
      * @notice Changes the minimum bet amount of USDT
      * @param _minimumBetAmount The new minimum bet amount
+     * @dev Emits MinimumBetAmountChanged event
      */
     function setMinimumBetAmount(uint256 _minimumBetAmount) external onlyOwner {
         emit MinimumBetAmountChanged(minimumBetAmount, _minimumBetAmount);
@@ -194,6 +194,7 @@ contract Vault is IVault, Ownable {
     /**
      * @notice Changes the percentage of USDT in the Vault that can be sent as the reward
      * @param _maximumBetRate The new maximim bet rate
+     * @dev Emits MaximumBetRateChanged event
      */
     function setMaximumBetRate(uint256 _maximumBetRate) external onlyOwner {
         emit MaximumBetRateChanged(maximimBetRate, _maximumBetRate);

@@ -12,6 +12,7 @@ import {IRevealer} from "./interfaces/IRevealer.sol";
  * @dev Only addresses with the REVEALER_ROLE can call the revealBatch function
  */
 contract Revealer is AccessControl, IRevealer {
+    /// @notice Revealer role hash
     bytes32 public constant REVEALER_ROLE = keccak256("REVEALER_ROLE");
 
     /**
@@ -24,6 +25,7 @@ contract Revealer is AccessControl, IRevealer {
     /**
      * @notice Reveals a card
      * @param _card The details of the revealed card
+     * @dev Emits CardRevealed event
      */
     function revealCard(RevealedCard calldata _card) external onlyRole(REVEALER_ROLE) {
         _revealCard(_card);
@@ -32,6 +34,7 @@ contract Revealer is AccessControl, IRevealer {
     /**
      * @notice Reveals multiple cards from a single or different games
      * @param _cards The details of the revealed cards
+     * @dev Emits CardRevealed event
      */
     function revealCardBatch(RevealedCard[] calldata _cards) external onlyRole(REVEALER_ROLE) {
         for (uint256 i = 0; i < _cards.length; ++i) {
@@ -42,6 +45,7 @@ contract Revealer is AccessControl, IRevealer {
     /**
      * @notice Initializes a game
      * @param _data The details of the game
+     * @dev Emits GameInitialized event
      */
     function initialize(InitializeGame calldata _data) external onlyRole(REVEALER_ROLE) {
         _initialize(_data);
@@ -50,6 +54,7 @@ contract Revealer is AccessControl, IRevealer {
     /**
      * @notice Initializes multiple games
      * @param _data The details of multiple games
+     * @dev Emits GameInitialized event
      */
     function initializeBatch(InitializeGame[] calldata _data) external onlyRole(REVEALER_ROLE) {
         for (uint256 i = 0; i < _data.length; ++i) {

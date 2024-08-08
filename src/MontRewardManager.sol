@@ -15,19 +15,26 @@ import {PoolAddress} from "./libraries/PoolAddress.sol";
 /**
  * @title Reward Manager Contract
  * @notice Manages the distribution of MONT rewards to players based on game outcomes
- * @dev Only the Vault contract can call functions in this contract
  */
 contract MontRewardManager is IMontRewardManager, Ownable {
     using SafeERC20 for IMONT;
 
+    /// @notice Address of the MONT token
     IMONT public immutable mont;
+    /// @notice Address of the USDT token
     IERC20 public immutable usdt;
+    /// @notice Address of the Vault contract
     address public immutable vault;
+    /// @notice Fee of the Uniswap V3 pool for MONT-USDT
     uint24 public immutable poolFee;
+    /// @notice Address of the Uniswap V3 pool for MONT-USDT
     address public immutable uniswapPool;
+    /// @notice Address of the GameFactory contract
     GameFactory public immutable gameFactory;
 
+    /// @notice TWAP interval in seconds for getting the price from Uniswap Oracle
     uint32 public twapInterval;
+    /// @notice Claimable balances of players in MONT token
     mapping(address => uint256) public balances;
 
     /**
@@ -56,11 +63,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
         poolFee = _poolFee;
         twapInterval = _twapInterval;
 
-        PoolAddress.PoolKey memory poolKey = PoolAddress.getPoolKey(
-            address(mont),
-            address(usdt),
-            _poolFee
-        );
+        PoolAddress.PoolKey memory poolKey = PoolAddress.getPoolKey(address(mont), address(usdt), _poolFee);
 
         uniswapPool = PoolAddress.computeAddress(_uniswapFactory, poolKey);
     }
@@ -68,6 +71,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
     /**
      * @notice Changes the TWAP interval in seconds
      * @param _twapInterval The new TWAP interval in seconds
+     * @dev Emits TwapIntervalChanged event
      */
     function setTwapInterval(uint32 _twapInterval) external onlyOwner {
         emit TwapIntervalChanged(twapInterval, _twapInterval);
@@ -78,6 +82,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
     /**
      * @notice Claims MONT tokens of the caller (player)
      * @return amount Amount of MONT tokens transferred to caller
+     * @dev Emits MontClaimed event
      */
     function claim() external returns (uint256 amount) {
         amount = balances[msg.sender];
@@ -99,6 +104,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
      * @param _player Address of the player
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return reward Amount of MONT rewards transferred to the player
+     * @dev Emits MontRewardAssigned event
      */
     function transferPlayerRewards(
         uint256 _betAmount,
@@ -112,11 +118,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
         }
 
         // A number in like 100e6
-        uint256 houseFee = calculateHouseFee(
-            _betAmount,
-            _houseEdgeAmount,
-            _isPlayerWinner
-        );
+        uint256 houseFee = calculateHouseFee(_betAmount, _houseEdgeAmount, _isPlayerWinner);
         UD60x18 inversePrice = getMontPrice();
 
         // (0.8 * HouseFee) / P
@@ -126,9 +128,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
          * 2. To get better precision, we multiply it my 1e18 and after the calculations are over
          * we divide it by 1e18 again
          */
-        reward =
-            ud(((houseFee * 8) / 10) * 1e30).div(inversePrice).unwrap() /
-            1e18;
+        reward = ud(((houseFee * 8) / 10) * 1e30).div(inversePrice).unwrap() / 1e18;
 
         // Total Amount has 6 decimals, to make it 18 decimals, we multiply it by 1e12
         uint256 reward2 = _totalAmount * 1e12;
@@ -163,11 +163,11 @@ contract MontRewardManager is IMontRewardManager, Ownable {
      * @param _isPlayerWinner Flag indicating whether the player won the bet
      * @return houseFee Calculated house fee
      */
-    function calculateHouseFee(
-        uint256 _betAmount,
-        uint256 _houseEdgeAmount,
-        bool _isPlayerWinner
-    ) private pure returns (uint256 houseFee) {
+    function calculateHouseFee(uint256 _betAmount, uint256 _houseEdgeAmount, bool _isPlayerWinner)
+        private
+        pure
+        returns (uint256 houseFee)
+    {
         houseFee = _houseEdgeAmount;
 
         if (!_isPlayerWinner) {
@@ -182,12 +182,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
     function getMontPrice() private view returns (UD60x18 inversePrice) {
         int24 twapTick = OracleLibrary.consult(uniswapPool, twapInterval);
 
-        uint256 amountQuote = OracleLibrary.getQuoteAtTick(
-            twapTick,
-            1e6,
-            address(usdt),
-            address(mont)
-        );
+        uint256 amountQuote = OracleLibrary.getQuoteAtTick(twapTick, 1e6, address(usdt), address(mont));
 
         inversePrice = ud(1e18).div(ud(amountQuote)).mul(ud(1e18));
     }
@@ -198,9 +193,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
      * @return isReferrerSet If the referrer is set for the referee (player)
      * @return referrer Address of the referrer of the referee (player)
      */
-    function checkReferrer(
-        address _referee
-    ) private view returns (bool isReferrerSet, address referrer) {
+    function checkReferrer(address _referee) private view returns (bool isReferrerSet, address referrer) {
         referrer = gameFactory.referrals(_referee);
 
         if (referrer != address(0)) {
