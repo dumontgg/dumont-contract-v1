@@ -18,7 +18,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     /// @notice This uses 6 decimals because the contract uses USDT as the fee token
-    uint256 public constant MAXIMUM_GAME_CREATION_FEE = 100e6;
+    uint256 public constant MAXIMUM_GAME_CREATION_FEE = 10e6;
 
     /// @notice Address of the USDT token
     IERC20 public immutable usdt;
@@ -160,7 +160,9 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
     function createGame(address _referrer) external whenNotPaused returns (uint256 id, address gameAddress) {
         uint256 _gameId = nextGameId;
 
-        usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
+        if (gameCreationFee > 0) {
+            usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
+        }
 
         id = _gameId;
         gameAddress =

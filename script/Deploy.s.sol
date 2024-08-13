@@ -21,17 +21,17 @@ import {BaseScript} from "./Base.s.sol";
 contract DeployCore is BaseScript {
     address[] public EMPTY_ADDRESS_ARRAY;
 
-    uint256 MIN_DELAY = 0;
+    uint256 MIN_DELAY = 0; // khodam
     uint256 GAME_DURATION = 1 days / 2;
-    uint256 CLAIMABLE_AFTER = 1 days / 6;
+    uint256 CLAIMABLE_AFTER = 1 days / 4;
     uint256 MAX_FREE_REVEALS = 3;
     uint32 TWAP_INTERVAL = 1000;
-    uint24 MONT_USDT_POOL_FEE = 3000;
+    uint24 MONT_USDT_POOL_FEE = 3000; // 30000? 3%
     uint256 GAME_CREATION_FEE = 1e6;
     uint256 MINIMUM_BET_AMOUNT = 1e6;
     uint256 MONT_INITIAL_SUPPLY = 10_000_000_000;
     uint256 VAULT_INITIAL_USDT_SUPPLY = 100_000e6;
-    uint256 MONT_REWARD_MANAGER_INITIAL_MONT_SUPPLY = 1_000_000e18;
+    uint256 MONT_REWARD_MANAGER_INITIAL_MONT_SUPPLY = 4_000_000_000e18;
 
     function run()
         public
@@ -50,59 +50,24 @@ contract DeployCore is BaseScript {
         )
     {
         // todo: use env to check if we should create the USDT token or use its address
-        usdt = new ERC20Custom(
-            "USD Tether",
-            "USDT",
-            6,
-            100_000_000,
-            msg.sender
-        );
+        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, msg.sender);
         mont = new MONT(MONT_INITIAL_SUPPLY, msg.sender);
         burner = new Burner(mont, usdt, uniswapSwapRouter, MONT_USDT_POOL_FEE);
         revealer = new Revealer();
-        vault = new Vault(
-            mont,
-            usdt,
-            burner,
-            GameFactory(address(0)),
-            IMontRewardManager(address(0)),
-            MINIMUM_BET_AMOUNT
-        );
+        vault =
+            new Vault(mont, usdt, burner, GameFactory(address(0)), IMontRewardManager(address(0)), MINIMUM_BET_AMOUNT);
         gameFactory = new GameFactory(
-            usdt,
-            vault,
-            address(revealer),
-            GAME_DURATION,
-            CLAIMABLE_AFTER,
-            MAX_FREE_REVEALS,
-            GAME_CREATION_FEE
+            usdt, vault, address(revealer), GAME_DURATION, CLAIMABLE_AFTER, MAX_FREE_REVEALS, GAME_CREATION_FEE
         );
 
         bytes memory emptyByte;
-        gameFactoryProxy = new GameFactoryProxy(
-            address(gameFactory),
-            msg.sender,
-            emptyByte
-        );
-        GameFactory realGameFactoryProxy = GameFactory(
-            address(gameFactoryProxy)
-        );
+        gameFactoryProxy = new GameFactoryProxy(address(gameFactory), msg.sender, emptyByte);
+        GameFactory realGameFactoryProxy = GameFactory(address(gameFactoryProxy));
 
         montRewardManager = new MontRewardManager(
-            address(vault),
-            mont,
-            usdt,
-            realGameFactoryProxy,
-            uniswapV3Factory,
-            MONT_USDT_POOL_FEE,
-            TWAP_INTERVAL
+            address(vault), mont, usdt, realGameFactoryProxy, uniswapV3Factory, MONT_USDT_POOL_FEE, TWAP_INTERVAL
         );
-        timeLockController = new TimelockController(
-            MIN_DELAY,
-            EMPTY_ADDRESS_ARRAY,
-            EMPTY_ADDRESS_ARRAY,
-            msg.sender
-        );
+        timeLockController = new TimelockController(MIN_DELAY, EMPTY_ADDRESS_ARRAY, EMPTY_ADDRESS_ARRAY, msg.sender);
 
         vault.setMontRewardManager(montRewardManager);
         vault.setGameFactory(realGameFactoryProxy);
@@ -114,10 +79,7 @@ contract DeployCore is BaseScript {
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer5);
 
         usdt.transfer(address(vault), VAULT_INITIAL_USDT_SUPPLY);
-        mont.transfer(
-            address(montRewardManager),
-            MONT_REWARD_MANAGER_INITIAL_MONT_SUPPLY
-        );
+        mont.transfer(address(montRewardManager), MONT_REWARD_MANAGER_INITIAL_MONT_SUPPLY);
 
         vault.transferOwnership(address(timeLockController));
         gameFactory.transferOwnership(address(timeLockController));
@@ -135,10 +97,7 @@ contract DeployCore is BaseScript {
         console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
     }
 
-    function createPoolAndMintLiquidity(
-        address _usdt,
-        address _mont
-    ) public returns (address pool) {
+    function createPoolAndMintLiquidity(address _usdt, address _mont) public returns (address pool) {
         if (_usdt > _mont) {
             uint256 amount0 = 2_000_000_000e18;
             uint256 amount1 = 500_000e6;
