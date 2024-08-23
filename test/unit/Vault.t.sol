@@ -10,6 +10,8 @@ import {GameFactory} from "../../src/GameFactory.sol";
 import {MontRewardManager} from "../../src/MontRewardManager.sol";
 
 contract VaultTest is BaseTest {
+    error GameFactoryAlreadySet();
+
     uint256 private constant GAME_CREATION_FEE = 1e18;
     uint256 private constant MINIMUM_BET_ = 1e18;
 
@@ -29,6 +31,15 @@ contract VaultTest is BaseTest {
 
     function test_owner() public {
         assertEq(vault.owner(), users.admin);
+    }
+
+    function test_setGameFactoryForSecondTimeShouldRevert() public {
+        vm.prank(users.admin);
+        vault.setGameFactory(GameFactory(address(usdt)));
+
+        vm.prank(users.admin);
+        vm.expectRevert(abi.encodeWithSelector(GameFactoryAlreadySet.selector));
+        vault.setGameFactory(GameFactory(address(mont)));
     }
 
     function test_deposit() public changeCaller(users.admin) {
