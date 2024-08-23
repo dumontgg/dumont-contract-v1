@@ -84,6 +84,10 @@ contract Vault is IVault, Ownable {
     function setGameFactory(IGameFactory _gameFactory) external onlyOwner {
         emit GameFactoryChanged(address(gameFactory), address(_gameFactory));
 
+        if (address(gameFactory) != address(0)) {
+            revert GameFactoryAlreadySet();
+        }
+
         gameFactory = _gameFactory;
     }
 

@@ -57,11 +57,7 @@ interface IVault {
      * @param _amount The amount being withdrawn
      * @param _recipient The address receiving the withdrawal
      */
-    event Withdrawn(
-        address indexed _token,
-        uint256 _amount,
-        address indexed _recipient
-    );
+    event Withdrawn(address indexed _token, uint256 _amount, address indexed _recipient);
 
     /**
      * @notice Emitted when the maximum bet rate is changed
@@ -82,24 +78,21 @@ interface IVault {
     error FailedToSendEther();
 
     /**
+     * @notice Thrown when an attempt to change the GameFactory contract address fails
+     */
+    error GameFactoryAlreadySet();
+
+    /**
      * @notice Changes the address of the Burner contract
      * @param _burner The new address of the Burner contract
      */
     function setBurner(IBurner _burner) external;
 
     /**
-     * @notice Changes the address of the GameFactory contract
-     * @param _gameFactory The new address of the GameFactory contract
-     */
-    function setGameFactory(IGameFactory _gameFactory) external;
-
-    /**
      * @notice Changes the address of the MontRewardManager contract
      * @param _montRewardManager The address of the new MontRewardManager contract
      */
-    function setMontRewardManager(
-        IMontRewardManager _montRewardManager
-    ) external;
+    function setMontRewardManager(IMontRewardManager _montRewardManager) external;
 
     /**
      * @notice Allows admins to deposit USDT into the contract
@@ -113,11 +106,7 @@ interface IVault {
      * @param _amount The amount of tokens to withdraw
      * @param _recipient The address to receive the withdrawn tokens
      */
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient
-    ) external;
+    function withdraw(address _token, uint256 _amount, address _recipient) external;
 
     /**
      * @notice Allows the owner to withdraw ETH from the contract
