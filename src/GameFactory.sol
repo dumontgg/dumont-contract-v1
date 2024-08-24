@@ -96,7 +96,10 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
         if (_gameCreationFee > MAXIMUM_GAME_CREATION_FEE) {
-            revert GameCreationFeeIsTooHigh(_gameCreationFee, MAXIMUM_GAME_CREATION_FEE);
+            revert GameCreationFeeIsTooHigh(
+                _gameCreationFee,
+                MAXIMUM_GAME_CREATION_FEE
+            );
         }
 
         emit GameFeeChanged(gameCreationFee, _gameCreationFee);
@@ -157,7 +160,9 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      * @return id The ID of the newly created game
      * @return gameAddress The address of the newly created game
      */
-    function createGame(address _referrer) external whenNotPaused returns (uint256 id, address gameAddress) {
+    function createGame(
+        address _referrer
+    ) external whenNotPaused returns (uint256 id, address gameAddress) {
         uint256 _gameId = nextGameId;
 
         if (gameCreationFee > 0) {
@@ -165,8 +170,18 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         }
 
         id = _gameId;
-        gameAddress =
-            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
+        gameAddress = address(
+            new Game(
+                usdt,
+                vault,
+                revealer,
+                msg.sender,
+                _gameId,
+                gameDuration,
+                claimableAfter,
+                maxFreeReveals
+            )
+        );
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,
@@ -182,9 +197,9 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         ++nextGameId;
         userGames[msg.sender] += 1;
 
-        emit GameCreated(_gameId, gameAddress, msg.sender);
-
         setReferrer(msg.sender, _referrer);
+
+        emit GameCreated(_gameId, gameAddress, msg.sender);
 
         return (_gameId, gameAddress);
     }
@@ -209,11 +224,13 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         }
 
         if (_referrer == _referee) {
-            revert InvalidReferrer(_referrer, _referee);
+            return;
+            // revert InvalidReferrer(_referrer, _referee);
         }
 
         if (referrals[_referee] != address(0)) {
-            revert ReferralAlreadySet(_referee, referrals[_referee]);
+            return;
+            // revert ReferralAlreadySet(_referee, referrals[_referee]);
         }
 
         referrals[_referee] = _referrer;
