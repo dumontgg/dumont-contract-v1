@@ -32,22 +32,22 @@ abstract contract BaseScript is Script {
     /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
     string internal mnemonic;
 
-    address internal UNISWAP_SWAP_ROUTER_BASE = 0x2626664c2603336E57B271c5C0b26F421741e481; // todo
+    address internal UNISWAP_SWAP_ROUTER_BASE = 0x2626664c2603336E57B271c5C0b26F421741e481;
     address internal UNISWAP_SWAP_ROUTER_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address internal UNISWAP_SWAP_ROUTER_SEPOLIA = 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4;
 
-    address internal UNISWAP_V3_FACTORY_BASE = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD; // todo
-    address internal UNISWAP_V3_FACTORY_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address internal UNISWAP_V3_FACTORY_BASE = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
+    address internal UNISWAP_V3_FACTORY_MAINNET = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address internal UNISWAP_V3_FACTORY_SEPOLIA = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
 
-    address internal UNISWAP_NFPM_BASE = 0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1; // todo
+    address internal UNISWAP_NFPM_BASE = 0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1;
     address internal UNISWAP_NFPM_MAINNET = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address internal UNISWAP_NFPM_SEPOLIA = 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2;
 
     // todo: use env
-    ISwapRouter02 uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_SEPOLIA); // todo
-    address uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA; // todo
-    address uniswapNFPM = UNISWAP_NFPM_SEPOLIA; // todo
+    ISwapRouter02 uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_SEPOLIA);
+    address uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA;
+    address uniswapNFPM = UNISWAP_NFPM_SEPOLIA;
 
     /// @dev Initializes the transaction broadcaster like this:
     ///
