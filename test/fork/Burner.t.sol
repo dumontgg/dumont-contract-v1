@@ -17,8 +17,10 @@ contract BurnerTest is ForkTest {
     function setUp() public override {
         ForkTest.setUp();
 
-        vm.prank(users.admin);
-        burnerContract = new Burner(SHIBA, USDC, SWAP_ROUTER, 3000);
+        vm.startPrank(users.admin);
+        burnerContract = new Burner();
+        burnerContract.initialize(SHIBA, USDC, SWAP_ROUTER, 3000);
+        vm.stopPrank();
 
         deal(address(USDC), users.admin, 100_000_000e6);
         deal(address(SHIBA), users.admin, 100_000_000e18);

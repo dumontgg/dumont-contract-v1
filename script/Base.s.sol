@@ -10,6 +10,7 @@ import {ISwapRouter02} from "../src/interfaces/Uniswap/ISwapRouter02.sol";
 import {INonfungiblePositionManager} from "./test/INonfungiblePositionManager.sol";
 
 abstract contract BaseScript is Script {
+    bytes internal emptyByte;
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
     string internal constant TEST_MNEMONIC = "test test test test test test test test test test test junk";
 

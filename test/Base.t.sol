@@ -71,7 +71,9 @@ abstract contract BaseTest is Test, Constants {
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server1);
         revealer.grantRole(revealer.REVEALER_ROLE(), users.server2);
 
-        burner = new Burner(mont, usdt, SWAP_ROUTER, 3000);
+        burner = new Burner();
+        burner.initialize(mont, usdt, SWAP_ROUTER, 3000);
+
         vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
 
         gameFactory = new GameFactory();

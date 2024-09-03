@@ -50,13 +50,21 @@ contract DeployCore is BaseScript {
         // todo: use env to check if we should create the USDT token or use its address
         usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, msg.sender);
         mont = new MONT(MONT_INITIAL_SUPPLY, msg.sender);
-        burner = new Burner(mont, usdt, uniswapSwapRouter, MONT_USDT_POOL_FEE);
+
+        Burner burnerImplementation = new Burner();
+        TransparentUpgradeableProxy burnerProxy =
+            new TransparentUpgradeableProxy(address(burnerImplementation), msg.sender, emptyByte);
+        burner = Burner(address(burnerProxy));
+
+        burner.initialize(mont, usdt, uniswapSwapRouter, MONT_USDT_POOL_FEE);
+        // burner = new Burner(mont, usdt, uniswapSwapRouter, MONT_USDT_POOL_FEE);
+
         revealer = new Revealer();
         vault =
             new Vault(mont, usdt, burner, GameFactory(address(0)), IMontRewardManager(address(0)), MINIMUM_BET_AMOUNT);
 
+        // GAME_FACTORY PROXY
         GameFactory gameFactoryImplementation = new GameFactory();
-        bytes memory emptyByte;
         TransparentUpgradeableProxy gameFactoryProxy =
             new TransparentUpgradeableProxy(address(gameFactoryImplementation), msg.sender, emptyByte);
         gameFactory = GameFactory(address(gameFactoryProxy));

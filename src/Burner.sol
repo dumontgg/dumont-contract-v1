@@ -2,9 +2,8 @@
 pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
@@ -15,17 +14,17 @@ import {ISwapRouter02} from "./interfaces/Uniswap/ISwapRouter02.sol";
  * @notice Burner is used to swap USDT to MONT and burn MONT
  * @dev The contract uses a custom pool in Uniswap to burn MONT tokens
  */
-contract Burner is IBurner, Ownable2Step {
+contract Burner is IBurner, Ownable2StepUpgradeable {
     using SafeERC20 for IERC20;
 
     /// @notice Address of the MONT token
-    IMONT public immutable mont;
+    IMONT public mont;
     /// @notice Address of the USDT token
-    IERC20 public immutable usdt;
+    IERC20 public usdt;
     /// @notice Fee of the Uniswap V3 pool for MONT-USDT
-    uint24 public immutable uniswapPoolFee;
+    uint24 public uniswapPoolFee;
     /// @notice Address of the Uniswap SwapRouter contract
-    ISwapRouter02 public immutable swapRouter;
+    ISwapRouter02 public swapRouter;
 
     /**
      * @notice Sets related contract addresses
@@ -34,13 +33,19 @@ contract Burner is IBurner, Ownable2Step {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter02 _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
+    function initialize(IMONT _mont, IERC20 _usdt, ISwapRouter02 _swapRouter, uint24 _uniswapPoolFee)
+        external
+        initializer
+    {
         mont = _mont;
         usdt = _usdt;
         swapRouter = _swapRouter;
         uniswapPoolFee = _uniswapPoolFee;
 
         usdt.forceApprove(address(_swapRouter), type(uint256).max);
+
+        __Ownable2Step_init();
+        __Ownable_init(msg.sender);
     }
 
     /**
