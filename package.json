@@ -22,6 +22,7 @@
   "homepage": "https://github.com/matinkaboli/dumont-contract-v1#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "@prb/math": "^4.0.2"
   }
 }

@@ -2,8 +2,8 @@
 pragma solidity 0.8.23;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Game} from "./Game.sol";
@@ -14,16 +14,16 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
  * @title GameFactory Contract
  * @notice Facilitates the creation of new games
  */
-contract GameFactory is IGameFactory, Ownable, Pausable {
+contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20 for IERC20;
 
     /// @notice This uses 6 decimals because the contract uses USDT as the fee token
     uint256 public constant MAXIMUM_GAME_CREATION_FEE = 10e6;
 
     /// @notice Address of the USDT token
-    IERC20 public immutable usdt;
+    IERC20 public usdt;
     /// @notice Address of the Vault contract
-    Vault public immutable vault;
+    Vault public vault;
     /// @notice Address of the Revealer contract
     address public revealer;
     /// @notice Duration of newly created games
@@ -55,7 +55,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      * @param _gameCreationFee The fee required for players to create games
      * @param _maxFreeReveals The maximum amount of free reveals a player can request
      */
-    constructor(
+    function initialize(
         IERC20 _usdt,
         Vault _vault,
         address _revealer,
@@ -63,7 +63,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         uint256 _claimableAfter,
         uint256 _maxFreeReveals,
         uint256 _gameCreationFee
-    ) Ownable(msg.sender) {
+    ) external initializer {
         usdt = _usdt;
         vault = _vault;
         revealer = _revealer;
@@ -71,6 +71,8 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         claimableAfter = _claimableAfter;
         maxFreeReveals = _maxFreeReveals;
         gameCreationFee = _gameCreationFee;
+
+        __Ownable_init(msg.sender);
     }
 
     /**
@@ -96,10 +98,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
         if (_gameCreationFee > MAXIMUM_GAME_CREATION_FEE) {
-            revert GameCreationFeeIsTooHigh(
-                _gameCreationFee,
-                MAXIMUM_GAME_CREATION_FEE
-            );
+            revert GameCreationFeeIsTooHigh(_gameCreationFee, MAXIMUM_GAME_CREATION_FEE);
         }
 
         emit GameFeeChanged(gameCreationFee, _gameCreationFee);
@@ -160,9 +159,7 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
      * @return id The ID of the newly created game
      * @return gameAddress The address of the newly created game
      */
-    function createGame(
-        address _referrer
-    ) external whenNotPaused returns (uint256 id, address gameAddress) {
+    function createGame(address _referrer) external whenNotPaused returns (uint256 id, address gameAddress) {
         uint256 _gameId = nextGameId;
 
         if (gameCreationFee > 0) {
@@ -170,18 +167,8 @@ contract GameFactory is IGameFactory, Ownable, Pausable {
         }
 
         id = _gameId;
-        gameAddress = address(
-            new Game(
-                usdt,
-                vault,
-                revealer,
-                msg.sender,
-                _gameId,
-                gameDuration,
-                claimableAfter,
-                maxFreeReveals
-            )
-        );
+        gameAddress =
+            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,

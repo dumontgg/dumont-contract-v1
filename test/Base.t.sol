@@ -36,11 +36,11 @@ abstract contract BaseTest is Test, Constants {
     }
 
     function setUp() public virtual {
-        mont = new MONT(100_000_000, address(this));
-        usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, address(this));
+        // mont = new MONT(100_000_000, address(this));
+        // usdt = new ERC20Custom("USD Tether", "USDT", 6, 100_000_000, address(this));
 
-        // mont = MONT(address(SHIBA));
-        // usdt = ERC20Custom(address(USDC));
+        mont = MONT(address(SHIBA));
+        usdt = ERC20Custom(address(USDC));
 
         users = Users({
             eve: createUser("Eve"),
@@ -74,7 +74,9 @@ abstract contract BaseTest is Test, Constants {
         burner = new Burner(mont, usdt, SWAP_ROUTER, 3000);
         vault = new Vault(mont, usdt, burner, GameFactory(address(0x00)), MontRewardManager(address(0x00)), 1e6);
 
-        gameFactory = new GameFactory(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
+        gameFactory = new GameFactory();
+        gameFactory.initialize(usdt, vault, address(revealer), ONE_HOUR * 12, ONE_HOUR * 6, 5, 1e6);
+
         montRewardManager =
             new MontRewardManager(address(vault), mont, usdt, gameFactory, address(UNISWAP_V3_FACTORY), 3000, 1500);
 

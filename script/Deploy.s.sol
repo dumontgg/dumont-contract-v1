@@ -2,12 +2,11 @@
 pragma solidity 0.8.23;
 
 import {console2} from "forge-std/console2.sol";
-
 import {TimelockController} from "@openzeppelin/contracts/governance/TimeLockController.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {Burner} from "../src/Burner.sol";
 import {GameFactory} from "../src/GameFactory.sol";
-import {GameFactoryProxy} from "../src/GameFactoryProxy.sol";
 import {IMontRewardManager} from "../src/interfaces/IMontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
 import {Vault} from "../src/Vault.sol";
@@ -39,14 +38,13 @@ contract DeployCore is BaseScript {
         broadcast
         returns (
             Burner burner,
-            GameFactory gameFactory,
             Revealer revealer,
             Vault vault,
             MontRewardManager montRewardManager,
             MONT mont,
             ERC20Custom usdt,
             TimelockController timeLockController,
-            GameFactoryProxy gameFactoryProxy
+            GameFactory gameFactory
         )
     {
         // todo: use env to check if we should create the USDT token or use its address
@@ -56,21 +54,24 @@ contract DeployCore is BaseScript {
         revealer = new Revealer();
         vault =
             new Vault(mont, usdt, burner, GameFactory(address(0)), IMontRewardManager(address(0)), MINIMUM_BET_AMOUNT);
-        gameFactory = new GameFactory(
+
+        GameFactory gameFactoryImplementation = new GameFactory();
+        bytes memory emptyByte;
+        TransparentUpgradeableProxy gameFactoryProxy =
+            new TransparentUpgradeableProxy(address(gameFactoryImplementation), msg.sender, emptyByte);
+        gameFactory = GameFactory(address(gameFactoryProxy));
+
+        gameFactory.initialize(
             usdt, vault, address(revealer), GAME_DURATION, CLAIMABLE_AFTER, MAX_FREE_REVEALS, GAME_CREATION_FEE
         );
 
-        bytes memory emptyByte;
-        gameFactoryProxy = new GameFactoryProxy(address(gameFactory), msg.sender, emptyByte);
-        GameFactory realGameFactoryProxy = GameFactory(address(gameFactoryProxy));
-
         montRewardManager = new MontRewardManager(
-            address(vault), mont, usdt, realGameFactoryProxy, uniswapV3Factory, MONT_USDT_POOL_FEE, TWAP_INTERVAL
+            address(vault), mont, usdt, gameFactory, uniswapV3Factory, MONT_USDT_POOL_FEE, TWAP_INTERVAL
         );
         timeLockController = new TimelockController(MIN_DELAY, EMPTY_ADDRESS_ARRAY, EMPTY_ADDRESS_ARRAY, msg.sender);
 
         vault.setMontRewardManager(montRewardManager);
-        vault.setGameFactory(realGameFactoryProxy);
+        vault.setGameFactory(gameFactory);
 
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer1);
         revealer.grantRole(revealer.REVEALER_ROLE(), revealer2);
@@ -90,11 +91,13 @@ contract DeployCore is BaseScript {
         console2.log("GAME_FACTORY=%s", address(gameFactoryProxy));
         console2.log("REVEALER=%s", address(revealer));
         console2.log("VAULT=%s", address(vault));
-        console2.log("MONT_REWAERD_MANAGER=%s", address(montRewardManager));
+        console2.log("MONT_REWARD_MANAGER=%s", address(montRewardManager));
         console2.log("MONT=%s", address(mont));
         console2.log("USDT=%s", address(usdt));
         console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
-        console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
+        console2.log("UNISWAP_V3_FACTORY", address(uniswapV3Factory));
+        console2.log("UNISWAP_V3_NFPM", address(uniswapNFPM));
+        console2.log("UNISWAP_V3_SWAP_ROUTER", address(uniswapSwapRouter));
     }
 
     function createPoolAndMintLiquidity(address _usdt, address _mont) public returns (address pool) {

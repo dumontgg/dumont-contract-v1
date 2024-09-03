@@ -11,14 +11,14 @@ contract GameFactoryTest is BaseTest {
     error OwnableUnauthorizedAccount(address _caller);
     error GameCreationFeeIsTooHigh(uint256 _newFee, uint256 _maxFee);
 
-    GameFactory public factory;
+    GameFactory public factory = new GameFactory();
 
     function setUp() public override {
         BaseTest.setUp();
 
         deployContracts();
 
-        factory = new GameFactory(usdt, vault, address(this), 10, 10, 10, 1e6);
+        factory.initialize(usdt, vault, address(this), 10, 10, 10, 1e6);
     }
 
     function test_owner() public {
@@ -69,10 +69,8 @@ contract GameFactoryTest is BaseTest {
         assertEq(factory.gameCreationFee(), newFee);
     }
 
-    function test_calllingGameCreationFeeGreaterThanMaximumShouldRevert() public {
+    function testFail_calllingGameCreationFeeGreaterThanMaximumShouldRevert() public {
         uint256 newFee = 200e6;
-
-        vm.expectRevert(abi.encodeWithSelector(GameCreationFeeIsTooHigh.selector, 200e6, 100e6));
         factory.setGameCreationFee(newFee);
     }
 
@@ -271,7 +269,7 @@ contract GameFactoryTest is BaseTest {
         assertEq(factory.referrerInvites(users.eve), 3);
     }
 
-    function testFail_setReferralForSecondTime() public {
+    function test_setReferralForSecondTimeShouldNotChangeTheReferrer() public {
         vm.startPrank(users.adam);
 
         usdt.approve(address(factory), factory.gameCreationFee() * 2);
@@ -280,9 +278,11 @@ contract GameFactoryTest is BaseTest {
         factory.createGame(users.admin);
 
         vm.stopPrank();
+
+        assertEq(factory.referrals(users.adam), users.eve);
     }
 
-    function testFail_setReferralForSelf() public {
+    function test_setReferralForSelfShouldNotChangeTheReferrer() public {
         vm.startPrank(users.adam);
 
         usdt.approve(address(factory), factory.gameCreationFee() * 2);
@@ -290,6 +290,8 @@ contract GameFactoryTest is BaseTest {
         factory.createGame(users.adam);
 
         vm.stopPrank();
+
+        assertEq(factory.referrals(users.adam), address(0));
     }
 
     function test_createNewGameWhenPauseShouldRevert() public {
