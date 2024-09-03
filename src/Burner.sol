@@ -8,7 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IMONT} from "./interfaces/IMONT.sol";
 import {IBurner} from "./interfaces/IBurner.sol";
-import {ISwapRouter} from "./interfaces/Uniswap/ISwapRouter.sol";
+import {ISwapRouter02} from "./interfaces/Uniswap/ISwapRouter02.sol";
 
 /**
  * @title Burner contract burns MONT tokens
@@ -25,7 +25,7 @@ contract Burner is IBurner, Ownable2Step {
     /// @notice Fee of the Uniswap V3 pool for MONT-USDT
     uint24 public immutable uniswapPoolFee;
     /// @notice Address of the Uniswap SwapRouter contract
-    ISwapRouter public immutable swapRouter;
+    ISwapRouter02 public immutable swapRouter;
 
     /**
      * @notice Sets related contract addresses
@@ -34,7 +34,7 @@ contract Burner is IBurner, Ownable2Step {
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
+    constructor(IMONT _mont, IERC20 _usdt, ISwapRouter02 _swapRouter, uint24 _uniswapPoolFee) Ownable(msg.sender) {
         mont = _mont;
         usdt = _usdt;
         swapRouter = _swapRouter;
@@ -75,15 +75,18 @@ contract Burner is IBurner, Ownable2Step {
         private
         returns (uint256 amountOut)
     {
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+        if (block.timestamp > _deadline) {
+            revert DeadlinePassed();
+        }
+
+        ISwapRouter02.ExactInputSingleParams memory params = ISwapRouter02.ExactInputSingleParams({
             fee: uniswapPoolFee,
             amountIn: _amountIn,
             tokenIn: address(usdt),
             tokenOut: address(mont),
             recipient: address(this),
-            deadline: _deadline,
-            amountOutMinimum: _amountOutMinimum,
-            sqrtPriceLimitX96: 0
+            sqrtPriceLimitX96: 0,
+            amountOutMinimum: _amountOutMinimum
         });
 
         amountOut = swapRouter.exactInputSingle(params);

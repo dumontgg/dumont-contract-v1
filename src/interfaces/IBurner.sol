@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IMONT} from "./IMONT.sol";
-import {ISwapRouter} from "./Uniswap/ISwapRouter.sol";
+import {ISwapRouter02} from "./Uniswap/ISwapRouter02.sol";
 
 /**
  * @title Burner contract burns MONT tokens
@@ -16,15 +16,17 @@ interface IBurner {
      * @param _usdtAmount The amount of USDT swapped
      * @param _montAmount The amount of MONT burned
      */
-    event MONTTokensBurned(
-        uint256 indexed _usdtAmount,
-        uint256 indexed _montAmount
-    );
+    event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
 
     /**
      * @notice Throws when there are not enough USDT tokens to burn
      */
     error NotEnoughUSDT();
+
+    /**
+     * @notice Throws when deadline is passed for swap using Uniswap SwapRouter
+     */
+    error DeadlinePassed();
 
     /**
      * @notice Returns the MONT token address
@@ -39,7 +41,7 @@ interface IBurner {
     /**
      * @notice Returns the Uniswap SwapRouter contract address
      */
-    function swapRouter() external returns (ISwapRouter);
+    function swapRouter() external returns (ISwapRouter02);
 
     /**
      * @notice Returns the Uniswap USDT-MONT pool fee tier

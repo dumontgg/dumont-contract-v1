@@ -5,13 +5,12 @@ pragma solidity 0.8.23;
  * @title Router token swapping functionality
  * @notice Functions for swapping tokens via Uniswap V3
  */
-interface ISwapRouter {
+interface ISwapRouter02 {
     struct ExactInputSingleParams {
         address tokenIn;
         address tokenOut;
         uint24 fee;
         address recipient;
-        uint256 deadline;
         uint256 amountIn;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;

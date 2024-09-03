@@ -7,7 +7,7 @@ import {Burner} from "../src/Burner.sol";
 import {Constants} from "./utils/Constants.sol";
 import {ERC20Custom} from "../script/test/ERC20Custom.sol";
 import {GameFactory} from "../src/GameFactory.sol";
-import {ISwapRouter} from "../src/interfaces/Uniswap/ISwapRouter.sol";
+import {ISwapRouter02} from "../src/interfaces/Uniswap/ISwapRouter02.sol";
 import {MONT} from "../src/MONT.sol";
 import {MontRewardManager} from "../src/MontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";

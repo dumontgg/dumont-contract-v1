@@ -6,10 +6,7 @@ import {ForkTest} from "./Fork.t.sol";
 import {SWAP_ROUTER, SHIBA, USDC} from "./Addresses.t.sol";
 
 contract BurnerTest is ForkTest {
-    event MONTTokensBurned(
-        uint256 indexed _usdtAmount,
-        uint256 indexed _montAmount
-    );
+    event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
 
     error NotEnoughUSDT();
     error OwnableUnauthorizedAccount(address account);
@@ -35,33 +32,19 @@ contract BurnerTest is ForkTest {
         burnerContract.burnTokens(0, block.timestamp);
     }
 
-    function test_callingBurnTokensFromUnauthorizedAccountsShouldrevert()
-        public
-        changeCaller(users.eve)
-    {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                OwnableUnauthorizedAccount.selector,
-                users.eve
-            )
-        );
+    function test_callingBurnTokensFromUnauthorizedAccountsShouldrevert() public changeCaller(users.eve) {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, users.eve));
 
         burnerContract.burnTokens(0, block.timestamp);
     }
 
-    function test_burnTokensShouldRevertIfThereIsZeroTokens()
-        public
-        changeCaller(users.admin)
-    {
+    function test_burnTokensShouldRevertIfThereIsZeroTokens() public changeCaller(users.admin) {
         vm.expectRevert(abi.encodeWithSelector(NotEnoughUSDT.selector));
 
         burnerContract.burnTokens(0, block.timestamp);
     }
 
-    function test_burnTokensShouldEmitEvents()
-        public
-        changeCaller(users.admin)
-    {
+    function test_burnTokensShouldEmitEvents() public changeCaller(users.admin) {
         USDC.transfer(address(burnerContract), 1_000e6);
 
         vm.expectEmit(true, false, false, false);
@@ -70,10 +53,7 @@ contract BurnerTest is ForkTest {
         burnerContract.burnTokens(0, block.timestamp);
     }
 
-    function test_burnTokensShouldDecreaseTheTotalSupplyOfMONTTokens()
-        public
-        changeCaller(users.admin)
-    {
+    function test_burnTokensShouldDecreaseTheTotalSupplyOfMONTTokens() public changeCaller(users.admin) {
         uint256 totalSupplyBefore = SHIBA.totalSupply();
 
         USDC.transfer(address(burnerContract), 1_000e6);
