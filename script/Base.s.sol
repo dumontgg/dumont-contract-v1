@@ -11,64 +11,49 @@ import {INonfungiblePositionManager} from "./test/INonfungiblePositionManager.so
 
 abstract contract BaseScript is Script {
     bytes internal emptyByte;
-    /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
-    string internal constant TEST_MNEMONIC = "test test test test test test test test test test test junk";
-
+    address[] emptyAddressArray;
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
-
-    /// @dev Needed for the deterministic deployments.
     bytes32 internal constant ZERO_SALT = bytes32(0);
+
+    address internal constant BASE_USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
+    address internal constant UNISWAP_SWAP_ROUTER_BASE = 0x2626664c2603336E57B271c5C0b26F421741e481;
+    address internal constant UNISWAP_SWAP_ROUTER_SEPOLIA = 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4;
+    address internal constant UNISWAP_V3_FACTORY_BASE = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
+    address internal constant UNISWAP_V3_FACTORY_SEPOLIA = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
+    address internal constant UNISWAP_NFPM_BASE = 0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1;
+    address internal constant UNISWAP_NFPM_SEPOLIA = 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2;
 
     /// @dev The address of the transaction broadcaster.
     address internal broadcaster;
 
+    /// @dev Determines the deployment on base or base sepolia
+    bool internal isBase;
+
     /// @dev The address of the revealers
-    address internal revealer1 = 0xA328A350142026000dd2A9529dbE171ebFDE6427;
-    address internal revealer2 = 0x44c7F0C629e84C4f22E74A737D2D0134F0b9B757;
-    address internal revealer3 = 0xFc2c52EB8Ce44C92cef2B361Fac4D9d5E5D27af5;
-    address internal revealer4 = 0xFE77Cd80E4A50A7ad5B7A38c5C8De6Ebc3e7a335;
-    address internal revealer5 = 0x3e03984BF3b9Cfa9fC640eCe3ee7a55Fef14Fe15;
+    address[] internal revealers;
 
-    /// @dev Used to derive the broadcaster's address if $ETH_FROM is not defined.
-    string internal mnemonic;
-
-    address internal UNISWAP_SWAP_ROUTER_BASE = 0x2626664c2603336E57B271c5C0b26F421741e481;
-    address internal UNISWAP_SWAP_ROUTER_MAINNET = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
-    address internal UNISWAP_SWAP_ROUTER_SEPOLIA = 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4;
-
-    address internal UNISWAP_V3_FACTORY_BASE = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
-    address internal UNISWAP_V3_FACTORY_MAINNET = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    address internal UNISWAP_V3_FACTORY_SEPOLIA = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
-
-    address internal UNISWAP_NFPM_BASE = 0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1;
-    address internal UNISWAP_NFPM_MAINNET = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
-    address internal UNISWAP_NFPM_SEPOLIA = 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2;
-
-    // todo: use env
-    ISwapRouter02 uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_SEPOLIA);
-    address uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA;
-    address uniswapNFPM = UNISWAP_NFPM_SEPOLIA;
+    /// @dev Uniswap addresses based on the network
+    address internal uniswapNFPM;
+    address internal uniswapV3Factory;
+    ISwapRouter02 internal uniswapSwapRouter;
 
     /// @dev Initializes the transaction broadcaster like this:
     ///
-    /// - If $ETH_FROM is defined, use it.
-    /// - Otherwise, derive the broadcaster address from $MNEMONIC.
-    /// - If $MNEMONIC is not defined, default to a test mnemonic.
-    ///
-    /// The use case for $ETH_FROM is to specify the broadcaster key and its address via the command line.
+    /// - Sets the $ETH_FROM, $REVEALERS, and $IS_BASE
     constructor() {
-        address from = vm.envOr({name: "ETH_FROM", defaultValue: address(0)});
+        isBase = vm.envOr("IS_BASE", false);
+        broadcaster = vm.envOr("ETH_FROM", address(0));
+        revealers = vm.envOr("REVEALERS", ",", emptyAddressArray);
 
-        if (from != address(0)) {
-            broadcaster = from;
+        if (isBase) {
+            uniswapNFPM = UNISWAP_NFPM_BASE;
+            uniswapV3Factory = UNISWAP_V3_FACTORY_BASE;
+            uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_BASE);
         } else {
-            mnemonic = vm.envOr({name: "MNEMONIC", defaultValue: TEST_MNEMONIC});
-
-            (broadcaster,) = deriveRememberKey({mnemonic: mnemonic, index: 0});
-            (revealer1,) = deriveRememberKey({mnemonic: mnemonic, index: 1});
-            (revealer2,) = deriveRememberKey({mnemonic: mnemonic, index: 2});
-            (revealer3,) = deriveRememberKey({mnemonic: mnemonic, index: 3});
+            uniswapNFPM = UNISWAP_NFPM_SEPOLIA;
+            uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA;
+            uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_SEPOLIA);
         }
     }
 
@@ -91,6 +76,10 @@ abstract contract BaseScript is Script {
         INonfungiblePositionManager nfpm = INonfungiblePositionManager(uniswapNFPM);
 
         pool = nfpm.createAndInitializePoolIfNecessary(_token0, _token1, _fee, _sqrtPriceX96);
+
+        if (isBase) {
+            return pool;
+        }
 
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: _token0,
