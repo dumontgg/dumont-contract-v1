@@ -105,7 +105,7 @@ interface IGameFactory {
 
     /**
      * @notice Changes the fee required to create a new game
-     * @param _gameCreationFee The new fee amount in USDT
+     * @param _gameCreationFee The new fee amount in USDC
      */
     function setGameCreationFee(uint256 _gameCreationFee) external;
 

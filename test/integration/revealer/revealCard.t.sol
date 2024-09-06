@@ -36,11 +36,11 @@ contract RevealCardTest is IntegrationTest {
     function setUp() public virtual override {
         IntegrationTest.setUp();
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
         (uint256 _gameId, address game0Address) = gameFactory.createGame(address(0));
 
         setCards(game0Address);
@@ -48,7 +48,7 @@ contract RevealCardTest is IntegrationTest {
         game = Game(game0Address);
         gameId = _gameId;
 
-        usdt.approve(address(game), 100e6);
+        usdc.approve(address(game), 100e6);
 
         vm.stopPrank();
 
@@ -258,8 +258,8 @@ contract RevealCardTest is IntegrationTest {
         assertEq(game.revealedCardNumbersCount(9), 1);
     }
 
-    function test_revealCardShouldTransferUSDTIfWon() public changeCaller(users.server1) {
-        uint256 balanceBefore = usdt.balanceOf(game.player());
+    function test_revealCardShouldTransferUSDCIfWon() public changeCaller(users.server1) {
+        uint256 balanceBefore = usdc.balanceOf(game.player());
 
         uint256 amount = game.cards(0).totalAmount;
 
@@ -273,13 +273,13 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        uint256 balanceAfter = usdt.balanceOf(game.player());
+        uint256 balanceAfter = usdc.balanceOf(game.player());
 
         assertEq(balanceAfter, balanceBefore + amount);
     }
 
-    function test_revealCardShouldNotTransferUSDTIfLost() public changeCaller(users.server1) {
-        uint256 balanceBefore = usdt.balanceOf(game.player());
+    function test_revealCardShouldNotTransferUSDCIfLost() public changeCaller(users.server1) {
+        uint256 balanceBefore = usdc.balanceOf(game.player());
 
         IRevealer.RevealedCard memory params = IRevealer.RevealedCard({
             game: address(game),
@@ -291,7 +291,7 @@ contract RevealCardTest is IntegrationTest {
 
         revealer.revealCard(params);
 
-        uint256 balanceAfter = usdt.balanceOf(game.player());
+        uint256 balanceAfter = usdc.balanceOf(game.player());
 
         assertEq(balanceAfter, balanceBefore);
     }

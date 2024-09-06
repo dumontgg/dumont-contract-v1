@@ -7,7 +7,7 @@ import {IMontRewardManager} from "./IMontRewardManager.sol";
 
 /**
  * @title Vault Contract
- * @notice Manages USDT deposits, withdrawals, and game rewards
+ * @notice Manages USDC deposits, withdrawals, and game rewards
  */
 interface IVault {
     /**
@@ -18,9 +18,9 @@ interface IVault {
     event BurnerChanged(address indexed _from, address indexed _to);
 
     /**
-     * @notice Emitted when the player received USDT by guessing a card correctly
+     * @notice Emitted when the player received USDC by guessing a card correctly
      * @param _player The player address that received the reward
-     * @param _rewards The amount of USDT rewards that the player received
+     * @param _rewards The amount of USDC rewards that the player received
      */
     event PlayerRewardsTransferred(address indexed _player, uint256 _rewards);
 
@@ -95,8 +95,8 @@ interface IVault {
     function setMontRewardManager(IMontRewardManager _montRewardManager) external;
 
     /**
-     * @notice Allows admins to deposit USDT into the contract
-     * @param _amount The amount of USDT to deposit
+     * @notice Allows admins to deposit USDC into the contract
+     * @param _amount The amount of USDC to deposit
      */
     function deposit(uint256 _amount) external;
 
@@ -115,9 +115,9 @@ interface IVault {
     function withdrawETH(address _recipient) external;
 
     /**
-     * @notice Notifies the Vault contract that a player lost a bet and sends USDT if player is the winner
+     * @notice Notifies the Vault contract that a player lost a bet and sends USDC if player is the winner
      * @param _gameId Id of the game
-     * @param _betAmount Amount of the bet in USDT
+     * @param _betAmount Amount of the bet in USDC
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Whether or not the player won or not
@@ -131,7 +131,7 @@ interface IVault {
     ) external;
 
     /**
-     * @notice Changes the minimum bet amount of USDT
+     * @notice Changes the minimum bet amount of USDC
      * @param _minimumBetAmount The new minimum bet amount
      */
     function setMinimumBetAmount(uint256 _minimumBetAmount) external;

@@ -14,7 +14,7 @@ import {IVault} from "./interfaces/IVault.sol";
 
 /**
  * @title Vault Contract
- * @notice Manages USDT deposits, withdrawals, and game rewards
+ * @notice Manages USDC deposits, withdrawals, and game rewards
  * @dev All deposits and withdrawals happen through this contract
  */
 contract Vault is IVault, Ownable {
@@ -25,8 +25,8 @@ contract Vault is IVault, Ownable {
 
     /// @notice Address of the MONT token
     IMONT public immutable mont;
-    /// @notice Address of the USDT token
-    IERC20 public immutable usdt;
+    /// @notice Address of the USDC token
+    IERC20 public immutable usdc;
     /// @notice Address of the Burner contract
     IBurner public burner;
     /// @notice Address of the GameFactory contract
@@ -36,28 +36,28 @@ contract Vault is IVault, Ownable {
 
     /// @notice Maximum total bet amount in percentage. Default is 200, means 2%
     uint256 public maximimBetRate;
-    /// @notice Minimum bet amount. Default is 1000000, means 1 USDT
+    /// @notice Minimum bet amount. Default is 1000000, means 1 USDC
     uint256 public minimumBetAmount;
 
     /**
      * @notice Constructor to set initial values
      * @param _mont Address of the Dumont token contract
-     * @param _usdt Address of the USDT token contract
-     * @param _burner Address of the burner contract used to sell USDT and burn MONT tokens
+     * @param _usdc Address of the USDC token contract
+     * @param _burner Address of the burner contract used to sell USDC and burn MONT tokens
      * @param _gameFactory Address of the GameFactory contract
      * @param _montRewardManager Address of the RewardManager contract
-     * @param _minimumBetAmount Minimum amount of USDT that a player can place as a bet
+     * @param _minimumBetAmount Minimum amount of USDC that a player can place as a bet
      */
     constructor(
         IMONT _mont,
-        IERC20 _usdt,
+        IERC20 _usdc,
         IBurner _burner,
         IGameFactory _gameFactory,
         IMontRewardManager _montRewardManager,
         uint256 _minimumBetAmount
     ) Ownable(msg.sender) {
         mont = _mont;
-        usdt = _usdt;
+        usdc = _usdc;
         burner = _burner;
         maximimBetRate = 200;
         gameFactory = _gameFactory;
@@ -103,12 +103,12 @@ contract Vault is IVault, Ownable {
     }
 
     /**
-     * @notice Allows admins to deposit USDT into the contract
-     * @param _amount The amount of USDT to deposit
+     * @notice Allows admins to deposit USDC into the contract
+     * @param _amount The amount of USDC to deposit
      * @dev Emits Deposited event
      */
     function deposit(uint256 _amount) external onlyOwner {
-        usdt.safeTransferFrom(msg.sender, address(this), _amount);
+        usdc.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Deposited(_amount);
     }
@@ -144,9 +144,9 @@ contract Vault is IVault, Ownable {
     }
 
     /**
-     * @notice Notifies the Vault contract that a player lost a bet and sends USDT if player is the winner
+     * @notice Notifies the Vault contract that a player lost a bet and sends USDC if player is the winner
      * @param _gameId Id of the game
-     * @param _betAmount Amount of the bet in USDT
+     * @param _betAmount Amount of the bet in USDC
      * @param _totalAmount Amount of the bet multiplied by the odds
      * @param _houseEdgeAmount The house edge amount reducted from the total amount if the player wins
      * @param _isPlayerWinner Whether or not the player won or not
@@ -173,10 +173,10 @@ contract Vault is IVault, Ownable {
 
         uint256 burnAmount = (houseEdge * 8) / 10;
 
-        usdt.safeTransfer(address(burner), burnAmount);
+        usdc.safeTransfer(address(burner), burnAmount);
 
         if (_isPlayerWinner) {
-            usdt.safeTransfer(game.player, _totalAmount);
+            usdc.safeTransfer(game.player, _totalAmount);
 
             emit PlayerRewardsTransferred(game.player, _totalAmount);
         }
@@ -185,7 +185,7 @@ contract Vault is IVault, Ownable {
     }
 
     /**
-     * @notice Changes the minimum bet amount of USDT
+     * @notice Changes the minimum bet amount of USDC
      * @param _minimumBetAmount The new minimum bet amount
      * @dev Emits MinimumBetAmountChanged event
      */
@@ -196,7 +196,7 @@ contract Vault is IVault, Ownable {
     }
 
     /**
-     * @notice Changes the percentage of USDT in the Vault that can be sent as the reward
+     * @notice Changes the percentage of USDC in the Vault that can be sent as the reward
      * @param _maximumBetRate The new maximim bet rate
      * @dev Emits MaximumBetRateChanged event
      */
@@ -210,9 +210,9 @@ contract Vault is IVault, Ownable {
      * @notice Returns the maximum bet amount a player can place
      */
     function getMaximumBetAmount() external view returns (uint256) {
-        uint256 usdtAmount = usdt.balanceOf(address(this));
+        uint256 usdcAmount = usdc.balanceOf(address(this));
 
-        return (usdtAmount * maximimBetRate) / 10000;
+        return (usdcAmount * maximimBetRate) / 10000;
     }
 
     /**

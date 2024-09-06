@@ -21,7 +21,7 @@ contract VaultTest is BaseTest {
         vm.prank(users.admin);
         vault = new Vault(
             mont,
-            usdt,
+            usdc,
             Burner(address(0x00)),
             GameFactory(address(0x00)),
             MontRewardManager(address(0x00)),
@@ -35,7 +35,7 @@ contract VaultTest is BaseTest {
 
     function test_setGameFactoryForSecondTimeShouldRevert() public {
         vm.prank(users.admin);
-        vault.setGameFactory(GameFactory(address(usdt)));
+        vault.setGameFactory(GameFactory(address(usdc)));
 
         vm.prank(users.admin);
         vm.expectRevert(abi.encodeWithSelector(GameFactoryAlreadySet.selector));
@@ -45,13 +45,13 @@ contract VaultTest is BaseTest {
     function test_deposit() public changeCaller(users.admin) {
         uint256 amount = 100e6;
 
-        usdt.approve(address(vault), amount);
+        usdc.approve(address(vault), amount);
 
-        uint256 balanceBefore = usdt.balanceOf(address(vault));
+        uint256 balanceBefore = usdc.balanceOf(address(vault));
 
         vault.deposit(amount);
 
-        uint256 balanceAfter = usdt.balanceOf(address(vault));
+        uint256 balanceAfter = usdc.balanceOf(address(vault));
 
         assertEq(balanceBefore + amount, balanceAfter);
     }
@@ -59,13 +59,13 @@ contract VaultTest is BaseTest {
     function testFail_depositNotAuthorized() public {
         uint256 amount = 100e6;
 
-        usdt.approve(address(vault), amount);
+        usdc.approve(address(vault), amount);
 
-        uint256 balanceBefore = usdt.balanceOf(address(vault));
+        uint256 balanceBefore = usdc.balanceOf(address(vault));
 
         vault.deposit(amount);
 
-        uint256 balanceAfter = usdt.balanceOf(address(vault));
+        uint256 balanceAfter = usdc.balanceOf(address(vault));
 
         assertEq(balanceBefore + amount, balanceAfter);
     }
@@ -73,22 +73,22 @@ contract VaultTest is BaseTest {
     function test_depositAndWithdraw() public changeCaller(users.admin) {
         uint256 amount = 100e6;
 
-        usdt.approve(address(vault), amount);
+        usdc.approve(address(vault), amount);
 
-        uint256 vaultBalanceBefore = usdt.balanceOf(address(vault));
+        uint256 vaultBalanceBefore = usdc.balanceOf(address(vault));
 
         vault.deposit(amount);
 
-        uint256 vaultBalanceAfter = usdt.balanceOf(address(vault));
+        uint256 vaultBalanceAfter = usdc.balanceOf(address(vault));
 
         assertEq(vaultBalanceBefore + amount, vaultBalanceAfter);
 
-        uint256 adminBalanceBefore = usdt.balanceOf(users.admin);
+        uint256 adminBalanceBefore = usdc.balanceOf(users.admin);
 
-        vault.withdraw(address(usdt), amount, users.admin);
+        vault.withdraw(address(usdc), amount, users.admin);
 
-        uint256 adminBalanceAfter = usdt.balanceOf(users.admin);
-        uint256 vaultBalanceAfterWithdraw = usdt.balanceOf(address(vault));
+        uint256 adminBalanceAfter = usdc.balanceOf(users.admin);
+        uint256 vaultBalanceAfterWithdraw = usdc.balanceOf(address(vault));
 
         assertEq(vaultBalanceBefore, vaultBalanceAfterWithdraw);
         assertEq(adminBalanceBefore + amount, adminBalanceAfter);
@@ -103,7 +103,7 @@ contract VaultTest is BaseTest {
     function test_maximumBetAmount() public changeCaller(users.admin) {
         uint256 amount = 100e6;
 
-        usdt.approve(address(vault), amount);
+        usdc.approve(address(vault), amount);
 
         vault.deposit(amount);
 

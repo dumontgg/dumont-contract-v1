@@ -21,13 +21,13 @@ contract MontRewardManager is IMontRewardManager, Ownable {
 
     /// @notice Address of the MONT token
     IMONT public immutable mont;
-    /// @notice Address of the USDT token
-    IERC20 public immutable usdt;
+    /// @notice Address of the USDC token
+    IERC20 public immutable usdc;
     /// @notice Address of the Vault contract
     address public immutable vault;
-    /// @notice Fee of the Uniswap V3 pool for MONT-USDT
+    /// @notice Fee of the Uniswap V3 pool for MONT-USDC
     uint24 public immutable poolFee;
-    /// @notice Address of the Uniswap V3 pool for MONT-USDT
+    /// @notice Address of the Uniswap V3 pool for MONT-USDC
     address public immutable uniswapPool;
     /// @notice Address of the GameFactory contract
     GameFactory public immutable gameFactory;
@@ -41,7 +41,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
      * @notice Constructor to initialize contract state variables
      * @param _vault Address of the Vault contract
      * @param _mont Address of the MONT token contract
-     * @param _usdt Address of the USDT token contract
+     * @param _usdc Address of the USDC token contract
      * @param _gameFactory Address of the GameFactory contract
      * @param _uniswapFactory Address of the UniswapV3Factory
      * @param _poolFee Uniswap pool fee tier
@@ -50,20 +50,20 @@ contract MontRewardManager is IMontRewardManager, Ownable {
     constructor(
         address _vault,
         IMONT _mont,
-        IERC20 _usdt,
+        IERC20 _usdc,
         GameFactory _gameFactory,
         address _uniswapFactory,
         uint24 _poolFee,
         uint32 _twapInterval
     ) Ownable(msg.sender) {
         mont = _mont;
-        usdt = _usdt;
+        usdc = _usdc;
         vault = _vault;
         gameFactory = _gameFactory;
         poolFee = _poolFee;
         twapInterval = _twapInterval;
 
-        PoolAddress.PoolKey memory poolKey = PoolAddress.getPoolKey(address(mont), address(usdt), _poolFee);
+        PoolAddress.PoolKey memory poolKey = PoolAddress.getPoolKey(address(mont), address(usdc), _poolFee);
 
         uniswapPool = PoolAddress.computeAddress(_uniswapFactory, poolKey);
     }
@@ -124,7 +124,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
         // (0.8 * HouseFee) / P
         /*
          * The numerator is multiplied to 1e30. Because:
-         * 1. USDT has 6 decimals, we multiply it by 1e12 to make it 18 decimals
+         * 1. USDC has 6 decimals, we multiply it by 1e12 to make it 18 decimals
          * 2. To get better precision, we multiply it my 1e18 and after the calculations are over
          * we divide it by 1e18 again
          */
@@ -182,7 +182,7 @@ contract MontRewardManager is IMontRewardManager, Ownable {
     function getMontPrice() private view returns (UD60x18 inversePrice) {
         int24 twapTick = OracleLibrary.consult(uniswapPool, twapInterval);
 
-        uint256 amountQuote = OracleLibrary.getQuoteAtTick(twapTick, 1e6, address(usdt), address(mont));
+        uint256 amountQuote = OracleLibrary.getQuoteAtTick(twapTick, 1e6, address(usdc), address(mont));
 
         inversePrice = ud(1e18).div(ud(amountQuote)).mul(ud(1e18));
     }

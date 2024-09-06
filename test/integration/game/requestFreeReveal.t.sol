@@ -28,11 +28,11 @@ contract RequestFreeReveal is IntegrationTest {
     function setUp() public virtual override {
         IntegrationTest.setUp();
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
         (uint256 _gameId, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);

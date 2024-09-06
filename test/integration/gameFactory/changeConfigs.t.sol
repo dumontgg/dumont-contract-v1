@@ -12,7 +12,7 @@ contract GameFactoryTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
 
         vm.stopPrank();
     }

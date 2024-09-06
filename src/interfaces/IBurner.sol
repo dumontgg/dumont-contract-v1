@@ -8,20 +8,20 @@ import {ISwapRouter02} from "./Uniswap/ISwapRouter02.sol";
 
 /**
  * @title Burner contract burns MONT tokens
- * @notice Burner is used to swap USDT to MONT and burn MONT
+ * @notice Burner is used to swap USDC to MONT and burn MONT
  */
 interface IBurner {
     /**
      * @notice Emitted when MONT tokens are burned
-     * @param _usdtAmount The amount of USDT swapped
+     * @param _usdcAmount The amount of USDC swapped
      * @param _montAmount The amount of MONT burned
      */
-    event MONTTokensBurned(uint256 indexed _usdtAmount, uint256 indexed _montAmount);
+    event MONTTokensBurned(uint256 indexed _usdcAmount, uint256 indexed _montAmount);
 
     /**
-     * @notice Throws when there are not enough USDT tokens to burn
+     * @notice Throws when there are not enough USDC tokens to burn
      */
-    error NotEnoughUSDT();
+    error NotEnoughUSDC();
 
     /**
      * @notice Throws when deadline is passed for swap using Uniswap SwapRouter
@@ -34,9 +34,9 @@ interface IBurner {
     function mont() external returns (IMONT);
 
     /**
-     * @notice Returns the USDT token address
+     * @notice Returns the USDC token address
      */
-    function usdt() external returns (IERC20);
+    function usdc() external returns (IERC20);
 
     /**
      * @notice Returns the Uniswap SwapRouter contract address
@@ -44,12 +44,12 @@ interface IBurner {
     function swapRouter() external returns (ISwapRouter02);
 
     /**
-     * @notice Returns the Uniswap USDT-MONT pool fee tier
+     * @notice Returns the Uniswap USDC-MONT pool fee tier
      */
     function uniswapPoolFee() external returns (uint24);
 
     /**
-     * @notice Swaps USDT to MONT and burns MONT tokens
+     * @notice Swaps USDC to MONT and burns MONT tokens
      * @param _amountOutMinimum The minimum amount of MONT to burn
      * @param _deadline Deadline of the swap
      */

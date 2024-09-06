@@ -11,7 +11,7 @@ import {ISwapRouter02} from "./interfaces/Uniswap/ISwapRouter02.sol";
 
 /**
  * @title Burner contract burns MONT tokens
- * @notice Burner is used to swap USDT to MONT and burn MONT
+ * @notice Burner is used to swap USDC to MONT and burn MONT
  * @dev The contract uses a custom pool in Uniswap to burn MONT tokens
  */
 contract Burner is IBurner, Ownable2StepUpgradeable {
@@ -19,9 +19,9 @@ contract Burner is IBurner, Ownable2StepUpgradeable {
 
     /// @notice Address of the MONT token
     IMONT public mont;
-    /// @notice Address of the USDT token
-    IERC20 public usdt;
-    /// @notice Fee of the Uniswap V3 pool for MONT-USDT
+    /// @notice Address of the USDC token
+    IERC20 public usdc;
+    /// @notice Fee of the Uniswap V3 pool for MONT-USDC
     uint24 public uniswapPoolFee;
     /// @notice Address of the Uniswap SwapRouter contract
     ISwapRouter02 public swapRouter;
@@ -29,51 +29,51 @@ contract Burner is IBurner, Ownable2StepUpgradeable {
     /**
      * @notice Sets related contract addresses
      * @param _mont The address of the MONT ERC20 token contract
-     * @param _usdt The address of the USDT token
+     * @param _usdc The address of the USDC token
      * @param _swapRouter The address of the UniswapV3 SwapRouter contract
      * @param _uniswapPoolFee The fee of the UniswapV3 pool
      */
-    function initialize(IMONT _mont, IERC20 _usdt, ISwapRouter02 _swapRouter, uint24 _uniswapPoolFee)
+    function initialize(IMONT _mont, IERC20 _usdc, ISwapRouter02 _swapRouter, uint24 _uniswapPoolFee)
         external
         initializer
     {
         mont = _mont;
-        usdt = _usdt;
+        usdc = _usdc;
         swapRouter = _swapRouter;
         uniswapPoolFee = _uniswapPoolFee;
 
-        usdt.forceApprove(address(_swapRouter), type(uint256).max);
+        usdc.forceApprove(address(_swapRouter), type(uint256).max);
 
         __Ownable2Step_init();
         __Ownable_init(msg.sender);
     }
 
     /**
-     * @notice Swaps USDT to MONT and burns MONT tokens
+     * @notice Swaps USDC to MONT and burns MONT tokens
      * @param _amountOutMinimum The minimum amount of MONT to burn
      * @param _deadline Deadline of the swap
      * @dev Emits MONTTokensBurned event
      */
     function burnTokens(uint256 _amountOutMinimum, uint256 _deadline) external onlyOwner {
-        uint256 usdtBalance = usdt.balanceOf(address(this));
+        uint256 usdcBalance = usdc.balanceOf(address(this));
 
-        if (usdtBalance == 0) {
-            revert NotEnoughUSDT();
+        if (usdcBalance == 0) {
+            revert NotEnoughUSDC();
         }
 
-        // Swap is used to convert all USDT tokens to MONT tokens
-        _swap(usdtBalance, _amountOutMinimum, _deadline);
+        // Swap is used to convert all USDC tokens to MONT tokens
+        _swap(usdcBalance, _amountOutMinimum, _deadline);
 
         uint256 montBalance = mont.balanceOf(address(this));
 
         mont.burn(montBalance);
 
-        emit MONTTokensBurned(usdtBalance, montBalance);
+        emit MONTTokensBurned(usdcBalance, montBalance);
     }
 
     /**
-     * @notice Swaps USDT to get MONT using a UniswapV3 pool
-     * @param _amountIn The amount of USDT to swap
+     * @notice Swaps USDC to get MONT using a UniswapV3 pool
+     * @param _amountIn The amount of USDC to swap
      * @param _amountOutMinimum The minimum amount of MONT to receive
      */
     function _swap(uint256 _amountIn, uint256 _amountOutMinimum, uint256 _deadline)
@@ -87,7 +87,7 @@ contract Burner is IBurner, Ownable2StepUpgradeable {
         ISwapRouter02.ExactInputSingleParams memory params = ISwapRouter02.ExactInputSingleParams({
             fee: uniswapPoolFee,
             amountIn: _amountIn,
-            tokenIn: address(usdt),
+            tokenIn: address(usdc),
             tokenOut: address(mont),
             recipient: address(this),
             sqrtPriceLimitX96: 0,

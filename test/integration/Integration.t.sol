@@ -14,10 +14,10 @@ abstract contract IntegrationTest is BaseTest, RandomDeck {
 
         vm.startPrank(users.admin);
 
-        usdt.approve(address(vault), type(uint256).max);
+        usdc.approve(address(vault), type(uint256).max);
         vault.deposit(100_000e6);
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         mont.transfer(address(montRewardManager), 10_000_000e18);
 

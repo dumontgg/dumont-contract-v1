@@ -14,25 +14,25 @@ contract DeployTokensScript is BaseScript {
         public
         virtual
         broadcast
-        returns (ERC20Custom usdt, MONT mont, address pool)
+        returns (ERC20Custom usdc, MONT mont, address pool)
     {
-        usdt = new ERC20Custom(
+        usdc = new ERC20Custom(
             "USD Tether",
-            "USDT",
+            "USDC",
             6,
             100_000_000,
             msg.sender
         );
         mont = new MONT(100_000_000_000, msg.sender);
 
-        if (address(usdt) > address(mont)) {
+        if (address(usdc) > address(mont)) {
             uint256 amount0 = 2_000_000_000e18;
             uint256 amount1 = 500_000e6;
             uint160 sqrt = 560_227_709_747_861_389_312;
 
             pool = createPool(
                 address(mont),
-                address(usdt),
+                address(usdc),
                 3000,
                 sqrt,
                 amount0,
@@ -44,7 +44,7 @@ contract DeployTokensScript is BaseScript {
             uint160 sqrt = 11_204_554_194_957_228_823_252_587_668_406_534_144;
 
             pool = createPool(
-                address(usdt),
+                address(usdc),
                 address(mont),
                 3000,
                 sqrt,

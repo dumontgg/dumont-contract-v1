@@ -29,8 +29,8 @@ contract Game is Initializable, IGame {
 
     mapping(uint256 => Card) private _cards;
 
-    /// @notice Address of the USDT token
-    IERC20 public immutable usdt;
+    /// @notice Address of the USDC token
+    IERC20 public immutable usdc;
     /// @notice Address of the Vault token
     Vault public immutable vault;
     /// @notice Address of the player
@@ -83,7 +83,7 @@ contract Game is Initializable, IGame {
 
     /**
      * @notice Sets contract and player addresses
-     * @param _usdt The address of the USDT token
+     * @param _usdc The address of the USDC token
      * @param _vault The Vault contract address
      * @param _revealer The game server that submits the random hash of cards and reveals the guessed cards
      * @param _player The player that created the game using the GameFactory contract
@@ -93,7 +93,7 @@ contract Game is Initializable, IGame {
      * @param _maxFreeReveals The maximum number of free reveals a player can request
      */
     constructor(
-        IERC20 _usdt,
+        IERC20 _usdc,
         Vault _vault,
         address _revealer,
         address _player,
@@ -102,7 +102,7 @@ contract Game is Initializable, IGame {
         uint256 _claimableAfter,
         uint256 _maxFreeReveals
     ) {
-        usdt = _usdt;
+        usdc = _usdc;
         vault = _vault;
         revealer = _revealer;
         player = _player;
@@ -137,7 +137,7 @@ contract Game is Initializable, IGame {
     /**
      * @notice Stores the player's guess
      * @param _index Index of the card
-     * @param _betAmount The amount of USDT that the player bets
+     * @param _betAmount The amount of USDC that the player bets
      * @param _guessedNumbers Numbers that the player guessed
      * @dev Emits CardGuessed event
      */
@@ -171,7 +171,7 @@ contract Game is Initializable, IGame {
             revert BetAmountIsGreaterThanMaximum(gameId, totalWinningBetAmount);
         }
 
-        usdt.safeTransferFrom(msg.sender, address(vault), _betAmount);
+        usdc.safeTransferFrom(msg.sender, address(vault), _betAmount);
 
         uint256 reward = totalWinningBetAmount - ((totalWinningBetAmount - _betAmount) / 10);
 

@@ -18,11 +18,11 @@ contract ClaimWinTest is IntegrationTest {
     function setUp() public virtual override {
         IntegrationTest.setUp();
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
         (uint256 _gameId, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);
@@ -42,7 +42,7 @@ contract ClaimWinTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(game), 100e6);
+        usdc.approve(address(game), 100e6);
 
         game.guessCard(index, betAmount, amounts);
 
@@ -85,14 +85,14 @@ contract ClaimWinTest is IntegrationTest {
         game.claimWin(index);
     }
 
-    function test_claimWinShouldTransferUSDT() public changeCaller(users.adam) {
+    function test_claimWinShouldTransferUSDC() public changeCaller(users.adam) {
         vm.warp(block.timestamp + (ONE_HOUR * 7));
 
-        uint256 userBalanceBefore = usdt.balanceOf(address(users.adam));
+        uint256 userBalanceBefore = usdc.balanceOf(address(users.adam));
 
         game.claimWin(index);
 
-        uint256 userBalanceAfter = usdt.balanceOf(address(users.adam));
+        uint256 userBalanceAfter = usdc.balanceOf(address(users.adam));
 
         assertEq(userBalanceAfter, userBalanceBefore + game.cards(index).totalAmount);
     }

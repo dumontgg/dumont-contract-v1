@@ -17,11 +17,11 @@ import {IGameFactory} from "./interfaces/IGameFactory.sol";
 contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20 for IERC20;
 
-    /// @notice This uses 6 decimals because the contract uses USDT as the fee token
+    /// @notice This uses 6 decimals because the contract uses USDC as the fee token
     uint256 public constant MAXIMUM_GAME_CREATION_FEE = 10e6;
 
-    /// @notice Address of the USDT token
-    IERC20 public usdt;
+    /// @notice Address of the USDC token
+    IERC20 public usdc;
     /// @notice Address of the Vault contract
     Vault public vault;
     /// @notice Address of the Revealer contract
@@ -32,7 +32,7 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
     uint256 public claimableAfter;
     /// @notice Maximum amount of free reveals for newly created games
     uint256 public maxFreeReveals;
-    /// @notice Fee of game creation in USDT
+    /// @notice Fee of game creation in USDC
     uint256 public gameCreationFee;
     /// @notice ID of the next Game
     uint256 public nextGameId = 0;
@@ -47,7 +47,7 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
 
     /**
      * @notice Initializes the GameFactory contract with specified parameters
-     * @param _usdt The address of the USDT token
+     * @param _usdc The address of the USDC token
      * @param _vault The address of the vault that will call the createGame function
      * @param _revealer A trusted address used to initialize games and reveal player guesses
      * @param _gameDuration The duration of each game, after which games expire
@@ -56,7 +56,7 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
      * @param _maxFreeReveals The maximum amount of free reveals a player can request
      */
     function initialize(
-        IERC20 _usdt,
+        IERC20 _usdc,
         Vault _vault,
         address _revealer,
         uint256 _gameDuration,
@@ -64,7 +64,7 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
         uint256 _maxFreeReveals,
         uint256 _gameCreationFee
     ) external initializer {
-        usdt = _usdt;
+        usdc = _usdc;
         vault = _vault;
         revealer = _revealer;
         gameDuration = _gameDuration;
@@ -93,7 +93,7 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
 
     /**
      * @notice Changes the fee required to create a new game
-     * @param _gameCreationFee The new fee amount in USDT
+     * @param _gameCreationFee The new fee amount in USDC
      * @dev Emits GameFeeChanged event
      */
     function setGameCreationFee(uint256 _gameCreationFee) external onlyOwner {
@@ -163,12 +163,12 @@ contract GameFactory is IGameFactory, OwnableUpgradeable, PausableUpgradeable {
         uint256 _gameId = nextGameId;
 
         if (gameCreationFee > 0) {
-            usdt.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
+            usdc.safeTransferFrom(msg.sender, address(vault), gameCreationFee);
         }
 
         id = _gameId;
         gameAddress =
-            address(new Game(usdt, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
+            address(new Game(usdc, vault, revealer, msg.sender, _gameId, gameDuration, claimableAfter, maxFreeReveals));
 
         _games[_gameId] = GameDetails({
             gameAddress: gameAddress,

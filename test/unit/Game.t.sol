@@ -24,7 +24,7 @@ contract GameTest is BaseTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), gameFactory.gameCreationFee());
+        usdc.approve(address(gameFactory), gameFactory.gameCreationFee());
 
         (uint256 id_, address gameAddress_) = gameFactory.createGame(address(0));
 

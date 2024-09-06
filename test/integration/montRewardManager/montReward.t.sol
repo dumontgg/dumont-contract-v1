@@ -25,18 +25,18 @@ contract MontRewardTest is IntegrationTest {
     function setUp() public virtual override {
         IntegrationTest.setUp();
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
         (, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);
 
         game = Game(game0);
 
-        usdt.approve(address(game), type(uint256).max);
+        usdc.approve(address(game), type(uint256).max);
 
         vm.stopPrank();
 
@@ -69,15 +69,15 @@ contract MontRewardTest is IntegrationTest {
             number: cards[0].number
         });
 
-        uint256 usdtBalanceBefore = usdt.balanceOf(users.adam);
+        uint256 usdcBalanceBefore = usdc.balanceOf(users.adam);
         uint256 montBalanceBefore = montRewardManager.balances(users.adam);
 
         revealer.revealCard(params);
 
-        uint256 usdtBalanceAfter = usdt.balanceOf(users.adam);
+        uint256 usdcBalanceAfter = usdc.balanceOf(users.adam);
         uint256 montBalanceAfter = montRewardManager.balances(users.adam);
 
-        assert(usdtBalanceBefore == usdtBalanceAfter); // since the player lost
+        assert(usdcBalanceBefore == usdcBalanceAfter); // since the player lost
         assert(montBalanceBefore < montBalanceAfter); // losers get mont anyways
 
         vm.stopPrank();
@@ -120,7 +120,7 @@ contract MontRewardTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(game0Address, type(uint256).max);
+        usdc.approve(game0Address, type(uint256).max);
         Game(game0Address).guessCard(index0, amount0, numbers0);
 
         vm.stopPrank();
@@ -171,7 +171,7 @@ contract MontRewardTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(game0Address, type(uint256).max);
+        usdc.approve(game0Address, type(uint256).max);
         Game(game0Address).guessCard(index0, amount0, numbers0);
 
         vm.stopPrank();
@@ -204,7 +204,7 @@ contract MontRewardTest is IntegrationTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(game1Address, type(uint256).max);
+        usdc.approve(game1Address, type(uint256).max);
         Game(game1Address).guessCard(index0, amount0, numbers0);
 
         vm.stopPrank();

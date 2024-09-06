@@ -11,11 +11,11 @@ contract GuessCardTest is IntegrationTest {
     function setUp() public virtual override {
         IntegrationTest.setUp();
 
-        assertEq(usdt.balanceOf(address(vault)), 100_000e6);
+        assertEq(usdc.balanceOf(address(vault)), 100_000e6);
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(gameFactory), 100e6);
+        usdc.approve(address(gameFactory), 100e6);
         (, address game0) = gameFactory.createGame(address(0));
 
         setCards(game0);
@@ -44,7 +44,7 @@ contract GuessCardTest is IntegrationTest {
     }
 
     function test_maximumBetAmount() public {
-        assertEq(vault.getMaximumBetAmount(), (usdt.balanceOf(address(vault)) * 2) / 100);
+        assertEq(vault.getMaximumBetAmount(), (usdc.balanceOf(address(vault)) * 2) / 100);
     }
 
     function test_guessCardForTheFirstTime() public {
@@ -56,7 +56,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 guessCards = 0;
         guessCards += 1 << 11;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
         game.guessCard(0, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
@@ -67,7 +67,7 @@ contract GuessCardTest is IntegrationTest {
 
         // vm.startPrank(users.server1);
         //
-        // uint256 userBalanceBefore = usdt.balanceOf(users.adam);
+        // uint256 userBalanceBefore = usdc.balanceOf(users.adam);
         //
         // IRevealer.RevealedCard memory revealParams = IRevealer.RevealedCard({
         //     game: address(game),
@@ -81,7 +81,7 @@ contract GuessCardTest is IntegrationTest {
         //
         // vm.stopPrank();
         //
-        // uint256 userBalanceAfter = usdt.balanceOf(users.adam);
+        // uint256 userBalanceAfter = usdc.balanceOf(users.adam);
         //
         // assert(userBalanceAfter > userBalanceBefore);
     }
@@ -95,7 +95,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 guessCards = 0;
         guessCards += 1 << 11;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
         game.guessCard(0, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
@@ -106,7 +106,7 @@ contract GuessCardTest is IntegrationTest {
         guessCards = 0;
         guessCards += 1 << 11;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
         game.guessCard(1, amount, guessCards);
 
         assertEq(game.cards(0).betAmount, amount);
@@ -125,7 +125,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 guessCards = 0;
         guessCards += 1 << 11;
 
-        usdt.approve(address(game), amount * 2);
+        usdc.approve(address(game), amount * 2);
 
         game.guessCard(0, amount, guessCards);
         game.guessCard(0, amount, guessCards);
@@ -154,7 +154,7 @@ contract GuessCardTest is IntegrationTest {
         guessCards += 1 << 11;
         guessCards += 1 << 12;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(0, amount, guessCards);
 
@@ -169,7 +169,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 amount = 1e6;
         uint256 guessCards = 0;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(0, amount, guessCards);
 
@@ -184,7 +184,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 amount = 1e6;
         uint256 guessCards = 1;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(0, amount, guessCards);
 
@@ -200,7 +200,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 amount = 1e6;
         uint256 guessCards = 1;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(index, amount, guessCards);
 
@@ -218,7 +218,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 amount = 1e6 - 1;
         uint256 guessCards = 1;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(index, amount, guessCards);
 
@@ -236,7 +236,7 @@ contract GuessCardTest is IntegrationTest {
         uint256 amount = maxAmount + 1;
         uint256 guessCards = 1;
 
-        usdt.approve(address(game), amount);
+        usdc.approve(address(game), amount);
 
         game.guessCard(index, amount, guessCards);
 

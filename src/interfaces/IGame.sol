@@ -40,11 +40,11 @@ interface IGame {
      * @notice Emitted when guessCard is called for a specific card
      * @param _gameId Game id
      * @param _index Index of the card
-     * @param _usdtAmount USDT amount betted for the card by the player
+     * @param _usdcAmount USDC amount betted for the card by the player
      * @param _guessedNumbers Numbers guessed by the player
      */
     event CardGuessed(
-        uint256 indexed _gameId, uint256 indexed _index, uint256 indexed _usdtAmount, uint256 _guessedNumbers
+        uint256 indexed _gameId, uint256 indexed _index, uint256 indexed _usdcAmount, uint256 _guessedNumbers
     );
 
     /**
@@ -183,7 +183,7 @@ interface IGame {
     /**
      * @notice Stores the player's guess
      * @param _index Index of the card
-     * @param _betAmount The amount of USDT that the player bets
+     * @param _betAmount The amount of USDC that the player bets
      * @param _guessedNumbers Numbers that the player guessed
      */
     function guessCard(uint256 _index, uint256 _betAmount, uint256 _guessedNumbers) external;

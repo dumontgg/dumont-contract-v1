@@ -18,7 +18,7 @@ contract GameFactoryTest is BaseTest {
 
         deployContracts();
 
-        factory.initialize(usdt, vault, address(this), 10, 10, 10, 1e6);
+        factory.initialize(usdc, vault, address(this), 10, 10, 10, 1e6);
     }
 
     function test_owner() public {
@@ -75,16 +75,16 @@ contract GameFactoryTest is BaseTest {
     }
 
     function test_createGame() public {
-        // Adam has USDT
+        // Adam has USDC
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
-        assertEq(usdt.allowance(users.adam, address(factory)), factory.gameCreationFee());
+        assertEq(usdc.allowance(users.adam, address(factory)), factory.gameCreationFee());
 
         factory.createGame(address(0));
 
-        assertEq(usdt.allowance(users.adam, address(factory)), 0);
+        assertEq(usdc.allowance(users.adam, address(factory)), 0);
 
         vm.stopPrank();
     }
@@ -92,7 +92,7 @@ contract GameFactoryTest is BaseTest {
     function test_createGameStoresOnGame() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         (uint256 id, address game) = factory.createGame(address(0));
 
@@ -107,7 +107,7 @@ contract GameFactoryTest is BaseTest {
     function test_createGamesStoresAccordingly() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee() * 4);
+        usdc.approve(address(factory), factory.gameCreationFee() * 4);
 
         (uint256 id0,) = factory.createGame(address(0));
         (uint256 id1,) = factory.createGame(address(0));
@@ -127,7 +127,7 @@ contract GameFactoryTest is BaseTest {
     function test_changeMaxFreeRevealsForNewGames() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee() * 4);
+        usdc.approve(address(factory), factory.gameCreationFee() * 4);
 
         (uint256 id0,) = factory.createGame(address(0));
 
@@ -139,7 +139,7 @@ contract GameFactoryTest is BaseTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee() * 4);
+        usdc.approve(address(factory), factory.gameCreationFee() * 4);
 
         (uint256 id1,) = factory.createGame(address(0));
 
@@ -153,11 +153,11 @@ contract GameFactoryTest is BaseTest {
     function test_changeGameCreationFeeForNewGames() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         factory.createGame(address(0));
 
-        assertEq(usdt.allowance(users.adam, address(factory)), 0);
+        assertEq(usdc.allowance(users.adam, address(factory)), 0);
 
         vm.stopPrank();
 
@@ -165,13 +165,13 @@ contract GameFactoryTest is BaseTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), 2e6);
+        usdc.approve(address(factory), 2e6);
 
-        assertEq(usdt.allowance(users.adam, address(factory)), 2e6);
+        assertEq(usdc.allowance(users.adam, address(factory)), 2e6);
 
         factory.createGame(address(0));
 
-        assertEq(usdt.allowance(users.adam, address(factory)), 0);
+        assertEq(usdc.allowance(users.adam, address(factory)), 0);
 
         vm.stopPrank();
     }
@@ -179,7 +179,7 @@ contract GameFactoryTest is BaseTest {
     function test_changeGameDurationForNewGames() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         (uint256 id0,) = factory.createGame(address(0));
 
@@ -191,7 +191,7 @@ contract GameFactoryTest is BaseTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         (uint256 id1,) = factory.createGame(address(0));
 
@@ -203,7 +203,7 @@ contract GameFactoryTest is BaseTest {
     function test_changeClaimableAfterForNewGames() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         (uint256 id0,) = factory.createGame(address(0));
 
@@ -215,7 +215,7 @@ contract GameFactoryTest is BaseTest {
 
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         (uint256 id1,) = factory.createGame(address(0));
 
@@ -227,7 +227,7 @@ contract GameFactoryTest is BaseTest {
     function test_setReferralForNewGames() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         factory.createGame(users.eve);
 
@@ -242,7 +242,7 @@ contract GameFactoryTest is BaseTest {
         // Set eve as referrer for adam
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         factory.createGame(users.eve);
 
@@ -251,7 +251,7 @@ contract GameFactoryTest is BaseTest {
         // Set eve as referrer for admin
         vm.startPrank(users.admin);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         factory.createGame(users.eve);
 
@@ -260,7 +260,7 @@ contract GameFactoryTest is BaseTest {
         // Set eve as referrer for bob
         vm.startPrank(users.bob);
 
-        usdt.approve(address(factory), factory.gameCreationFee());
+        usdc.approve(address(factory), factory.gameCreationFee());
 
         factory.createGame(users.eve);
 
@@ -272,7 +272,7 @@ contract GameFactoryTest is BaseTest {
     function test_setReferralForSecondTimeShouldNotChangeTheReferrer() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee() * 2);
+        usdc.approve(address(factory), factory.gameCreationFee() * 2);
 
         factory.createGame(users.eve);
         factory.createGame(users.admin);
@@ -285,7 +285,7 @@ contract GameFactoryTest is BaseTest {
     function test_setReferralForSelfShouldNotChangeTheReferrer() public {
         vm.startPrank(users.adam);
 
-        usdt.approve(address(factory), factory.gameCreationFee() * 2);
+        usdc.approve(address(factory), factory.gameCreationFee() * 2);
 
         factory.createGame(users.adam);
 
