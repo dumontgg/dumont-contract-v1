@@ -34,7 +34,7 @@ abstract contract BaseScript is Script {
     address[] internal revealers;
 
     /// @dev Uniswap addresses based on the network
-    address internal uniswapNFPM;
+    INonfungiblePositionManager internal uniswapNFPM;
     address internal uniswapV3Factory;
     ISwapRouter02 internal uniswapSwapRouter;
 
@@ -47,11 +47,11 @@ abstract contract BaseScript is Script {
         revealers = vm.envOr("REVEALERS", ",", emptyAddressArray);
 
         if (isBase) {
-            uniswapNFPM = UNISWAP_NFPM_BASE;
+            uniswapNFPM = INonfungiblePositionManager(UNISWAP_NFPM_BASE);
             uniswapV3Factory = UNISWAP_V3_FACTORY_BASE;
             uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_BASE);
         } else {
-            uniswapNFPM = UNISWAP_NFPM_SEPOLIA;
+            uniswapNFPM = INonfungiblePositionManager(UNISWAP_NFPM_SEPOLIA);
             uniswapV3Factory = UNISWAP_V3_FACTORY_SEPOLIA;
             uniswapSwapRouter = ISwapRouter02(UNISWAP_SWAP_ROUTER_SEPOLIA);
         }
@@ -65,22 +65,14 @@ abstract contract BaseScript is Script {
         vm.stopBroadcast();
     }
 
-    function createPool(
-        address _token0,
-        address _token1,
-        uint24 _fee,
-        uint160 _sqrtPriceX96,
-        uint256 _amount0,
-        uint256 _amount1
-    ) internal returns (address pool) {
-        INonfungiblePositionManager nfpm = INonfungiblePositionManager(uniswapNFPM);
+    function createPool(address _token0, address _token1, uint24 _fee, uint160 _sqrtPriceX96)
+        internal
+        returns (address pool)
+    {
+        pool = uniswapNFPM.createAndInitializePoolIfNecessary(_token0, _token1, _fee, _sqrtPriceX96);
+    }
 
-        pool = nfpm.createAndInitializePoolIfNecessary(_token0, _token1, _fee, _sqrtPriceX96);
-
-        if (isBase) {
-            return pool;
-        }
-
+    function mintPool(address _token0, address _token1, uint24 _fee, uint256 _amount0, uint256 _amount1) internal {
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: _token0,
             token1: _token1,
@@ -95,9 +87,9 @@ abstract contract BaseScript is Script {
             deadline: type(uint256).max
         });
 
-        IERC20(_token0).approve(address(nfpm), type(uint256).max);
-        IERC20(_token1).approve(address(nfpm), type(uint256).max);
+        IERC20(_token0).approve(address(uniswapNFPM), type(uint256).max);
+        IERC20(_token1).approve(address(uniswapNFPM), type(uint256).max);
 
-        nfpm.mint(params);
+        uniswapNFPM.mint(params);
     }
 }
