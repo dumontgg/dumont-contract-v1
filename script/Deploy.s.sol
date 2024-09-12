@@ -6,13 +6,14 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimeLockCon
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {Burner} from "../src/Burner.sol";
+import {ERC20Custom} from "./test/ERC20Custom.sol";
 import {GameFactory} from "../src/GameFactory.sol";
 import {IMontRewardManager} from "../src/interfaces/IMontRewardManager.sol";
+import {MONT} from "../src/MONT.sol";
+import {MontRewardManager} from "../src/MontRewardManager.sol";
 import {Revealer} from "../src/Revealer.sol";
 import {Vault} from "../src/Vault.sol";
-import {ERC20Custom} from "./test/ERC20Custom.sol";
-import {MontRewardManager} from "../src/MontRewardManager.sol";
-import {MONT} from "../src/MONT.sol";
+import {TaxBasedLocker} from "../src/TaxBasedLocker.sol";
 
 import {BaseScript} from "./Base.s.sol";
 
@@ -20,7 +21,7 @@ import {BaseScript} from "./Base.s.sol";
 contract DeployCore is BaseScript {
     address[] public EMPTY_ADDRESS_ARRAY;
 
-    uint256 MIN_DELAY = 1 days / 6;
+    uint256 MIN_DELAY = 0; // can be changed later after to 6 hours
     uint256 GAME_DURATION = 1 days / 2;
     uint256 CLAIMABLE_AFTER = 1 days / 4;
     uint256 MAX_FREE_REVEALS = 3;
@@ -28,6 +29,7 @@ contract DeployCore is BaseScript {
     uint24 MONT_USDC_POOL_FEE = 3000;
     uint256 GAME_CREATION_FEE = 1e6;
     uint256 MINIMUM_BET_AMOUNT = 1e6;
+    uint256 TEN_YEARS = 60 * 60 * 24 * 365 * 10;
     uint256 MONT_INITIAL_SUPPLY = 10_000_000_000;
     uint256 VAULT_INITIAL_USDC_SUPPLY = 100_000e6;
     uint256 MONT_REWARD_MANAGER_INITIAL_MONT_SUPPLY = 4_000_000_000e18;
@@ -44,7 +46,8 @@ contract DeployCore is BaseScript {
             MONT mont,
             ERC20Custom usdc,
             TimelockController timeLockController,
-            GameFactory gameFactory
+            GameFactory gameFactory,
+            TaxBasedLocker taxBasedLocker
         )
     {
         if (isBase) {
@@ -54,6 +57,9 @@ contract DeployCore is BaseScript {
         }
 
         mont = new MONT(MONT_INITIAL_SUPPLY, msg.sender);
+
+        taxBasedLocker = new TaxBasedLocker(mont, TEN_YEARS);
+        taxBasedLocker.initialize(2_000_000_000e18);
 
         Burner burnerImplementation = new Burner();
         TransparentUpgradeableProxy burnerProxy =
@@ -107,6 +113,7 @@ contract DeployCore is BaseScript {
         console2.log("MONT=%s", address(mont));
         console2.log("USDC=%s", address(usdc));
         console2.log("TIME_LOCK_CONTROLLER=%s", address(timeLockController));
+        console2.log("TAX_BASED_LOCKER=%s", address(taxBasedLocker));
         console2.log("UNISWAP_V3_POOL=%s", pool);
         console2.log("UNISWAP_V3_FACTORY=%s", address(uniswapV3Factory));
         console2.log("UNISWAP_V3_NFPM=%s", address(uniswapNFPM));
