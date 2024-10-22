@@ -36,11 +36,17 @@ abstract contract BaseTest is Test, Constants {
     }
 
     function setUp() public virtual {
-        // mont = new MONT(100_000_000, address(this));
-        // usdc = new ERC20Custom("USD Tether", "USDC", 6, 100_000_000, address(this));
+        mont = new MONT(100_000_000, address(this));
+        usdc = new ERC20Custom(
+            "USD Tether",
+            "USDC",
+            6,
+            100_000_000,
+            address(this)
+        );
 
-        mont = MONT(address(SHIBA));
-        usdc = ERC20Custom(address(USDT));
+        // mont = MONT(address(SHIBA));
+        // usdc = ERC20Custom(address(USDT));
 
         users = Users({
             eve: createUser("Eve"),
